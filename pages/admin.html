@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - CCM 2.0</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Theme Animations CSS -->
+<link rel="stylesheet" href="../css/theme-animations.css">
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 transition-colors duration-200">
+  
+  <nav class="bmw-navbar bg-gray-900 dark:bg-gray-950 text-white p-4 animate-fade-down">
+    <div class="max-w-7xl mx-auto flex justify-between items-center">
+      <h1 class="text-2xl font-bold bmw-hover px-3 py-1 rounded-lg">CCM 2.0 Admin</h1>
+      <div class="flex gap-4">
+        <a href="../index.html" class="hover:text-blue-400 bmw-hover">Back to Site</a>
+        <button id="logout-btn" class="hover:text-red-400 bmw-hover">Logout</button>
+      </div>
+    </div>
+  </nav>
+
+  <div class="max-w-7xl mx-auto p-6 page-transition">
+    
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+      <div class="lion-stat lion-glow bg-white dark:bg-gray-800 p-6 rounded-lg shadow hover-lift animate-scale-in cursor-pointer">
+        <p class="text-gray-500 dark:text-gray-400 text-sm">Total Users</p>
+        <p id="total-users" class="text-3xl font-bold text-blue-600 dark:text-blue-400">0</p>
+      </div>
+      <div class="lion-stat lion-glow bg-white dark:bg-gray-800 p-6 rounded-lg shadow hover-lift animate-scale-in cursor-pointer" style="animation-delay: 0.1s">
+        <p class="text-gray-500 dark:text-gray-400 text-sm">Total Products</p>
+        <p id="total-products" class="text-3xl font-bold text-green-600 dark:text-green-400">0</p>
+      </div>
+      <div class="lion-stat lion-glow bg-white dark:bg-gray-800 p-6 rounded-lg shadow hover-lift animate-scale-in cursor-pointer" style="animation-delay: 0.2s">
+        <p class="text-gray-500 dark:text-gray-400 text-sm">Total Orders</p>
+        <p id="total-orders" class="text-3xl font-bold text-purple-600 dark:text-purple-400">0</p>
+      </div>
+      <div class="lion-stat lion-glow bg-white dark:bg-gray-800 p-6 rounded-lg shadow hover-lift animate-scale-in cursor-pointer" style="animation-delay: 0.3s">
+        <p class="text-gray-500 dark:text-gray-400 text-sm">Revenue</p>
+        <p id="total-revenue" class="text-3xl font-bold text-orange-600 dark:text-orange-400">₹0</p>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow mb-6 animate-fade-up">
+      <div class="flex border-b dark:border-gray-700 overflow-x-auto">
+        <button data-tab="orders" class="tab-btn px-6 py-3 font-semibold border-b-2 border-blue-600 text-blue-600 dark:text-blue-400 bmw-hover">Orders</button>
+        <button data-tab="products" class="tab-btn px-6 py-3 font-semibold text-gray-500 dark:text-gray-400 bmw-hover">Products</button>
+        <button data-tab="users" class="tab-btn px-6 py-3 font-semibold text-gray-500 dark:text-gray-400 bmw-hover">Users</button>
+        <button data-tab="charts" class="tab-btn px-6 py-3 font-semibold text-gray-500 dark:text-gray-400 bmw-hover">Analytics</button>
+      </div>
+
+      <!-- Orders Tab -->
+      <div id="orders-tab" class="tab-content p-6">
+        <h2 class="text-xl font-bold mb-4 text-gray-900 dark:text-white">All Orders</h2>
+        <div id="orders-table" class="overflow-x-auto animate-fade-in">Loading...</div>
+      </div>
+
+      <!-- Products Tab -->
+      <div id="products-tab" class="tab-content p-6 hidden">
+        <h2 class="text-xl font-bold mb-4 text-gray-900 dark:text-white">All Products</h2>
+        <div id="products-table" class="overflow-x-auto animate-fade-in">Loading...</div>
+      </div>
+
+      <!-- Users Tab -->
+      <div id="users-tab" class="tab-content p-6 hidden">
+        <h2 class="text-xl font-bold mb-4 text-gray-900 dark:text-white">All Users</h2>
+        <div id="users-table" class="overflow-x-auto animate-fade-in">Loading...</div>
+      </div>
+
+      <!-- Charts Tab -->
+      <div id="charts-tab" class="tab-content p-6 hidden">
+        <h2 class="text-xl font-bold mb-4 text-gray-900 dark:text-white">Sales Analytics - Last 7 Days</h2>
+        <div class="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg">
+          <canvas id="sales-chart" height="100"></canvas>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script type="module">
+    import { supabase } from '../js/supabase.js'
+
+    // 🔥 ADMIN CHECK FUNCTION - LOCAL AH POTEN
+    async function isAdmin(userId) {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', userId)
+        .single()
+      
+      if (error) {
+        console.error('Admin check error:', error)
+        return false
+      }
+      return data?.role === 'admin'
+    }
+
+    // 🔥 AUTH + ADMIN VERIFY
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session?.user) {
+      alert('Login pannu da')
+      window.location.href = 'login.html'
+    }
+
+    const adminCheck = await isAdmin(session.user.id)
+    if (!adminCheck) {
+      alert('Dei nee admin illa da 😂')
+      window.location.href = '../index.html'
+    }
+
+    document.getElementById('logout-btn').onclick = async () => {
+      await supabase.auth.signOut()
+      window.location.href = '../index.html'
+    }
+
+    // 🔥 LOAD STATS
+    async function loadStats() {
+      const { count: userCount } = await supabase.from('profiles').select('*', { count: 'exact', head: true })
+      const { count: productCount } = await supabase.from('products').select('*', { count: 'exact', head: true })
+      const { count: orderCount } = await supabase.from('orders').select('*', { count: 'exact', head: true })
+      const { data: revenueData } = await supabase.from('orders').select('total_price').eq('status', 'completed')
+      
+      const revenue = revenueData?.reduce((sum, o) => sum + Number(o.total_price), 0) || 0
+
+      document.getElementById('total-users').textContent = userCount || 0
+      document.getElementById('total-products').textContent = productCount || 0
+      document.getElementById('total-orders').textContent = orderCount || 0
+      document.getElementById('total-revenue').textContent = `₹${revenue.toLocaleString('en-IN')}`
+    }
+
+    // 🔥 LOAD ORDERS - FIXED JOIN
+    async function loadOrders() {
+      const { data: orders, error } = await supabase
+        .from('orders')
+        .select(`
+          *,
+          products(title)
+        `)
+        .order('created_at', { ascending: false })
+        .limit(50)
+
+      if (error) {
+        document.getElementById('orders-table').innerHTML = `<p class="text-red-500 animate-shake">Error: ${error.message}</p>`
+        return
+      }
+
+      // Email ah thaniya edukurathu - RLS issue varathu
+      const userIds = [...new Set(orders.flatMap(o => [o.buyer_id, o.seller_id]))]
+      const { data: profiles } = await supabase.from('profiles').select('id, email').in('id', userIds)
+      const emailMap = Object.fromEntries((profiles || []).map(u => [u.id, u.email]))
+
+      document.getElementById('orders-table').innerHTML = `
+        <table class="w-full text-sm">
+          <thead class="bg-gray-50 dark:bg-gray-900">
+            <tr>
+              <th class="p-3 text-left text-gray-700 dark:text-gray-300">ID</th>
+              <th class="p-3 text-left text-gray-700 dark:text-gray-300">Product</th>
+              <th class="p-3 text-left text-gray-700 dark:text-gray-300">Buyer</th>
+              <th class="p-3 text-left text-gray-700 dark:text-gray-300">Seller</th>
+              <th class="p-3 text-left text-gray-700 dark:text-gray-300">Price</th>
+              <th class="p-3 text-left text-gray-700 dark:text-gray-300">Status</th>
+              <th class="p-3 text-left text-gray-700 dark:text-gray-300">Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${orders.map(o => `
+              <tr class="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                <td class="p-3 font-mono text-xs text-gray-600 dark:text-gray-400">${o.id.substring(0,8)}</td>
+                <td class="p-3 text-gray-900 dark:text-gray-200">${o.products?.title || 'Deleted'}</td>
+                <td class="p-3 text-xs text-gray-600 dark:text-gray-400">${emailMap[o.buyer_id] || 'N/A'}</td>
+                <td class="p-3 text-xs text-gray-600 dark:text-gray-400">${emailMap[o.seller_id] || 'N/A'}</td>
+                <td class="p-3 font-semibold text-gray-900 dark:text-gray-200">₹${o.total_price}</td>
+                <td class="p-3"><span class="px-2 py-1 rounded text-xs bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300">${o.status}</span></td>
+                <td class="p-3 text-xs text-gray-600 dark:text-gray-400">${new Date(o.created_at).toLocaleDateString('en-IN')}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `
+    }
+
+    // 🔥 LOAD PRODUCTS - FIXED
+    async function loadProducts() {
+      const { data: products, error } = await supabase
+        .from('products')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(50)
+
+      if (error) {
+        document.getElementById('products-table').innerHTML = `<p class="text-red-500 animate-shake">Error: ${error.message}</p>`
+        return
+      }
+
+      // Seller emails thaniya edukurathu
+      const sellerIds = [...new Set(products.map(p => p.seller_id))]
+      const { data: profiles } = await supabase.from('profiles').select('id, email').in('id', sellerIds)
+      const emailMap = Object.fromEntries((profiles || []).map(u => [u.id, u.email]))
+
+      document.getElementById('products-table').innerHTML = `
+        <table class="w-full text-sm">
+          <thead class="bg-gray-50 dark:bg-gray-900">
+            <tr>
+              <th class="p-3 text-left text-gray-700 dark:text-gray-300">Title</th>
+              <th class="p-3 text-left text-gray-700 dark:text-gray-300">Price</th>
+              <th class="p-3 text-left text-gray-700 dark:text-gray-300">Seller</th>
+              <th class="p-3 text-left text-gray-700 dark:text-gray-300">Status</th>
+              <th class="p-3 text-left text-gray-700 dark:text-gray-300">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${products.map(p => `
+              <tr class="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                <td class="p-3 font-medium text-gray-900 dark:text-gray-200">${p.title}</td>
+                <td class="p-3 font-semibold text-gray-900 dark:text-gray-200">₹${p.price}</td>
+                <td class="p-3 text-xs text-gray-600 dark:text-gray-400">${emailMap[p.seller_id] || 'N/A'}</td>
+                <td class="p-3"><span class="px-2 py-1 rounded text-xs ${p.status === 'available' ? 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'}">${p.status}</span></td>
+                <td class="p-3">
+                  <button onclick="deleteProduct('${p.id}')" class="transformer-btn text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 text-xs font-semibold">Delete</button>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `
+    }
+
+    // 🔥 LOAD USERS - FIXED - NO full_name/email ASSUMPTION
+    async function loadUsers() {
+      const { data: profiles, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(50)
+
+      if (error) {
+        document.getElementById('users-table').innerHTML = `<p class="text-red-500 animate-shake">Error: ${error.message}</p>`
+        return
+      }
+
+      document.getElementById('users-table').innerHTML = `
+        <table class="w-full text-sm">
+          <thead class="bg-gray-50 dark:bg-gray-900">
+            <tr>
+              <th class="p-3 text-left text-gray-700 dark:text-gray-300">Email</th>
+              <th class="p-3 text-left text-gray-700 dark:text-gray-300">Name</th>
+              <th class="p-3 text-left text-gray-700 dark:text-gray-300">Role</th>
+              <th class="p-3 text-left text-gray-700 dark:text-gray-300">Joined</th>
+              <th class="p-3 text-left text-gray-700 dark:text-gray-300">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${profiles.map(u => `
+              <tr class="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                <td class="p-3 text-xs text-gray-600 dark:text-gray-400">${u.email || 'N/A'}</td>
+                <td class="p-3 text-gray-900 dark:text-gray-200">${u.name || u.username || u.full_name || 'N/A'}</td>
+                <td class="p-3"><span class="px-2 py-1 rounded text-xs ${u.role === 'admin' ? 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300 font-bold' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'}">${u.role || 'user'}</span></td>
+                <td class="p-3 text-xs text-gray-600 dark:text-gray-400">${new Date(u.created_at).toLocaleDateString('en-IN')}</td>
+                <td class="p-3">
+                  ${u.role !== 'admin' ? `<button onclick="makeAdmin('${u.id}')" class="transformer-btn text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-xs font-semibold">Make Admin</button>` : ''}
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `
+    }
+
+    // 🔥 DELETE PRODUCT
+    window.deleteProduct = async (id) => {
+      if (!confirm('Delete this product? Action cannot be undone.')) return
+      const { error } = await supabase.from('products').delete().eq('id', id)
+      if (error) alert('Error: ' + error.message)
+      else {
+        loadProducts()
+        loadStats()
+      }
+    }
+
+    // 🔥 MAKE ADMIN
+    window.makeAdmin = async (id) => {
+      if (!confirm('Make this user an admin?')) return
+      const { error } = await supabase.from('profiles').update({ role: 'admin' }).eq('id', id)
+      if (error) alert('Error: ' + error.message)
+      else loadUsers()
+    }
+
+    // 🔥 SALES CHART
+    async function loadChart() {
+      const { data: orders } = await supabase
+        .from('orders')
+        .select('created_at, total_price')
+        .eq('status', 'completed')
+        .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString())
+
+      const days = {}
+      const last7Days = [...Array(7)].map((_, i) => {
+        const d = new Date()
+        d.setDate(d.getDate() - i)
+        return d.toLocaleDateString('en-IN')
+      }).reverse()
+
+      last7Days.forEach(day => days[day] = 0)
+      orders?.forEach(o => {
+        const day = new Date(o.created_at).toLocaleDateString('en-IN')
+        if (days[day] !== undefined) days[day] += Number(o.total_price)
+      })
+
+      new Chart(document.getElementById('sales-chart'), {
+        type: 'line',
+        data: {
+          labels: Object.keys(days),
+          datasets: [{
+            label: 'Daily Revenue ₹',
+            data: Object.values(days),
+            borderColor: 'rgb(59, 130, 246)',
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            tension: 0.3,
+            fill: true
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } }
+        }
+      })
+    }
+
+    // TAB SWITCHING
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.onclick = () => {
+        document.querySelectorAll('.tab-btn').forEach(b => {
+          b.classList.remove('border-blue-600', 'text-blue-600', 'dark:text-blue-400')
+          b.classList.add('text-gray-500', 'dark:text-gray-400')
+        })
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'))
+        
+        btn.classList.add('border-blue-600', 'text-blue-600', 'dark:text-blue-400')
+        btn.classList.remove('text-gray-500', 'dark:text-gray-400')
+        document.getElementById(`${btn.dataset.tab}-tab`).classList.remove('hidden')
+        
+        if (btn.dataset.tab === 'orders') loadOrders()
+        if (btn.dataset.tab === 'products') loadProducts()
+        if (btn.dataset.tab === 'users') loadUsers()
+        if (btn.dataset.tab === 'charts') loadChart()
+      }
+    })
+
+    // INIT
+    loadStats()
+    loadOrders()
+  </script>
+  <!-- Theme Effects JS -->
+<script type="module" src="../js/theme-effects.js"></script>
+</body>
+</html>

@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Wishlist - CCM 2.0</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode: 'class' }
+  </script>
+  <link rel="stylesheet" href="../css/style.css">
+  <!-- Theme Animations CSS -->
+<link rel="stylesheet" href="../css/theme-animations.css">
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
+
+  <!-- Navbar -->
+  <nav class="bmw-navbar bg-white dark:bg-gray-800 shadow-md p-4 sticky top-0 z-10 transition-colors animate-fade-down">
+    <div class="max-w-6xl mx-auto flex justify-between items-center">
+      <a href="../index.html" class="text-2xl font-bold text-blue-600 dark:text-blue-400 bmw-hover px-3 py-1 rounded-lg">CCM 2.0</a>
+      <div class="flex gap-4">
+        <!-- JS la fill aagum -->
+      </div>
+    </div>
+  </nav>
+
+  <!-- Page Title -->
+  <div class="max-w-6xl mx-auto p-4 page-transition">
+    <h2 class="text-2xl font-bold mb-4 text-gray-900 dark:text-white animate-fade-up">❤️ My Wishlist</h2>
+    <p class="text-gray-500 dark:text-gray-400 mb-6">You saved these items. Chat with seller to buy.</p>
+  </div>
+
+  <!-- Wishlist Feed -->
+  <div id="wishlist-feed" class="max-w-6xl mx-auto p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div class="col-span-full text-center text-gray-400 dark:text-gray-500 py-10 animate-pulse">Loading your wishlist...</div>
+  </div>
+
+  <!-- Global Theme Button - INLINE -->
+  <script>
+    const html = document.documentElement
+    const THEME_KEY = 'ccm-theme'
+
+    function applyTheme() {
+      const saved = localStorage.getItem(THEME_KEY)
+      if (saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        html.classList.add('dark')
+      } else {
+        html.classList.remove('dark')
+      }
+    }
+
+    function toggleTheme() {
+      html.classList.toggle('dark')
+      const isDark = html.classList.contains('dark')
+      localStorage.setItem(THEME_KEY, isDark? 'dark' : 'light')
+      window.dispatchEvent(new CustomEvent('themeChanged', { detail: { isDark } }))
+      return isDark? '☀️' : '🌙'
+    }
+
+    function getThemeIcon() {
+      return html.classList.contains('dark')? '☀️' : '🌙'
+    }
+
+    applyTheme()
+
+    const btn = document.createElement('button')
+    btn.id = 'global-theme-toggle'
+    btn.className = 'fixed bottom-6 right-6 z-50 text-2xl p-4 rounded-full bg-white dark:bg-gray-800 shadow-2xl hover:scale-110 active:scale-95 transition-all border-2 border-gray-200 dark:border-gray-700 transformer-btn'
+    btn.textContent = getThemeIcon()
+    btn.title = 'Toggle Theme'
+    btn.onclick = () => {
+      btn.textContent = toggleTheme()
+    }
+
+    window.addEventListener('themeChanged', (e) => {
+      btn.textContent = e.detail.isDark? '☀️' : '🌙'
+    })
+
+    document.body.appendChild(btn)
+  </script>
+
+  <script type="module">
+    import { supabase } from '../js/supabase.js'
+
+    const wishlistFeed = document.getElementById('wishlist-feed')
+
+    // 1. Navbar Update - Same logic main.js la irunthu
+    async function updateNavbar() {
+      const { data: { user } } = await supabase.auth.getUser()
+      const navLinks = document.querySelector('nav div.flex.gap-4')
+
+      if (!navLinks) return
+
+      if (user) {
+        navLinks.innerHTML = `
+          <a href="wishlist.html" class="text-blue-600 dark:text-blue-400 font-medium bmw-hover">❤️ Wishlist</a>
+          <a href="chats.html" class="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 bmw-hover">My Chats</a>
+          <a href="profile.html" class="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 bmw-hover">Profile</a>
+          <button id="logout-btn" class="text-red-500 hover:text-red-600 bmw-hover">Logout</button>
+          <a href="add-product.html" class="transformer-btn bmw-hover bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">+ Sell</a>
+        `
+        document.getElementById('logout-btn').addEventListener('click', async () => {
+          await supabase.auth.signOut()
+          window.location.href = 'login.html'
+        })
+      } else {
+        window.location.href = 'login.html'
+      }
+    }
+
+    // 2. Product Card - Same main.js mathiri + dark mode + ANIMATIONS
+    function createProductCard(product, index) {
+      const firstPhoto = product.photos?.[0] || 'https://via.placeholder.com/300x200?text=No+Image'
+      const timeAgo = new Date(product.created_at).toLocaleDateString('en-IN')
+
+      return `
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden hover-lift animate-scale-in transition-colors" style="animation-delay: ${index * 0.1}s">
+          <div class="relative">
+            <img src="${firstPhoto}" alt="${product.title}" class="w-full h-48 object-cover hover-scale">
+            <button onclick="removeFromWishlist('${product.id}')"
+              class="transformer-btn absolute top-2 right-2 p-2 bg-white dark:bg-gray-700 rounded-full shadow-md hover:scale-110 transition">
+              <svg class="w-5 h-5 text-red-500 fill-current" viewBox="0 0 20 20"><path d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z"/></svg>
+            </button>
+          </div>
+          <div class="p-4">
+            <div class="flex justify-between items-start mb-2">
+              <h3 class="font-bold text-lg truncate text-gray-900 dark:text-white">${product.title}</h3>
+              <span class="text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 py-1 rounded">${product.condition}</span>
+            </div>
+            <p class="text-2xl font-bold text-blue-600 dark:text-blue-400 mb-2">₹${product.price}</p>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mb-3 line-clamp-2">${product.description || 'No description'}</p>
+            <div class="flex justify-between items-center text-xs text-gray-400 dark:text-gray-500">
+              <span>${product.category}</span>
+              <span>${timeAgo}</span>
+            </div>
+            <button onclick="openChat('${product.id}', '${product.user_id}')"
+              class="transformer-btn bmw-hover w-full mt-3 bg-blue-600 text-white py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 active:scale-95 transition">
+              Chat with Seller
+            </button>
+          </div>
+        </div>
+      `
+    }
+
+    // 3. Load Wishlist
+    async function loadWishlist() {
+      const { data: { user } } = await supabase.auth.getUser()
+
+      if (!user) {
+        window.location.href = 'login.html'
+        return
+      }
+
+      wishlistFeed.innerHTML = '<div class="col-span-full text-center text-gray-400 dark:text-gray-500 py-10 animate-pulse">Loading...</div>'
+
+      // User oda wishlist la irukura product_id eduthu, products table la join pannu
+      const { data: wishlists, error } = await supabase
+   .from('wishlists')
+   .select(`
+          product_id,
+          products (*, profiles(name, rating))
+        `)
+   .eq('user_id', user.id)
+   .order('created_at', { ascending: false })
+
+      if (error) {
+        wishlistFeed.innerHTML = `<div class="col-span-full text-center text-red-500 dark:text-red-400 py-10 animate-shake">Error: ${error.message}</div>`
+        return
+      }
+
+      if (!wishlists || wishlists.length === 0) {
+        wishlistFeed.innerHTML = `
+          <div class="col-span-full text-center py-20 animate-fade-in">
+            <div class="text-6xl mb-4">💔</div>
+            <p class="text-gray-400 dark:text-gray-500 text-lg mb-4">Your wishlist is empty da</p>
+            <a href="../index.html" class="transformer-btn bmw-hover bg-blue-600 text-white px-6 py-2 rounded-lg inline-block hover:bg-blue-700">Browse Products</a>
+          </div>
+        `
+        return
+      }
+
+      const products = wishlists.map(w => w.products).filter(p => p!== null)
+      wishlistFeed.innerHTML = products.map((p, i) => createProductCard(p, i)).join('')
+    }
+
+    // 4. Remove from Wishlist
+    window.removeFromWishlist = async (productId) => {
+      const { data: { user } } = await supabase.auth.getUser()
+
+      const { error } = await supabase
+   .from('wishlists')
+   .delete()
+   .eq('user_id', user.id)
+   .eq('product_id', productId)
+
+      if (!error) {
+        loadWishlist() // Refresh pannu
+      }
+    }
+
+    // 5. Chat Open Function - Same main.js mathiri
+    window.openChat = async (productId, sellerId) => {
+      const { data: { user } } = await supabase.auth.getUser()
+
+      if (!user) {
+        alert('Login pannitu chat pannu da')
+        window.location.href = 'login.html'
+        return
+      }
+      if (user.id === sellerId) {
+        alert('Neeye un product ku chat panna mudiyathu da 😂')
+        return
+      }
+      window.location.href = `chat.html?product=${productId}&seller=${sellerId}`
+    }
+
+    // Init
+    updateNavbar()
+    loadWishlist()
+  </script>
+  <!-- Theme Effects JS -->
+<script type="module" src="../js/theme-effects.js"></script>
+</body>
+</html>

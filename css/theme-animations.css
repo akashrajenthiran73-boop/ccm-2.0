@@ -1,0 +1,299 @@
+/* ===== CCM 2.0 THEME ANIMATIONS ===== */
+
+/* CSS Variables - Brand Colors */
+:root {
+  --bmw-blue: #0066B1;
+  --bmw-light-blue: #1C69D4;
+  --lion-gold: #FFB800;
+  --spider-red: #E31E24;
+  --transformer-silver: #C0C0C0;
+  --transition-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dark {
+  --bmw-blue: #3B82F6;
+  --bmw-light-blue: #60A5FA;
+  --lion-gold: #FCD34D;
+  --spider-red: #EF4444;
+  --transformer-silver: #9CA3AF;
+}
+
+/* ===== 1. BMW ANIMATION - Page Load + Navbar ===== */
+@keyframes bmwDrive {
+  0% { 
+    transform: translateX(-100%) skewX(-15deg);
+    opacity: 0;
+  }
+  50% { opacity: 1; }
+  100% { 
+    transform: translateX(0) skewX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes bmwGrill {
+  0%, 100% { transform: scaleX(1); }
+  50% { transform: scaleX(1.05); }
+}
+
+.bmw-load {
+  animation: bmwDrive 0.8s var(--transition-smooth);
+}
+
+.bmw-navbar {
+  position: relative;
+  /* overflow: hidden; <-- IDHA DELETE PANNITEN */
+}
+
+.bmw-navbar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(0,102,177,0.2), transparent);
+  animation: bmwDrive 1.5s ease-out;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.bmw-hover {
+  transition: all 0.3s var(--transition-smooth);
+}
+.bmw-hover:hover {
+  background: linear-gradient(135deg, var(--bmw-blue), var(--bmw-light-blue));
+  box-shadow: 0 0 20px rgba(0,102,177,0.4);
+  animation: bmwGrill 0.6s ease;
+}
+
+/* ===== 2. LION ANIMATION - Roar Effect ===== */
+@keyframes lionRoar {
+  0% { transform: scale(1) rotate(0deg); }
+  15% { transform: scale(1.2) rotate(-5deg); }
+  30% { transform: scale(1.1) rotate(5deg); }
+  45% { transform: scale(1.2) rotate(-3deg); }
+  60% { transform: scale(1.05) rotate(3deg); }
+  75% { transform: scale(1.1) rotate(0deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+
+@keyframes lionMane {
+  0%, 100% { filter: drop-shadow(0 0 5px var(--lion-gold)); }
+  50% { filter: drop-shadow(0 0 15px var(--lion-gold)); }
+}
+
+.lion-roar {
+  animation: lionRoar 0.8s ease-out;
+  animation-fill-mode: forwards;
+}
+
+.lion-glow {
+  animation: lionMane 2s ease-in-out infinite;
+}
+
+.lion-stat:hover {
+  animation: lionRoar 0.6s ease-out;
+  cursor: pointer;
+}
+
+/* ===== 3. SPIDER ANIMATION - Web Effect ===== */
+@keyframes spiderCrawl {
+  0% { 
+    transform: translateY(-100%) scale(0);
+    opacity: 0;
+  }
+  50% { opacity: 1; }
+  100% { 
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes webExpand {
+  0% { 
+    clip-path: circle(0% at 50% 0%);
+  }
+  100% { 
+    clip-path: circle(150% at 50% 0%);
+  }
+}
+
+@keyframes spiderShake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-2px); }
+  75% { transform: translateX(2px); }
+}
+
+.spider-notify {
+  animation: spiderCrawl 0.5s var(--transition-smooth);
+}
+
+.spider-web {
+  position: relative;
+}
+
+.spider-web::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 0%, transparent 0%, rgba(227,30,36,0.1) 100%);
+  animation: webExpand 0.6s ease-out;
+  pointer-events: none;
+}
+
+.spider-message {
+  animation: spiderShake 0.3s ease;
+}
+
+/* ===== 4. TRANSFORMERS - Button Transform ===== */
+@keyframes transformGear {
+  0% { 
+    transform: rotate(0deg) scale(1);
+    border-radius: 0.5rem;
+  }
+  50% { 
+    transform: rotate(180deg) scale(0.8);
+    border-radius: 50%;
+  }
+  100% { 
+    transform: rotate(360deg) scale(1);
+    border-radius: 0.5rem;
+  }
+}
+
+@keyframes transformSuccess {
+  0% { 
+    transform: scale(1);
+    background: var(--transformer-silver);
+  }
+  50% { 
+    transform: scale(1.1);
+    background: #10B981;
+  }
+  100% { 
+    transform: scale(1);
+    background: #10B981;
+  }
+}
+
+.transformer-btn {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.4s var(--transition-smooth);
+}
+
+.transformer-btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: var(--transformer-silver);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: all 0.4s var(--transition-smooth);
+}
+
+.transformer-btn:hover::before {
+  width: 300px;
+  height: 300px;
+}
+
+.transformer-btn:active {
+  animation: transformGear 0.6s ease;
+}
+
+.transformer-success {
+  animation: transformSuccess 0.8s ease-out forwards;
+}
+
+/* ===== 5. PAGE TRANSITIONS ===== */
+@keyframes pageSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes pageFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.page-transition {
+  animation: pageSlideIn 0.4s var(--transition-smooth);
+}
+
+/* ===== 6. RESPONSIVE OPTIMIZATIONS ===== */
+@media (max-width: 768px) {
+  /* Mobile la animations reduce pannu */
+  .bmw-load,
+  .lion-roar,
+  .spider-notify {
+    animation-duration: 0.3s;
+  }
+  
+  .hover-lift:hover {
+    transform: translateY(-2px);
+  }
+  
+  /* Disable complex animations on mobile */
+  .spider-web::after {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ============================================
+   DROPDOWN VISIBILITY FIX - FINAL 100%
+   ============================================ */
+
+/* Navbar and all parents must allow overflow */
+.bmw-navbar,
+.bmw-navbar > div,
+#auth-section,
+.max-w-6xl {
+  overflow: visible !important;
+}
+
+/* Navbar dropdowns should be above animations */
+.bmw-navbar {
+  z-index: 50 !important;
+}
+
+/* Dropdown ku highest priority */
+#notification-dropdown {
+  z-index: 999999 !important;
+  position: absolute !important;
+  top: 48px !important;
+  right: 0 !important;
+}
+
+/* Notification container relative */
+.notification-container {
+  position: relative !important;
+  z-index: 999999 !important;
+}
+
+/* Spider, gear, lion should stay behind dropdowns */
+body::before,
+body::after,
+.lion-corner {
+  z-index: 1 !important;
+  pointer-events: none !important;
+}

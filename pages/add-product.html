@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sell Item - CCM 2.0</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode: 'class' }
+  </script>
+  <!-- Theme Animations CSS -->
+<link rel="stylesheet" href="../css/theme-animations.css">
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
+  <!-- Navbar -->
+  <nav class="bmw-navbar bg-white dark:bg-gray-800 shadow-md p-4 sticky top-0 transition-colors animate-fade-down">
+    <div class="max-w-6xl mx-auto flex justify-between items-center">
+      <a href="chats.html" class="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 bmw-hover">My Chats</a>
+      <a href="../index.html" class="text-2xl font-bold text-blue-600 dark:text-blue-400 bmw-hover px-3 py-1 rounded-lg">CCM 2.0</a>
+      <a href="../index.html" class="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 bmw-hover">Cancel</a>
+    </div>
+  </nav>
+
+  <div class="max-w-2xl mx-auto p-4 page-transition">
+    <h2 class="text-2xl font-bold mb-6 text-gray-900 dark:text-white animate-fade-up">Post Your Item</h2>
+    
+    <form id="add-product-form" class="space-y-5 bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md hover-lift animate-scale-in transition-colors">
+      <!-- Photo Upload -->
+      <div>
+        <label class="block font-semibold mb-2 text-gray-900 dark:text-white">Photos - Max 4</label>
+        <input type="file" id="photos" accept="image/*" multiple required 
+               class="w-full p-2 border dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-blue-50 dark:file:bg-blue-900 file:text-blue-700 dark:file:text-blue-300 hover:file:bg-blue-100 dark:hover:file:bg-blue-800 transition-all">
+        <div id="photo-preview" class="flex gap-2 mt-2 flex-wrap"></div>
+      </div>
+
+      <!-- Title -->
+      <input type="text" id="title" placeholder="Item Title - ex: CS Textbooks 1st Year" required 
+             class="w-full p-3 border dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 transition-all">
+
+      <!-- Description -->
+      <textarea id="description" placeholder="Description - condition, reason for selling" rows="4" 
+                class="w-full p-3 border dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 transition-all"></textarea>
+
+      <!-- Price + Category -->
+      <div class="flex gap-4">
+        <input type="number" id="price" placeholder="Price ₹" required 
+               class="w-1/2 p-3 border dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 transition-all">
+        <select id="category" required 
+                class="w-1/2 p-3 border dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-all">
+          <option value="">Category</option>
+          <option value="Books">Books</option>
+          <option value="Cycles">Cycles</option>
+          <option value="Electronics">Electronics</option>
+          <option value="Hostel Items">Hostel Items</option>
+          <option value="Others">Others</option>
+        </select>
+      </div>
+
+      <!-- Condition -->
+      <div>
+        <label class="block font-semibold mb-2 text-gray-900 dark:text-white">Condition</label>
+        <div class="flex gap-4 text-gray-700 dark:text-gray-300">
+          <label class="flex items-center gap-2 cursor-pointer hover-scale">
+            <input type="radio" name="condition" value="New" required class="text-blue-600"> New
+          </label>
+          <label class="flex items-center gap-2 cursor-pointer hover-scale">
+            <input type="radio" name="condition" value="Like new" class="text-blue-600"> Like new
+          </label>
+          <label class="flex items-center gap-2 cursor-pointer hover-scale">
+            <input type="radio" name="condition" value="Used" class="text-blue-600"> Used
+          </label>
+        </div>
+      </div>
+
+      <!-- Location -->
+      <div>
+        <label class="block font-semibold mb-2 text-gray-900 dark:text-white">Location</label>
+        <button type="button" id="get-location" 
+                class="transformer-btn bmw-hover bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-4 py-2 rounded-lg text-sm hover:bg-gray-300 dark:hover:bg-gray-600">
+          📍 Use My Location
+        </button>
+        <p id="location-text" class="text-sm text-gray-500 dark:text-gray-400 mt-1">Location not set</p>
+      </div>
+
+      <!-- Submit -->
+      <button type="submit" id="submit-btn" 
+              class="transformer-btn bmw-hover w-full bg-blue-600 text-white p-3 rounded-lg font-semibold hover:bg-blue-700 active:scale-95 transition">
+        Post Item
+      </button>
+      <p id="error-msg" class="text-red-500 dark:text-red-400 text-sm text-center"></p>
+    </form>
+  </div>
+
+  <!-- Global Theme Button - INLINE -->
+  <script>
+    const html = document.documentElement
+    const THEME_KEY = 'ccm-theme'
+    
+    function applyTheme() {
+      const saved = localStorage.getItem(THEME_KEY)
+      if (saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        html.classList.add('dark')
+      } else {
+        html.classList.remove('dark')
+      }
+    }
+    
+    function toggleTheme() {
+      html.classList.toggle('dark')
+      const isDark = html.classList.contains('dark')
+      localStorage.setItem(THEME_KEY, isDark ? 'dark' : 'light')
+      window.dispatchEvent(new CustomEvent('themeChanged', { detail: { isDark } }))
+      return isDark ? '☀️' : '🌙'
+    }
+    
+    function getThemeIcon() {
+      return html.classList.contains('dark') ? '☀️' : '🌙'
+    }
+    
+    applyTheme()
+    
+    const btn = document.createElement('button')
+    btn.id = 'global-theme-toggle'
+    btn.className = 'fixed bottom-6 right-6 z-50 text-2xl p-4 rounded-full bg-white dark:bg-gray-800 shadow-2xl hover:scale-110 active:scale-95 transition-all border-2 border-gray-200 dark:border-gray-700 transformer-btn'
+    btn.textContent = getThemeIcon()
+    btn.title = 'Toggle Theme'
+    btn.onclick = () => {
+      btn.textContent = toggleTheme()
+    }
+    
+    window.addEventListener('themeChanged', (e) => {
+      btn.textContent = e.detail.isDark ? '☀️' : '🌙'
+    })
+    
+    document.body.appendChild(btn)
+  </script>
+
+  <script type="module" src="../js/add-products.js"></script>
+  <!-- Theme Effects JS -->
+<script type="module" src="../js/theme-effects.js"></script>
+</body>
+</html>

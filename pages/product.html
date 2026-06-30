@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Product Details - CCM 2.0</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode: 'class' }
+  </script>
+  <!-- Theme Animations CSS -->
+<link rel="stylesheet" href="../css/theme-animations.css">
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
+  <!-- Navbar -->
+  <nav class="bmw-navbar bg-white dark:bg-gray-800 shadow-sm p-4 transition-colors animate-fade-down">
+    <div class="max-w-6xl mx-auto flex justify-between items-center">
+      <a href="../index.html" class="text-2xl font-bold text-blue-600 dark:text-blue-400 bmw-hover px-3 py-1 rounded-lg">CCM 2.0</a>
+      <div id="nav-links" class="flex gap-4"></div>
+    </div>
+  </nav>
+
+  <!-- Product Content -->
+  <div class="max-w-6xl mx-auto p-4 mt-6 page-transition">
+    <div id="product-container">
+      <!-- Loading -->
+      <div class="text-center py-20">
+        <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 dark:border-blue-400"></div>
+        <p class="text-gray-500 dark:text-gray-400 mt-4 animate-pulse">Loading product...</p>
+      </div>
+    </div>
+
+    <!-- Similar Products -->
+    <div class="mt-12 animate-fade-up">
+      <h2 class="text-2xl font-bold mb-6 text-gray-900 dark:text-white">Similar Products</h2>
+      <div id="similar-products" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6"></div>
+    </div>
+  </div>
+
+  <!-- Global Theme Button - INLINE -->
+  <script>
+    const html = document.documentElement
+    const THEME_KEY = 'ccm-theme'
+
+    function applyTheme() {
+      const saved = localStorage.getItem(THEME_KEY)
+      if (saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        html.classList.add('dark')
+      } else {
+        html.classList.remove('dark')
+      }
+    }
+
+    function toggleTheme() {
+      html.classList.toggle('dark')
+      const isDark = html.classList.contains('dark')
+      localStorage.setItem(THEME_KEY, isDark? 'dark' : 'light')
+      window.dispatchEvent(new CustomEvent('themeChanged', { detail: { isDark } }))
+      return isDark? '☀️' : '🌙'
+    }
+
+    function getThemeIcon() {
+      return html.classList.contains('dark')? '☀️' : '🌙'
+    }
+
+    applyTheme()
+
+    const btn = document.createElement('button')
+    btn.id = 'global-theme-toggle'
+    btn.className = 'fixed bottom-6 right-6 z-50 text-2xl p-4 rounded-full bg-white dark:bg-gray-800 shadow-2xl hover:scale-110 active:scale-95 transition-all border-2 border-gray-200 dark:border-gray-700 transformer-btn'
+    btn.textContent = getThemeIcon()
+    btn.title = 'Toggle Theme'
+    btn.onclick = () => {
+      btn.textContent = toggleTheme()
+    }
+
+    window.addEventListener('themeChanged', (e) => {
+      btn.textContent = e.detail.isDark? '☀️' : '🌙'
+    })
+
+    document.body.appendChild(btn)
+  </script>
+
+  <script type="module" src="../js/product.js"></script>
+  <!-- Theme Effects JS -->
+<script type="module" src="../js/theme-effects.js"></script>
+</body>
+</html>

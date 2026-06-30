@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - CCM 2.0</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode: 'class' }
+  </script>
+  <!-- Theme Animations CSS -->
+<link rel="stylesheet" href="../css/theme-animations.css">
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 flex items-center justify-center min-h-screen transition-colors duration-200">
+  <div class="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-md w-full max-w-md hover-lift animate-scale-in transition-colors">
+    <h2 class="text-2xl font-bold text-center mb-6 text-blue-600 dark:text-blue-400 animate-fade-up">CCM 2.0 Login</h2>
+    
+    <form id="login-form" class="space-y-4">
+      <input type="email" id="email" placeholder="Email" required 
+             class="w-full p-3 border dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 transition-all">
+      <input type="password" id="password" placeholder="Password" required 
+             class="w-full p-3 border dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 transition-all">
+      
+      <button type="submit" id="login-btn" class="transformer-btn bmw-hover w-full bg-blue-600 text-white p-3 rounded-lg font-semibold hover:bg-blue-700 active:scale-95 transition">
+        Login
+      </button>
+      <p id="error-msg" class="text-red-500 dark:text-red-400 text-sm text-center"></p>
+    </form>
+
+    <p class="text-center mt-4 text-gray-600 dark:text-gray-300">
+      No account? <a href="register.html" class="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 bmw-hover">Register</a>
+    </p>
+  </div>
+
+  <!-- Global Theme Button - INLINE -->
+  <script>
+    const html = document.documentElement
+    const THEME_KEY = 'ccm-theme'
+    
+    function applyTheme() {
+      const saved = localStorage.getItem(THEME_KEY)
+      if (saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        html.classList.add('dark')
+      } else {
+        html.classList.remove('dark')
+      }
+    }
+    
+    function toggleTheme() {
+      html.classList.toggle('dark')
+      const isDark = html.classList.contains('dark')
+      localStorage.setItem(THEME_KEY, isDark ? 'dark' : 'light')
+      window.dispatchEvent(new CustomEvent('themeChanged', { detail: { isDark } }))
+      return isDark ? '☀️' : '🌙'
+    }
+    
+    function getThemeIcon() {
+      return html.classList.contains('dark') ? '☀️' : '🌙'
+    }
+    
+    applyTheme()
+    
+    const btn = document.createElement('button')
+    btn.id = 'global-theme-toggle'
+    btn.className = 'fixed bottom-6 right-6 z-50 text-2xl p-4 rounded-full bg-white dark:bg-gray-800 shadow-2xl hover:scale-110 active:scale-95 transition-all border-2 border-gray-200 dark:border-gray-700 transformer-btn'
+    btn.textContent = getThemeIcon()
+    btn.title = 'Toggle Theme'
+    btn.onclick = () => {
+      btn.textContent = toggleTheme()
+    }
+    
+    window.addEventListener('themeChanged', (e) => {
+      btn.textContent = e.detail.isDark ? '☀️' : '🌙'
+    })
+    
+    document.body.appendChild(btn)
+  </script>
+
+  <script type="module">
+    import { supabase } from '../js/supabase.js'
+    
+    const form = document.getElementById('login-form')
+    const errorMsg = document.getElementById('error-msg')
+    const loginBtn = document.getElementById('login-btn')
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault()
+      errorMsg.textContent = ''
+      loginBtn.disabled = true
+      loginBtn.textContent = 'Logging in...'
+      loginBtn.classList.add('animate-pulse')
+      
+      const email = document.getElementById('email').value
+      const password = document.getElementById('password').value
+
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email,
+        password: password
+      })
+
+      if (error) {
+        errorMsg.textContent = error.message
+        errorMsg.classList.add('animate-shake')
+        loginBtn.disabled = false
+        loginBtn.textContent = 'Login'
+        loginBtn.classList.remove('animate-pulse')
+        setTimeout(() => errorMsg.classList.remove('animate-shake'), 500)
+        return
+      }
+
+      // Login success
+      loginBtn.classList.remove('animate-pulse')
+      loginBtn.classList.add('transformer-success')
+      loginBtn.textContent = 'Success! ✓'
+      
+      setTimeout(() => {
+        window.location.href = '../index.html'
+      }, 800)
+    })
+  </script>
+  <!-- Theme Effects JS -->
+<script type="module" src="../js/theme-effects.js"></script>
+</body>
+</html>

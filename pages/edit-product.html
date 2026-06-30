@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Edit Product - CCM 2.0</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode: 'class' }
+  </script>
+  <!-- Theme Animations CSS -->
+<link rel="stylesheet" href="../css/theme-animations.css">
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
+  <nav class="bmw-navbar bg-white dark:bg-gray-800 shadow-md p-4 sticky top-0 transition-colors animate-fade-down">
+    <div class="max-w-6xl mx-auto flex justify-between items-center">
+      <a href="../index.html" class="text-2xl font-bold text-blue-600 dark:text-blue-400 bmw-hover px-3 py-1 rounded-lg">CCM 2.0</a>
+      <a href="profile.html" class="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 bmw-hover">← Back to Profile</a>
+    </div>
+  </nav>
+
+  <div class="max-w-2xl mx-auto p-4 page-transition">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow hover-lift animate-scale-in p-6 transition-colors">
+      <h1 class="text-2xl font-bold mb-6 text-gray-900 dark:text-white animate-fade-up">Edit Your Listing</h1>
+
+      <div id="loading" class="text-center py-8">
+        <p class="text-gray-400 dark:text-gray-500 animate-pulse">Loading product details...</p>
+      </div>
+
+      <form id="edit-form" class="space-y-5 hidden">
+        <!-- Current Photos -->
+        <div>
+          <label class="block text-sm font-bold mb-2 text-gray-900 dark:text-white">Current Photos</label>
+          <div id="current-photos" class="grid grid-cols-3 gap-2 mb-3"></div>
+          <label class="block text-sm font-bold mb-2 text-gray-900 dark:text-white">Add New Photos <span class="text-gray-400 dark:text-gray-500 font-normal">(Max 5 total)</span></label>
+          <input id="photo-input" type="file" accept="image/*" multiple
+                 class="block w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-blue-50 dark:file:bg-blue-900 file:text-blue-700 dark:file:text-blue-300 hover:file:bg-blue-100 dark:hover:file:bg-blue-800 transition-all">
+          <div id="new-photo-preview" class="grid grid-cols-3 gap-2 mt-3"></div>
+        </div>
+
+        <!-- Title -->
+        <div>
+          <label class="block text-sm font-bold mb-2 text-gray-900 dark:text-white">Product Title *</label>
+          <input id="title" type="text" required
+                 class="w-full border dark:border-gray-600 rounded-lg px-4 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all">
+        </div>
+
+        <!-- Price -->
+        <div>
+          <label class="block text-sm font-bold mb-2 text-gray-900 dark:text-white">Price *</label>
+          <input id="price" type="number" required min="1"
+                 class="w-full border dark:border-gray-600 rounded-lg px-4 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all">
+        </div>
+
+        <!-- Category -->
+        <div>
+          <label class="block text-sm font-bold mb-2 text-gray-900 dark:text-white">Category *</label>
+          <select id="category" required
+                  class="w-full border dark:border-gray-600 rounded-lg px-4 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all">
+            <option value="">Select Category</option>
+            <option value="Mobile">Mobile</option>
+            <option value="Laptop">Laptop</option>
+            <option value="Bike">Bike</option>
+            <option value="Car">Car</option>
+            <option value="Books">Books</option>
+            <option value="Furniture">Furniture</option>
+            <option value="Electronics">Electronics</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+
+        <!-- Condition -->
+        <div>
+          <label class="block text-sm font-bold mb-2 text-gray-900 dark:text-white">Condition *</label>
+          <select id="condition" required
+                  class="w-full border dark:border-gray-600 rounded-lg px-4 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all">
+            <option value="New">New</option>
+            <option value="Like new">Like new</option>
+            <option value="Used">Used</option>
+          </select>
+        </div>
+
+        <!-- Status -->
+        <div>
+          <label class="block text-sm font-bold mb-2 text-gray-900 dark:text-white">Status *</label>
+          <select id="status" required
+                  class="w-full border dark:border-gray-600 rounded-lg px-4 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all">
+            <option value="active">Active</option>
+            <option value="sold">Sold</option>
+            <option value="inactive">Inactive</option>
+          </select>
+        </div>
+
+        <!-- Description -->
+        <div>
+          <label class="block text-sm font-bold mb-2 text-gray-900 dark:text-white">Description *</label>
+          <textarea id="description" rows="4" required
+                    class="w-full border dark:border-gray-600 rounded-lg px-4 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"></textarea>
+        </div>
+
+        <!-- Location -->
+        <div>
+          <label class="block text-sm font-bold mb-2 text-gray-900 dark:text-white">Location *</label>
+          <input id="location" type="text" required
+                 class="w-full border dark:border-gray-600 rounded-lg px-4 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all">
+        </div>
+
+        <!-- Submit -->
+        <div class="flex gap-3">
+          <a href="profile.html" class="transformer-btn bmw-hover flex-1 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-bold py-3 rounded-lg text-center hover:bg-gray-300 dark:hover:bg-gray-600 transition">
+            Cancel
+          </a>
+          <button type="submit" id="submit-btn"
+                  class="transformer-btn bmw-hover flex-1 bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 active:scale-95 transition disabled:bg-gray-400 dark:disabled:bg-gray-600">
+            Update Listing
+          </button>
+        </div>
+
+        <div id="message" class="text-center text-sm"></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Global Theme Button - INLINE -->
+  <script>
+    const html = document.documentElement
+    const THEME_KEY = 'ccm-theme'
+
+    function applyTheme() {
+      const saved = localStorage.getItem(THEME_KEY)
+      if (saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        html.classList.add('dark')
+      } else {
+        html.classList.remove('dark')
+      }
+    }
+
+    function toggleTheme() {
+      html.classList.toggle('dark')
+      const isDark = html.classList.contains('dark')
+      localStorage.setItem(THEME_KEY, isDark? 'dark' : 'light')
+      window.dispatchEvent(new CustomEvent('themeChanged', { detail: { isDark } }))
+      return isDark? '☀️' : '🌙'
+    }
+
+    function getThemeIcon() {
+      return html.classList.contains('dark')? '☀️' : '🌙'
+    }
+
+    applyTheme()
+
+    const btn = document.createElement('button')
+    btn.id = 'global-theme-toggle'
+    btn.className = 'fixed bottom-6 right-6 z-50 text-2xl p-4 rounded-full bg-white dark:bg-gray-800 shadow-2xl hover:scale-110 active:scale-95 transition-all border-2 border-gray-200 dark:border-gray-700 transformer-btn'
+    btn.textContent = getThemeIcon()
+    btn.title = 'Toggle Theme'
+    btn.onclick = () => {
+      btn.textContent = toggleTheme()
+    }
+
+    window.addEventListener('themeChanged', (e) => {
+      btn.textContent = e.detail.isDark? '☀️' : '🌙'
+    })
+
+    document.body.appendChild(btn)
+  </script>
+
+  <script type="module">
+    import { supabase } from '../js/supabase.js'
+
+    let currentUser = null
+    let productId = null
+    let existingPhotos = []
+    let newFiles = []
+    let photosToDelete = []
+
+    // 1. Get product ID from URL
+    const urlParams = new URLSearchParams(window.location.search)
+    productId = urlParams.get('id')
+
+    if (!productId) {
+      document.getElementById('loading').innerHTML = '<p class="text-red-500 dark:text-red-400 animate-shake">Product ID missing</p>'
+      throw new Error('No product ID')
+    }
+
+    // 2. Auth check + Load product
+    async function init() {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        window.location.href = 'login.html'
+        return
+      }
+      currentUser = user
+
+      // Load product
+      const { data: product, error } = await supabase
+  .from('products')
+  .select('*')
+  .eq('id', productId)
+  .eq('user_id', currentUser.id)
+  .single()
+
+      if (error ||!product) {
+        document.getElementById('loading').innerHTML = '<p class="text-red-500 dark:text-red-400 animate-shake">Product not found or you don\'t have access</p>'
+        return
+      }
+
+      // Fill form
+      document.getElementById('title').value = product.title || ''
+      document.getElementById('price').value = product.price || ''
+      document.getElementById('category').value = product.category || ''
+      document.getElementById('condition').value = product.condition || 'Used'
+      document.getElementById('status').value = product.status || 'active'
+      document.getElementById('description').value = product.description || ''
+      document.getElementById('location').value = product.location || ''
+
+      existingPhotos = product.photos || []
+      renderExistingPhotos()
+
+      document.getElementById('loading').classList.add('hidden')
+      document.getElementById('edit-form').classList.remove('hidden')
+      document.getElementById('edit-form').classList.add('animate-fade-in')
+    }
+
+    // 3. Render existing photos with delete - ANIMATIONS ADD PANNITEN
+    function renderExistingPhotos() {
+      const container = document.getElementById('current-photos')
+      if (existingPhotos.length === 0) {
+        container.innerHTML = '<p class="text-gray-400 dark:text-gray-500 col-span-3 animate-fade-in">No photos</p>'
+        return
+      }
+
+      container.innerHTML = existingPhotos.map((url, i) => `
+        <div class="relative animate-scale-in" style="animation-delay: ${i * 0.1}s">
+          <img src="${url}" class="w-full h-24 object-cover rounded-lg hover-scale">
+          <button type="button" onclick="markPhotoForDelete(${i})"
+                  class="transformer-btn absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 text-xs hover:bg-red-600 hover:scale-110 transition">✕</button>
+        </div>
+      `).join('')
+    }
+
+    window.markPhotoForDelete = (index) => {
+      const url = existingPhotos[index]
+      photosToDelete.push(url)
+      existingPhotos.splice(index, 1)
+      renderExistingPhotos()
+    }
+
+    // 4. New photo preview - ANIMATIONS ADD PANNITEN
+    document.getElementById('photo-input').addEventListener('change', (e) => {
+      const files = Array.from(e.target.files)
+      const totalPhotos = existingPhotos.length + newFiles.length + files.length
+
+      if (totalPhotos > 5) {
+        alert('Maximum 5 photos total da')
+        e.target.value = ''
+        return
+      }
+
+      newFiles = [...newFiles,...files]
+      renderNewPhotos()
+    })
+
+    function renderNewPhotos() {
+      const preview = document.getElementById('new-photo-preview')
+      preview.innerHTML = newFiles.map((file, i) => `
+        <div class="relative animate-scale-in" style="animation-delay: ${i * 0.1}s">
+          <img src="${URL.createObjectURL(file)}" class="w-full h-24 object-cover rounded-lg hover-scale">
+          <button type="button" onclick="removeNewPhoto(${i})"
+                  class="transformer-btn absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 text-xs hover:bg-red-600 hover:scale-110 transition">✕</button>
+        </div>
+      `).join('')
+    }
+
+    window.removeNewPhoto = (index) => {
+      newFiles.splice(index, 1)
+      renderNewPhotos()
+    }
+
+    // 5. Form submit
+    document.getElementById('edit-form').addEventListener('submit', async (e) => {
+      e.preventDefault()
+      const btn = document.getElementById('submit-btn')
+      const msg = document.getElementById('message')
+
+      if (existingPhotos.length + newFiles.length === 0) {
+        msg.innerHTML = '<p class="text-red-500 dark:text-red-400 animate-shake">Please keep at least 1 photo</p>'
+        return
+      }
+
+      btn.disabled = true
+      btn.textContent = 'Updating...'
+      btn.classList.add('animate-pulse')
+      msg.innerHTML = '<p class="text-blue-500 dark:text-blue-400 animate-pulse">Uploading new photos...</p>'
+
+      try {
+        // 5a. Upload new photos
+        const uploadedUrls = []
+        for (let i = 0; i < newFiles.length; i++) {
+          const file = newFiles[i]
+          const fileExt = file.name.split('.').pop()
+          const fileName = `${currentUser.id}/${Date.now()}-${i}.${fileExt}`
+
+          const { error: uploadError } = await supabase.storage
+   .from('product-images')
+   .upload(fileName, file)
+
+          if (uploadError) throw uploadError
+
+          const { data } = supabase.storage
+   .from('product-images')
+   .getPublicUrl(fileName)
+
+          uploadedUrls.push(data.publicUrl)
+        }
+
+        // 5b. Delete old photos from storage
+        for (const url of photosToDelete) {
+          const path = url.split('/product-images/')[1]
+          if (path) {
+            await supabase.storage.from('product-images').remove([path])
+          }
+        }
+
+        msg.innerHTML = '<p class="text-blue-500 dark:text-blue-400 animate-pulse">Updating product...</p>'
+
+        // 5c. Update product
+        const allPhotos = [...existingPhotos,...uploadedUrls]
+        const { error: updateError } = await supabase
+.from('products')
+.update({
+            title: document.getElementById('title').value,
+            price: parseInt(document.getElementById('price').value),
+            category: document.getElementById('category').value,
+            condition: document.getElementById('condition').value,
+            status: document.getElementById('status').value,
+            description: document.getElementById('description').value,
+            location: document.getElementById('location').value,
+            photos: allPhotos,
+            image_url: allPhotos[0],
+            updated_at: new Date()
+          })
+.eq('id', productId)
+
+        if (updateError) throw updateError
+
+        btn.classList.remove('animate-pulse')
+        btn.classList.add('transformer-success')
+        msg.innerHTML = '<p class="text-green-500 dark:text-green-400 font-bold animate-bounce">Listing updated successfully! 🎉</p>'
+        setTimeout(() => {
+          window.location.href = 'profile.html'
+        }, 1500)
+
+      } catch (err) {
+        console.error(err)
+        msg.innerHTML = `<p class="text-red-500 dark:text-red-400 animate-shake">Error: ${err.message}</p>`
+        btn.disabled = false
+        btn.textContent = 'Update Listing'
+        btn.classList.remove('animate-pulse')
+      }
+    })
+
+    init()
+  </script>
+  <!-- Theme Effects JS -->
+<script type="module" src="../js/theme-effects.js"></script>
+</body>
+</html>

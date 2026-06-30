@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register - CCM 2.0</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode: 'class' }
+  </script>
+  <!-- Theme Animations CSS -->
+<link rel="stylesheet" href="../css/theme-animations.css">
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 flex items-center justify-center min-h-screen transition-colors duration-200">
+  <div class="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-md w-full max-w-md hover-lift animate-scale-in transition-colors">
+    <h2 class="text-2xl font-bold text-center mb-6 text-blue-600 dark:text-blue-400 animate-fade-up">CCM 2.0 Signup</h2>
+    
+    <form id="register-form" class="space-y-4">
+      <input type="text" id="name" placeholder="Full Name" required 
+             class="w-full p-3 border dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 transition-all">
+      
+      <input type="email" id="email" placeholder="Email" required 
+             class="w-full p-3 border dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 transition-all">
+      
+      <input type="password" id="password" placeholder="Password min 6 chars" required 
+             class="w-full p-3 border dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 transition-all">
+      
+      <select id="user_type" required 
+              class="w-full p-3 border dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-all">
+        <option value="">Select Account Type</option>
+        <option value="student">Student - College Email</option>
+        <option value="local_seller">Local Seller - Phone OTP</option>
+      </select>
+
+      <input type="tel" id="phone" placeholder="Phone Number" 
+             class="w-full p-3 border dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 transition-all">
+
+      <button type="submit" id="register-btn" class="transformer-btn bmw-hover w-full bg-blue-600 text-white p-3 rounded-lg font-semibold hover:bg-blue-700 active:scale-95 transition">
+        Create Account
+      </button>
+      <p id="error-msg" class="text-red-500 dark:text-red-400 text-sm text-center"></p>
+    </form>
+
+    <p class="text-center mt-4 text-gray-600 dark:text-gray-300">
+      Already have account? <a href="login.html" class="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 bmw-hover">Login</a>
+    </p>
+  </div>
+
+  <!-- Global Theme Button - INLINE -->
+  <script>
+    const html = document.documentElement
+    const THEME_KEY = 'ccm-theme'
+    
+    function applyTheme() {
+      const saved = localStorage.getItem(THEME_KEY)
+      if (saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        html.classList.add('dark')
+      } else {
+        html.classList.remove('dark')
+      }
+    }
+    
+    function toggleTheme() {
+      html.classList.toggle('dark')
+      const isDark = html.classList.contains('dark')
+      localStorage.setItem(THEME_KEY, isDark ? 'dark' : 'light')
+      window.dispatchEvent(new CustomEvent('themeChanged', { detail: { isDark } }))
+      return isDark ? '☀️' : '🌙'
+    }
+    
+    function getThemeIcon() {
+      return html.classList.contains('dark') ? '☀️' : '🌙'
+    }
+    
+    applyTheme()
+    
+    const btn = document.createElement('button')
+    btn.id = 'global-theme-toggle'
+    btn.className = 'fixed bottom-6 right-6 z-50 text-2xl p-4 rounded-full bg-white dark:bg-gray-800 shadow-2xl hover:scale-110 active:scale-95 transition-all border-2 border-gray-200 dark:border-gray-700 transformer-btn'
+    btn.textContent = getThemeIcon()
+    btn.title = 'Toggle Theme'
+    btn.onclick = () => {
+      btn.textContent = toggleTheme()
+    }
+    
+    window.addEventListener('themeChanged', (e) => {
+      btn.textContent = e.detail.isDark ? '☀️' : '🌙'
+    })
+    
+    document.body.appendChild(btn)
+  </script>
+
+  <script type="module">
+    import { supabase } from '../js/supabase.js'
+    
+    const form = document.getElementById('register-form')
+    const errorMsg = document.getElementById('error-msg')
+    const registerBtn = document.getElementById('register-btn')
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault()
+      errorMsg.textContent = ''
+      registerBtn.disabled = true
+      registerBtn.textContent = 'Creating Account...'
+      registerBtn.classList.add('animate-pulse')
+      
+      const name = document.getElementById('name').value
+      const email = document.getElementById('email').value
+      const password = document.getElementById('password').value
+      const user_type = document.getElementById('user_type').value
+      const phone = document.getElementById('phone').value
+
+      // 1. Supabase Auth la user create pannu
+      const { data, error } = await supabase.auth.signUp({
+        email: email,
+        password: password
+      })
+
+      if (error) {
+        errorMsg.textContent = error.message
+        errorMsg.classList.add('animate-shake')
+        registerBtn.disabled = false
+        registerBtn.textContent = 'Create Account'
+        registerBtn.classList.remove('animate-pulse')
+        setTimeout(() => errorMsg.classList.remove('animate-shake'), 500)
+        return
+      }
+
+      // 2. Profiles table la extra details save pannu
+      if (data.user) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert({
+            id: data.user.id,
+            name: name,
+            user_type: user_type,
+            phone: phone
+          })
+        
+        if (profileError) {
+          errorMsg.textContent = profileError.message
+          errorMsg.classList.add('animate-shake')
+          registerBtn.disabled = false
+          registerBtn.textContent = 'Create Account'
+          registerBtn.classList.remove('animate-pulse')
+          setTimeout(() => errorMsg.classList.remove('animate-shake'), 500)
+          return
+        }
+      }
+
+      // Success
+      registerBtn.classList.remove('animate-pulse')
+      registerBtn.classList.add('transformer-success')
+      registerBtn.textContent = 'Success! ✓'
+      
+      setTimeout(() => {
+        alert('Account created! Check email for verification. Apram login pannu.')
+        window.location.href = 'login.html'
+      }, 800)
+    })
+  </script>
+  <!-- Theme Effects JS -->
+<script type="module" src="../js/theme-effects.js"></script>
+</body>
+</html>
