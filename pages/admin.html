@@ -99,16 +99,16 @@
       return data?.role === 'admin'
     }
 
-    // 🔥 AUTH + ADMIN VERIFY
+    
     const { data: { session } } = await supabase.auth.getSession()
     if (!session?.user) {
-      alert('Login pannu da')
+      alert('please login')
       window.location.href = 'login.html'
     }
 
     const adminCheck = await isAdmin(session.user.id)
     if (!adminCheck) {
-      alert('Dei nee admin illa da 😂')
+      alert('your not admin ')
       window.location.href = '../index.html'
     }
 
@@ -117,7 +117,7 @@
       window.location.href = '../index.html'
     }
 
-    // 🔥 LOAD STATS
+    
     async function loadStats() {
       const { count: userCount } = await supabase.from('profiles').select('*', { count: 'exact', head: true })
       const { count: productCount } = await supabase.from('products').select('*', { count: 'exact', head: true })
@@ -132,7 +132,7 @@
       document.getElementById('total-revenue').textContent = `₹${revenue.toLocaleString('en-IN')}`
     }
 
-    // 🔥 LOAD ORDERS - FIXED JOIN
+    
     async function loadOrders() {
       const { data: orders, error } = await supabase
         .from('orders')
@@ -148,7 +148,7 @@
         return
       }
 
-      // Email ah thaniya edukurathu - RLS issue varathu
+      
       const userIds = [...new Set(orders.flatMap(o => [o.buyer_id, o.seller_id]))]
       const { data: profiles } = await supabase.from('profiles').select('id, email').in('id', userIds)
       const emailMap = Object.fromEntries((profiles || []).map(u => [u.id, u.email]))
@@ -183,7 +183,7 @@
       `
     }
 
-    // 🔥 LOAD PRODUCTS - FIXED
+    
     async function loadProducts() {
       const { data: products, error } = await supabase
         .from('products')
@@ -196,7 +196,7 @@
         return
       }
 
-      // Seller emails thaniya edukurathu
+      
       const sellerIds = [...new Set(products.map(p => p.seller_id))]
       const { data: profiles } = await supabase.from('profiles').select('id, email').in('id', sellerIds)
       const emailMap = Object.fromEntries((profiles || []).map(u => [u.id, u.email]))
@@ -229,7 +229,7 @@
       `
     }
 
-    // 🔥 LOAD USERS - FIXED - NO full_name/email ASSUMPTION
+    
     async function loadUsers() {
       const { data: profiles, error } = await supabase
         .from('profiles')
@@ -270,7 +270,7 @@
       `
     }
 
-    // 🔥 DELETE PRODUCT
+    
     window.deleteProduct = async (id) => {
       if (!confirm('Delete this product? Action cannot be undone.')) return
       const { error } = await supabase.from('products').delete().eq('id', id)
@@ -281,7 +281,7 @@
       }
     }
 
-    // 🔥 MAKE ADMIN
+    
     window.makeAdmin = async (id) => {
       if (!confirm('Make this user an admin?')) return
       const { error } = await supabase.from('profiles').update({ role: 'admin' }).eq('id', id)
@@ -289,7 +289,7 @@
       else loadUsers()
     }
 
-    // 🔥 SALES CHART
+
     async function loadChart() {
       const { data: orders } = await supabase
         .from('orders')
@@ -330,7 +330,7 @@
       })
     }
 
-    // TAB SWITCHING
+    
     document.querySelectorAll('.tab-btn').forEach(btn => {
       btn.onclick = () => {
         document.querySelectorAll('.tab-btn').forEach(b => {
@@ -350,11 +350,11 @@
       }
     })
 
-    // INIT
+    
     loadStats()
     loadOrders()
   </script>
-  <!-- Theme Effects JS -->
+  
 <script type="module" src="../js/theme-effects.js"></script>
 </body>
 </html>

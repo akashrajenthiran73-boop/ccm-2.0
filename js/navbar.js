@@ -16,7 +16,7 @@ function injectThemeButton() {
     btn.textContent = toggleTheme()
   }
   
-  // Theme maarum bodhu icon update
+  
   window.addEventListener('themeChanged', (e) => {
     btn.textContent = e.detail.isDark ? '☀️' : '🌙'
   })
@@ -24,7 +24,7 @@ function injectThemeButton() {
   document.body.appendChild(btn)
 }
 
-// DOM ready aana udane inject pannu
+
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', injectThemeButton)
 } else {

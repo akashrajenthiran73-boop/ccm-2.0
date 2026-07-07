@@ -6,7 +6,7 @@ async function loadOrders() {
   const { data: { user } } = await supabase.auth.getUser()
   
   if (!user) {
-    ordersContainer.innerHTML = '<div class="text-center py-20"><p class="text-red-500 mb-4">Login pannitu paaru da</p><a href="login.html" class="bg-blue-600 text-white px-6 py-2 rounded">Login</a></div>'
+    ordersContainer.innerHTML = '<div class="text-center py-20"><p class="text-red-500 mb-4">Please Login</p><a href="login.html" class="bg-blue-600 text-white px-6 py-2 rounded">Login</a></div>'
     return
   }
 
@@ -22,7 +22,7 @@ async function loadOrders() {
     .order('created_at', { ascending: false })
 
   if (error || !orders || orders.length === 0) {
-    ordersContainer.innerHTML = '<p class="text-gray-400 text-center py-20">Innum onnum vaangala da 😅</p>'
+    ordersContainer.innerHTML = '<p class="text-gray-400 text-center py-20"> No Items Found 😅</p>'
     return
   }
 
@@ -82,13 +82,13 @@ async function loadOrders() {
 window.openReviewModal = async (productId, sellerId) => {
   const { data: { user } } = await supabase.auth.getUser()
   
-  const rating = prompt('Rating kudu da 1-5:')
+  const rating = prompt('Please Rating 1-5:')
   if (!rating || rating < 1 || rating > 5) {
-    alert('1 to 5 kulla kudu da')
+    alert('Enter 1 to 5')
     return
   }
 
-  const reviewText = prompt('Review type pannu da (optional):')
+  const reviewText = prompt('Type Review(optional):')
 
   const { error } = await supabase
     .from('reviews')
@@ -103,7 +103,7 @@ window.openReviewModal = async (productId, sellerId) => {
   if (error) {
     alert('Error da: ' + error.message)
   } else {
-    alert('Review post aaiduchu da ⭐')
+    alert('Review posted⭐')
     loadOrders() // Refresh
   }
 }

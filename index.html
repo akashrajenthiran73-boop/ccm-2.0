@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CCM 2.0 - Community Commerce</title>
+  <title>CCM 2.0 - Campus Community MarketPlace</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = { darkMode: 'class' }
@@ -109,13 +109,13 @@
       const user = session?.user
 
       if (!user) {
-        alert('Order panna login pannu da macha')
+        alert('please login for order a project')
         window.location.href = 'pages/login.html'
         return
       }
 
       if (user.id === sellerId) {
-        alert('Dei un product ah neeye order panna mudiyathu da 😂')
+        alert('dont order yourself😂')
         return
       }
 
@@ -132,7 +132,7 @@
       })
 
       if (orderError) {
-        alert('Order fail aagiduchu da: ' + orderError.message)
+        alert('Order failed: ' + orderError.message)
         return
       }
 

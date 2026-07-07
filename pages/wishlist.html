@@ -153,7 +153,7 @@
 
       wishlistFeed.innerHTML = '<div class="col-span-full text-center text-gray-400 dark:text-gray-500 py-10 animate-pulse">Loading...</div>'
 
-      // User oda wishlist la irukura product_id eduthu, products table la join pannu
+      
       const { data: wishlists, error } = await supabase
    .from('wishlists')
    .select(`
@@ -172,7 +172,7 @@
         wishlistFeed.innerHTML = `
           <div class="col-span-full text-center py-20 animate-fade-in">
             <div class="text-6xl mb-4">💔</div>
-            <p class="text-gray-400 dark:text-gray-500 text-lg mb-4">Your wishlist is empty da</p>
+            <p class="text-gray-400 dark:text-gray-500 text-lg mb-4">Your wishlist is empty</p>
             <a href="../index.html" class="transformer-btn bmw-hover bg-blue-600 text-white px-6 py-2 rounded-lg inline-block hover:bg-blue-700">Browse Products</a>
           </div>
         `
@@ -203,22 +203,22 @@
       const { data: { user } } = await supabase.auth.getUser()
 
       if (!user) {
-        alert('Login pannitu chat pannu da')
+        alert('Login Before chat')
         window.location.href = 'login.html'
         return
       }
       if (user.id === sellerId) {
-        alert('Neeye un product ku chat panna mudiyathu da 😂')
+        alert('Dont chat your Product😂')
         return
       }
       window.location.href = `chat.html?product=${productId}&seller=${sellerId}`
     }
 
-    // Init
+    
     updateNavbar()
     loadWishlist()
   </script>
-  <!-- Theme Effects JS -->
+
 <script type="module" src="../js/theme-effects.js"></script>
 </body>
 </html>

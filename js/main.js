@@ -149,7 +149,7 @@ async function loadProducts(reset = false) {
 
   if (!products || products.length === 0) {
     if (currentPage === 0) {
-      productFeed.innerHTML = '<div class="col-span-full text-center text-gray-400 dark:text-gray-500 py-10 animate-fade-in">No products found da 😔</div>'
+      productFeed.innerHTML = '<div class="col-span-full text-center text-gray-400 dark:text-gray-500 py-10 animate-fade-in">No products found😔</div>'
     }
     hasMore = false
     isLoading = false
@@ -248,7 +248,7 @@ nearMeBtn?.addEventListener('click', () => {
         resetAndLoad()
       },
       () => {
-        alert('Location access kududa macha')
+        alert('Allow to Location access')
         nearMeBtn.textContent = '📍 Near Me 5km'
       }
     )
@@ -263,12 +263,12 @@ window.openChat = async (productId, sellerId) => {
   const pagesPath = isRoot? 'pages/' : ''
 
   if (!user) {
-    alert('Login pannitu chat pannu da')
+    alert('please login before chat')
     window.location.href = `${pagesPath}login.html`
     return
   }
   if (user.id === sellerId) {
-    alert('Neeye un product ku chat panna mudiyathu da 😂')
+    alert('dont chat your self 😂')
     return
   }
   window.location.href = `${pagesPath}chat.html?product=${productId}&seller=${sellerId}`
@@ -282,7 +282,7 @@ window.toggleWishlist = async (productId, btnElement) => {
   const pagesPath = isRoot? 'pages/' : ''
 
   if (!user) {
-    alert('Login pannitu wishlist add pannu da')
+    alert('Please login before add wishlist')
     window.location.href = `${pagesPath}login.html`
     return
   }

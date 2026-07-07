@@ -10,7 +10,7 @@ const productId = urlParams.get('id')
 // 1. Product Details Load Pannu
 async function loadProduct() {
   if (!productId) {
-    productContainer.innerHTML = '<div class="text-center text-red-500 dark:text-red-400 py-20 animate-shake">Product not found da 😔</div>'
+    productContainer.innerHTML = '<div class="text-center text-red-500 dark:text-red-400 py-20 animate-shake">Product not found😔</div>'
     return
   }
 
@@ -22,7 +22,7 @@ async function loadProduct() {
 .single()
 
   if (error ||!product) {
-    productContainer.innerHTML = '<div class="text-center text-red-500 dark:text-red-400 py-20 animate-shake">Product not found da 😔</div>'
+    productContainer.innerHTML = '<div class="text-center text-red-500 dark:text-red-400 py-20 animate-shake">Product not found 😔</div>'
     return
   }
 
@@ -151,7 +151,7 @@ ${!isOwner? `
   `}
 ` : `
   <div class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 text-center mb-4 animate-scale-in">
-    <p class="text-yellow-800 dark:text-yellow-300 font-semibold">This is your product da</p>
+    <p class="text-yellow-800 dark:text-yellow-300 font-semibold">This is your product</p>
   </div>
   ${product.status === 'active'? `
     <button onclick="markAsSold('${product.id}')"
@@ -167,7 +167,7 @@ ${!isOwner? `
         </div>
       </div>
 
-      <!-- REVIEWS SECTION - PUTHUSU DA -->
+      
       <div class="border-t dark:border-gray-700 p-6 animate-fade-up">
         <div class="flex justify-between items-center mb-4">
           <h3 class="font-semibold text-xl text-gray-900 dark:text-white">Reviews & Ratings</h3>
@@ -185,17 +185,17 @@ ${!isOwner? `
     </div>
   `
 
-  // VIEW COUNT PANNANUM DA
+  
   trackProductView(productId)
 
-  // Reviews load pannu
+  
   loadReviews(productId)
 
-  // Similar products load pannu
+  
   loadSimilarProducts(product.category, product.id)
 }
 
-// 2. Similar Products Load Pannu
+
 async function loadSimilarProducts(category, currentId) {
   const { data: products } = await supabase
 .from('products')
@@ -221,7 +221,7 @@ async function loadSimilarProducts(category, currentId) {
   `).join('')
 }
 
-// 3. VIEW TRACK FUNCTION
+
 async function trackProductView(productId) {
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -241,7 +241,7 @@ async function trackProductView(productId) {
   })
 }
 
-// 4. LOAD REVIEWS - PUTHUSU DA
+
 async function loadReviews(productId) {
   const reviewsList = document.getElementById('reviews-list')
 
@@ -294,16 +294,16 @@ async function loadReviews(productId) {
   `
 }
 
-// 5. REVIEW MODAL OPEN - PUTHUSU DA
+
 window.openReviewModal = async (productId, sellerId) => {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) {
-    alert('Login pannitu review podu da')
+    alert('Login to type Review')
     window.location.href = 'login.html'
     return
   }
 
-  // Already review pottutaana check pannu
+  
   const { data: existing } = await supabase
 .from('reviews')
 .select('id')
@@ -312,18 +312,18 @@ window.openReviewModal = async (productId, sellerId) => {
 .single()
 
   if (existing) {
-    alert('Nee already review pottuta da 😅')
+    alert('Already Reviewd 😅')
     return
   }
 
-  // Simple prompt la rating ketpom
-  const rating = prompt('Rating kudu da 1-5:')
+
+  const rating = prompt('Rating 1-5:')
   if (!rating || rating < 1 || rating > 5) {
-    alert('1 to 5 kulla kudu da')
+    alert('enter 1 to 5')
     return
   }
 
-  const reviewText = prompt('Review type pannu da (optional):')
+  const reviewText = prompt('Review (optional):')
 
   const { error } = await supabase
 .from('reviews')
@@ -338,13 +338,13 @@ window.openReviewModal = async (productId, sellerId) => {
   if (error) {
     alert('Error da: ' + error.message)
   } else {
-    alert('Review post aaiduchu da ⭐')
-    loadReviews(productId) // Refresh reviews
-    location.reload() // Seller rating update aaga
+    alert('Review posted ⭐')
+    loadReviews(productId) 
+    location.reload() 
   }
 }
 
-// 6. TIME AGO FUNCTION
+
 function timeAgo(date) {
   const seconds = Math.floor((new Date() - date) / 1000)
   if (seconds < 60) return "Just now"
@@ -357,22 +357,22 @@ function timeAgo(date) {
   return date.toLocaleDateString('en-IN')
 }
 
-// 7. Chat Open Function
+
 window.openChat = async (productId, sellerId) => {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) {
-    alert('Login pannitu chat pannu da')
+    alert('Login before chat')
     window.location.href = 'login.html'
     return
   }
   window.location.href = `chat.html?product=${productId}&seller=${sellerId}`
 }
 
-// 8. Wishlist Toggle
+
 window.toggleWishlist = async (productId, btnElement) => {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) {
-    alert('Login pannitu wishlist add pannu da')
+    alert('Login Before Add Wishlist')
     window.location.href = 'login.html'
     return
   }
@@ -392,17 +392,17 @@ window.toggleWishlist = async (productId, btnElement) => {
     btnElement.innerHTML = '<svg class="w-6 h-6 text-red-500 fill-current" viewBox="0 0 20 20"><path d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z"/></svg>'
   }
 }
-// 9. Mark as Sold Function - UPDATED DA
+
 window.markAsSold = async (productId) => {
-  if (!confirm('Sure ah sold nu mark pannavaa da?')) return
+  if (!confirm('Sure to mark  as sold ?')) return
 
   const { data: { user } } = await supabase.auth.getUser()
 
-  // Buyer email kekurom
-  const buyerEmail = prompt('Buyer oda email type pannu da:')
+  
+  const buyerEmail = prompt('Type Buyer Email:')
   if (!buyerEmail) return
 
-  // Buyer profile fetch
+  
   const { data: buyer, error: buyerError } = await supabase
   .from('profiles')
   .select('id')
@@ -410,23 +410,23 @@ window.markAsSold = async (productId) => {
   .single()
 
   if (buyerError ||!buyer) {
-    alert('Buyer account kedakala da. Correct email kudu.')
+    alert('Buyer account not found. Enter Correct email.')
     return
   }
 
   if (buyer.id === user.id) {
-    alert('Unakku nee eh vikka mudiyathu da 😂')
+    alert('dont sell your self 😂')
     return
   }
 
-  // Product details eduthuko
+  
   const { data: product } = await supabase
   .from('products')
   .select('price')
   .eq('id', productId)
   .single()
 
-  // 1. Product status update
+  
   const { error: updateError } = await supabase
   .from('products')
   .update({ status: 'sold' })
@@ -437,7 +437,7 @@ window.markAsSold = async (productId) => {
     return
   }
 
-  // 2. Order create pannu
+
   const { error: orderError } = await supabase
   .from('orders')
   .insert({
@@ -448,13 +448,12 @@ window.markAsSold = async (productId) => {
     })
 
   if (orderError) {
-    alert('Order create aagala da: ' + orderError.message)
+    alert('doesnt create order: ' + orderError.message)
     return
   }
 
-  alert('Sold nu mark panniyachu da 🎉 Buyer "My Orders" la paaka mudiyum')
+  alert('Sold marked succesfully 🎉 Buyer "My Orders" can view')
   location.reload()
 }
 
-// Init
 loadProduct()

@@ -120,7 +120,7 @@
     </div>
   </div>
 
-  <!-- Delete Confirm Modal -->
+  
   <div id="delete-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
     <div class="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-sm mx-4 animate-scale-in">
       <h3 class="text-lg font-bold mb-4 text-gray-900 dark:text-white">Delete Listing?</h3>
@@ -255,7 +255,7 @@
       }
 
       if (!updates.name) {
-        alert('Name kandippa venum da')
+        alert('Must Enter Name')
         return
       }
 
@@ -264,7 +264,7 @@
       if (error) {
         alert('Save failed: ' + error.message)
       } else {
-        alert('Profile update aagiduchu ✅')
+        alert('Profile updated ✅')
         document.getElementById('edit-form').classList.add('hidden')
         document.getElementById('edit-profile-btn').classList.remove('hidden')
         await loadProfile()
@@ -299,7 +299,7 @@
       await supabase.from('profiles').update({ avatar_url: publicUrl }).eq('id', currentUser.id)
 
       document.getElementById('avatar').src = publicUrl
-      alert('Profile pic update aagiduchu ✅')
+      alert('Profile pic updated ✅')
     }
 
     async function loadMyListings() {
