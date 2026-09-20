@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Deals & Group Buying - CCM 2.0</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' }</script>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen">
+  <nav id="main-navbar"></nav>
+
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+    
+    <div class="mb-8">
+      <h1 class="text-2xl sm:text-3xl font-black flex items-center gap-2 text-amber-500">
+        <span>⚡</span> Flash Deals & Group Buying Hub
+      </h1>
+      <p class="text-xs text-gray-400 mt-1">
+        Grab limited-time semester discounts and join group orders for collective bulk wholesale prices!
+      </p>
+    </div>
+
+    <!-- 1. FLASH DEALS SECTION -->
+    <section class="mb-12">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-black flex items-center gap-2">
+          <span>🔥</span> Limited-Time Flash Deals
+        </h2>
+        <span class="text-xs font-mono text-amber-500 font-bold bg-amber-50 dark:bg-amber-950 px-3 py-1 rounded-full border border-amber-200">
+          ⏱️ Ends at 11:59 PM Tonight
+        </span>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
+        <!-- Deal 1 -->
+        <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 shadow-sm hover-lift flex flex-col justify-between">
+          <div class="relative">
+            <img src="https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=600" class="w-full h-40 object-cover rounded-xl mb-3">
+            <span class="absolute top-2 left-2 bg-red-600 text-white text-[10px] font-black px-2.5 py-1 rounded-full shadow">
+              45% OFF
+            </span>
+          </div>
+          <div>
+            <h4 class="font-bold text-sm truncate">Semester 6 Complete Notes & Question Bank Bundle</h4>
+            <div class="flex items-baseline gap-2 mt-2">
+              <span class="text-2xl font-black text-blue-600">₹220</span>
+              <span class="text-xs text-gray-400 line-through">₹400</span>
+            </div>
+          </div>
+          <a href="checkout.html?item=deal-1&price=220" class="w-full mt-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl text-center shadow">
+            Claim Flash Deal ⚡
+          </a>
+        </div>
+
+        <!-- Deal 2 -->
+        <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 shadow-sm hover-lift flex flex-col justify-between">
+          <div class="relative">
+            <img src="https://images.unsplash.com/photo-1587145820266-a5951ee6f620?w=600" class="w-full h-40 object-cover rounded-xl mb-3">
+            <span class="absolute top-2 left-2 bg-red-600 text-white text-[10px] font-black px-2.5 py-1 rounded-full shadow">
+              35% OFF
+            </span>
+          </div>
+          <div>
+            <h4 class="font-bold text-sm truncate">Scientific Calculator Casio fx-991EX (Classwiz)</h4>
+            <div class="flex items-baseline gap-2 mt-2">
+              <span class="text-2xl font-black text-blue-600">₹550</span>
+              <span class="text-xs text-gray-400 line-through">₹850</span>
+            </div>
+          </div>
+          <a href="checkout.html?item=deal-2&price=550" class="w-full mt-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl text-center shadow">
+            Claim Flash Deal ⚡
+          </a>
+        </div>
+
+        <!-- Deal 3 -->
+        <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 shadow-sm hover-lift flex flex-col justify-between">
+          <div class="relative">
+            <img src="https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=600" class="w-full h-40 object-cover rounded-xl mb-3">
+            <span class="absolute top-2 left-2 bg-red-600 text-white text-[10px] font-black px-2.5 py-1 rounded-full shadow">
+              50% OFF
+            </span>
+          </div>
+          <div>
+            <h4 class="font-bold text-sm truncate">Ergonomic Laptop Riser Stand (Aluminum)</h4>
+            <div class="flex items-baseline gap-2 mt-2">
+              <span class="text-2xl font-black text-blue-600">₹399</span>
+              <span class="text-xs text-gray-400 line-through">₹799</span>
+            </div>
+          </div>
+          <a href="checkout.html?item=deal-3&price=399" class="w-full mt-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl text-center shadow">
+            Claim Flash Deal ⚡
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. GROUP BUYING SECTION -->
+    <section>
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h2 class="text-lg font-black flex items-center gap-2">
+            <span>👥</span> Group Buying Discounts
+          </h2>
+          <p class="text-xs text-gray-400">Join other students in buying together to unlock massive wholesale discounts</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <!-- Group Buy 1 -->
+        <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-5 shadow-sm space-y-4">
+          <div class="flex gap-4">
+            <img src="https://images.unsplash.com/photo-1553406830-ef2513450d76?w=600" class="w-24 h-24 object-cover rounded-xl">
+            <div class="flex-1">
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                Bulk 40% Tier Unlocked!
+              </span>
+              <h4 class="font-bold text-sm mt-1 text-gray-900 dark:text-white">IoT ESP32 NodeMCU Wi-Fi Starter Kits (Batch Order)</h4>
+              <div class="flex items-baseline gap-2 mt-1">
+                <span class="text-xl font-black text-emerald-600">₹420 / kit</span>
+                <span class="text-xs text-gray-400 line-through">₹700 individual</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Progress Bar -->
+          <div>
+            <div class="flex justify-between text-xs font-bold mb-1">
+              <span>Buyers Joined: <b class="text-blue-600">8 / 10 required</b></span>
+              <span class="text-amber-500">2 slots remaining</span>
+            </div>
+            <div class="w-full h-2.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+              <div class="h-full bg-emerald-500 rounded-full" style="width: 80%"></div>
+            </div>
+          </div>
+
+          <button onclick="joinGroupBuy(this, 'ESP32 Batch')" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow transition">
+            Join This Group Order (₹420)
+          </button>
+        </div>
+
+        <!-- Group Buy 2 -->
+        <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-5 shadow-sm space-y-4">
+          <div class="flex gap-4">
+            <img src="https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=600" class="w-24 h-24 object-cover rounded-xl">
+            <div class="flex-1">
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800">
+                Bulk 30% Tier
+              </span>
+              <h4 class="font-bold text-sm mt-1 text-gray-900 dark:text-white">Engineering Record Notebooks & Graph Pads (Pack of 5)</h4>
+              <div class="flex items-baseline gap-2 mt-1">
+                <span class="text-xl font-black text-emerald-600">₹180 / pack</span>
+                <span class="text-xs text-gray-400 line-through">₹260 individual</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Progress Bar -->
+          <div>
+            <div class="flex justify-between text-xs font-bold mb-1">
+              <span>Buyers Joined: <b class="text-blue-600">12 / 15 required</b></span>
+              <span class="text-amber-500">3 slots remaining</span>
+            </div>
+            <div class="w-full h-2.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+              <div class="h-full bg-indigo-500 rounded-full" style="width: 80%"></div>
+            </div>
+          </div>
+
+          <button onclick="joinGroupBuy(this, 'Notebooks Pack')" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow transition">
+            Join This Group Order (₹180)
+          </button>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <script type="module" src="../js/theme.js"></script>
+  <script type="module" src="../js/i18n.js"></script>
+  <script type="module" src="../js/mode.js"></script>
+  <script type="module" src="../js/navbar.js"></script>
+  <script type="module">
+    import { getCurrentUser } from '../js/supabase.js'
+
+    window.joinGroupBuy = async (btn, title) => {
+      const user = await getCurrentUser()
+      if (!user) {
+        alert('Please login to join group orders')
+        window.location.href = 'login.html'
+        return
+      }
+
+      btn.textContent = '✓ You Have Joined Group!'
+      btn.classList.add('bg-green-600')
+      alert(`🎉 Successfully joined group buy for "${title}"! When target buyers are reached, pickup details will be dispatched to your notifications.`)
+    }
+  </script>
+</body>
+</html>

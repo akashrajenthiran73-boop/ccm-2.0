@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rent & Borrow - CCM 2.0</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' }</script>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen">
+  <nav id="main-navbar"></nav>
+
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+    
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+      <div>
+        <h1 class="text-2xl sm:text-3xl font-black flex items-center gap-2">
+          <span>📚</span> Rent & Borrow Hub
+        </h1>
+        <p class="text-xs text-gray-400 mt-1">
+          Borrow textbooks, lab equipment, bicycles, and calculators for exams and mini-projects
+        </p>
+      </div>
+
+      <!-- Tab Switcher -->
+      <div class="flex items-center bg-gray-200 dark:bg-gray-800 p-1 rounded-xl text-xs font-bold">
+        <button id="tab-rent-browse" class="px-4 py-2 rounded-lg bg-blue-600 text-white shadow transition">
+          Browse Rentals
+        </button>
+        <button id="tab-my-rentals" class="px-4 py-2 rounded-lg text-gray-600 dark:text-gray-300 hover:text-blue-600 transition">
+          My Active Rentals
+        </button>
+      </div>
+    </div>
+
+    <!-- Section 1: Browse Rentals -->
+    <div id="section-rent-browse" class="space-y-6">
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5" id="rental-grid">
+        <div class="col-span-full text-center py-12 text-xs text-gray-400">Loading rental inventory...</div>
+      </div>
+    </div>
+
+    <!-- Section 2: My Active Rentals -->
+    <div id="section-my-rentals" class="hidden space-y-4">
+      <h3 class="font-bold text-sm">Active Borrowing & Return Tracking</h3>
+      <div id="my-rentals-list" class="space-y-3">
+        <div class="text-center py-12 text-xs text-gray-400">Loading your rentals...</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Rental Booking Modal -->
+  <div id="rental-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl max-w-sm w-full shadow-2xl space-y-4">
+      <h3 class="text-base font-black">📅 Book Rental Duration</h3>
+      <div class="p-3 bg-gray-50 dark:bg-gray-700 rounded-xl text-xs">
+        <div class="font-bold" id="rent-modal-title">Item</div>
+        <div class="text-blue-600 font-bold mt-0.5" id="rent-modal-rate">₹50 / day</div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold mb-1">Start Date *</label>
+        <input type="date" id="rent-start-date" class="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-xs">
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold mb-1">Return Date *</label>
+        <input type="date" id="rent-end-date" class="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-xs">
+      </div>
+
+      <div class="p-2.5 bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 text-xs font-bold rounded-xl flex justify-between">
+        <span>Estimated Total:</span>
+        <span id="rent-total-cost">₹100</span>
+      </div>
+
+      <div class="flex gap-2 pt-2">
+        <button id="close-rental-btn" class="flex-1 py-2.5 bg-gray-100 dark:bg-gray-700 text-xs font-bold rounded-xl hover:bg-gray-200">
+          Cancel
+        </button>
+        <button id="confirm-rental-btn" class="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow">
+          Confirm Rental
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="../js/theme.js"></script>
+  <script type="module" src="../js/i18n.js"></script>
+  <script type="module" src="../js/mode.js"></script>
+  <script type="module" src="../js/navbar.js"></script>
+  <script type="module">
+    import { supabase, getCurrentUser } from '../js/supabase.js'
+
+    let currentUser = null
+    let selectedRental = null
+
+    const RENTAL_ITEMS = [
+      { id: 'r1', title: 'Hercules Commuter Cycle (Geared)', rate: 40, per: 'day', deposit: 300, photos: ['https://images.unsplash.com/photo-1485965120184-e220f721d03e?w=600'], pickup: 'Hostel Block 2 Gate' },
+      { id: 'r2', title: 'Casio fx-991CW Calculator for Exam Week', rate: 25, per: 'day', deposit: 200, photos: ['https://images.unsplash.com/photo-1587145820266-a5951ee6f620?w=600'], pickup: 'Central Library' },
+      { id: 'r3', title: 'Digital Oscilloscope & Multimeter Lab Kit', rate: 120, per: 'day', deposit: 500, photos: ['https://images.unsplash.com/photo-1553406830-ef2513450d76?w=600'], pickup: 'ECE Lab Dept' },
+      { id: 'r4', title: 'Discrete Mathematics & Graph Theory (Rosen)', rate: 15, per: 'day', deposit: 100, photos: ['https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=600'], pickup: 'Library Front' }
+    ]
+
+    async function initRentals() {
+      currentUser = await getCurrentUser()
+      renderRentals()
+    }
+
+    function renderRentals() {
+      const grid = document.getElementById('rental-grid')
+      grid.innerHTML = RENTAL_ITEMS.map(item => `
+        <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 shadow-sm hover-lift flex flex-col justify-between">
+          <div>
+            <img src="${item.photos[0]}" class="w-full h-40 object-cover rounded-xl mb-3">
+            <h4 class="font-bold text-sm text-gray-900 dark:text-white truncate">${item.title}</h4>
+            <div class="text-blue-600 font-black text-base mt-1">₹${item.rate} <span class="text-xs text-gray-400 font-normal">/ ${item.per}</span></div>
+            <p class="text-[11px] text-gray-400 mt-1">📍 Handover Spot: <b>${item.pickup}</b></p>
+          </div>
+          <button onclick="openRentalModal('${item.id}', '${item.title.replace(/'/g, "\\'")}', ${item.rate})" class="w-full mt-4 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl text-xs shadow transition">
+            Book / Borrow Now →
+          </button>
+        </div>
+      `).join('')
+    }
+
+    window.openRentalModal = (id, title, rate) => {
+      if (!currentUser) {
+        alert('Please login to borrow items')
+        window.location.href = 'login.html'
+        return
+      }
+      selectedRental = { id, title, rate }
+      document.getElementById('rent-modal-title').textContent = title
+      document.getElementById('rent-modal-rate').textContent = `₹${rate} / day`
+
+      const today = new Date().toISOString().split('T')[0]
+      const tomorrow = new Date(Date.now() + 86400000 * 3).toISOString().split('T')[0]
+      document.getElementById('rent-start-date').value = today
+      document.getElementById('rent-end-date').value = tomorrow
+      calculateRentalCost()
+      document.getElementById('rental-modal').classList.remove('hidden')
+    }
+
+    function calculateRentalCost() {
+      const start = new Date(document.getElementById('rent-start-date').value)
+      const end = new Date(document.getElementById('rent-end-date').value)
+      const diffTime = Math.max(86400000, end - start)
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+      const total = diffDays * (selectedRental?.rate || 30)
+      document.getElementById('rent-total-cost').textContent = `₹${total} (${diffDays} days)`
+      return { days: diffDays, total }
+    }
+
+    document.getElementById('rent-start-date').onchange = calculateRentalCost
+    document.getElementById('rent-end-date').onchange = calculateRentalCost
+
+    document.getElementById('close-rental-btn').onclick = () => {
+      document.getElementById('rental-modal').classList.add('hidden')
+    }
+
+    document.getElementById('confirm-rental-btn').onclick = () => {
+      const { days, total } = calculateRentalCost()
+      const record = {
+        title: selectedRental.title,
+        days: days,
+        total: total,
+        start: document.getElementById('rent-start-date').value,
+        end: document.getElementById('rent-end-date').value,
+        status: 'Active (Return Pending)',
+        created_at: new Date().toISOString()
+      }
+
+      const list = JSON.parse(localStorage.getItem('ccm_active_rentals') || '[]')
+      list.unshift(record)
+      localStorage.setItem('ccm_active_rentals', JSON.stringify(list))
+
+      alert(`✅ Rental Confirmed!\nItem: ${selectedRental.title}\nReturn Date: ${record.end}\nAmount: ₹${total}`)
+      document.getElementById('rental-modal').classList.add('hidden')
+      loadMyRentals()
+      document.getElementById('tab-my-rentals').click()
+    }
+
+    function loadMyRentals() {
+      const container = document.getElementById('my-rentals-list')
+      const list = JSON.parse(localStorage.getItem('ccm_active_rentals') || '[]')
+      if (list.length === 0) {
+        container.innerHTML = '<div class="text-center py-12 text-xs text-gray-400">No active rentals. Borrow a cycle, book, or lab gear above!</div>'
+        return
+      }
+
+      container.innerHTML = list.map(r => `
+        <div class="bg-white dark:bg-gray-800 p-4 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm flex items-center justify-between">
+          <div>
+            <h4 class="font-bold text-xs text-gray-900 dark:text-white">${r.title}</h4>
+            <p class="text-[11px] text-gray-400">Duration: ${r.start} to ${r.end} (${r.days} days) • Paid: ₹${r.total}</p>
+          </div>
+          <span class="px-3 py-1 bg-green-100 text-green-700 font-bold text-[10px] rounded-full">
+            ${r.status}
+          </span>
+        </div>
+      `).join('')
+    }
+
+    document.getElementById('tab-rent-browse').onclick = () => {
+      document.getElementById('section-rent-browse').classList.remove('hidden')
+      document.getElementById('section-my-rentals').classList.add('hidden')
+      document.getElementById('tab-rent-browse').className = 'px-4 py-2 rounded-lg bg-blue-600 text-white shadow transition'
+      document.getElementById('tab-my-rentals').className = 'px-4 py-2 rounded-lg text-gray-600 dark:text-gray-300 hover:text-blue-600 transition'
+    }
+    document.getElementById('tab-my-rentals').onclick = () => {
+      document.getElementById('section-my-rentals').classList.remove('hidden')
+      document.getElementById('section-rent-browse').classList.add('hidden')
+      document.getElementById('tab-my-rentals').className = 'px-4 py-2 rounded-lg bg-blue-600 text-white shadow transition'
+      document.getElementById('tab-rent-browse').className = 'px-4 py-2 rounded-lg text-gray-600 dark:text-gray-300 hover:text-blue-600 transition'
+      loadMyRentals()
+    }
+
+    initRentals()
+  </script>
+</body>
+</html>

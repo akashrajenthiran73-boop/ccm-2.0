@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Marketplace Mode - CCM 2.0</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' }</script>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen">
+  <nav id="main-navbar"></nav>
+
+  <div class="max-w-4xl mx-auto px-4 py-12">
+    <div class="text-center mb-10">
+      <span class="text-4xl">🔄</span>
+      <h1 class="text-3xl font-black mt-3">Select Marketplace Mode</h1>
+      <p class="text-gray-500 dark:text-gray-400 mt-2 max-w-xl mx-auto text-sm">
+        Campus Community Marketplace (CCM 2.0) operates in two distinct modes. Choose how you want to buy, sell, and trade.
+      </p>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6">
+      
+      <!-- MODE 1: COLLEGE MARKETPLACE -->
+      <div id="card-college" class="bg-white dark:bg-gray-800 rounded-2xl p-6 border-2 border-blue-500 shadow-md hover-lift flex flex-col justify-between cursor-pointer transition">
+        <div>
+          <div class="flex items-center justify-between mb-4">
+            <span class="text-4xl">🎓</span>
+            <span class="text-xs bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 font-bold px-3 py-1 rounded-full">
+              MODE 1
+            </span>
+          </div>
+          <h2 class="text-2xl font-bold text-blue-600 dark:text-blue-400">College Marketplace</h2>
+          <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mt-1">Verified Campus Students & Staff</p>
+          
+          <ul class="space-y-2 mt-5 text-sm text-gray-600 dark:text-gray-300">
+            <li class="flex items-start gap-2">
+              <span class="text-green-500 font-bold">✓</span> Exclusive campus student & staff community
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-green-500 font-bold">✓</span> Semester books, notes, lab manuals & study gear
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-green-500 font-bold">✓</span> Safe handover at Campus Meeting Points (Main Gate, Library, Canteen)
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-green-500 font-bold">✓</span> Barter exchange (Book for Calculator) & semester rentals
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-green-500 font-bold">✓</span> Campus Lost & Found claims with college ID
+            </li>
+          </ul>
+        </div>
+
+        <button id="select-college-btn" class="w-full mt-8 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition shadow">
+          Enter College Marketplace
+        </button>
+      </div>
+
+      <!-- MODE 2: COMMUNITY MARKETPLACE -->
+      <div id="card-community" class="bg-white dark:bg-gray-800 rounded-2xl p-6 border-2 border-emerald-500 shadow-md hover-lift flex flex-col justify-between cursor-pointer transition">
+        <div>
+          <div class="flex items-center justify-between mb-4">
+            <span class="text-4xl">🌐</span>
+            <span class="text-xs bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-bold px-3 py-1 rounded-full">
+              MODE 2
+            </span>
+          </div>
+          <h2 class="text-2xl font-bold text-emerald-600 dark:text-emerald-400">Community Marketplace</h2>
+          <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mt-1">Nearby Public & Residents</p>
+          
+          <ul class="space-y-2 mt-5 text-sm text-gray-600 dark:text-gray-300">
+            <li class="flex items-start gap-2">
+              <span class="text-green-500 font-bold">✓</span> Open for campus residents and nearby public users
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-green-500 font-bold">✓</span> Furniture, home essentials, bicycles & electronics
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-green-500 font-bold">✓</span> Distance-based filter (Within 5 KM & radius searches)
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-green-500 font-bold">✓</span> Cash on meeting or simulated digital payment
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-green-500 font-bold">✓</span> Group buying deals with neighborhood discounts
+            </li>
+          </ul>
+        </div>
+
+        <button id="select-community-btn" class="w-full mt-8 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl transition shadow">
+          Enter Community Marketplace
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <script type="module" src="../js/theme.js"></script>
+  <script type="module" src="../js/i18n.js"></script>
+  <script type="module" src="../js/mode.js"></script>
+  <script type="module" src="../js/navbar.js"></script>
+  <script type="module">
+    import { setMarketplaceMode } from '../js/mode.js'
+
+    document.getElementById('select-college-btn').onclick = () => {
+      setMarketplaceMode('college')
+      window.location.href = '../index.html'
+    }
+    document.getElementById('select-community-btn').onclick = () => {
+      setMarketplaceMode('community')
+      window.location.href = '../index.html'
+    }
+  </script>
+</body>
+</html>

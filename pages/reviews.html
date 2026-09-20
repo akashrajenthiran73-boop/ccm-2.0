@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reviews & Seller Reputation - CCM 2.0</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' }</script>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen">
+  <nav id="main-navbar"></nav>
+
+  <div class="max-w-4xl mx-auto px-4 py-8">
+    <div class="mb-6">
+      <h1 class="text-2xl sm:text-3xl font-black flex items-center gap-2">
+        <span>⭐</span> Campus Reviews & Seller Reputation
+      </h1>
+      <p class="text-xs text-gray-400 mt-1">Verified buyer reviews, honesty ratings, and completed transaction history</p>
+    </div>
+
+    <!-- Reputation Score Card -->
+    <div class="bg-white dark:bg-gray-800 rounded-3xl p-6 sm:p-8 border border-gray-200 dark:border-gray-700 shadow-sm mb-8">
+      <div class="grid sm:grid-cols-3 gap-6 text-center divide-y sm:divide-y-0 sm:divide-x divide-gray-100 dark:divide-gray-700">
+        <div>
+          <div class="text-4xl font-black text-amber-500">4.9 / 5.0</div>
+          <div class="text-xs font-bold text-gray-500 mt-1">Overall Campus Rating</div>
+          <div class="text-[10px] text-gray-400">Based on 124 verified reviews</div>
+        </div>
+        <div class="pt-4 sm:pt-0">
+          <div class="text-4xl font-black text-emerald-500">98%</div>
+          <div class="text-xs font-bold text-gray-500 mt-1">On-Time Handover Rate</div>
+          <div class="text-[10px] text-gray-400">Meeting points punctual index</div>
+        </div>
+        <div class="pt-4 sm:pt-0">
+          <div class="text-4xl font-black text-blue-600 dark:text-blue-400">180+</div>
+          <div class="text-xs font-bold text-gray-500 mt-1">Successful Transits</div>
+          <div class="text-[10px] text-gray-400">Zero disputes recorded</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Reviews Feed -->
+    <h3 class="font-black text-base mb-4">Recent Verified Feedback</h3>
+    <div class="space-y-3" id="reviews-feed">
+      <!-- Review 1 -->
+      <div class="bg-white dark:bg-gray-800 p-4 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm">
+        <div class="flex items-center justify-between mb-2">
+          <div class="flex items-center gap-2">
+            <span class="font-bold text-xs text-gray-900 dark:text-white">Dinesh Kumar (CIT EEE)</span>
+            <span class="text-emerald-500 text-xs">✓ Verified Buyer</span>
+          </div>
+          <span class="text-amber-500 font-bold text-xs">⭐⭐⭐⭐⭐ 5.0</span>
+        </div>
+        <p class="text-xs text-gray-600 dark:text-gray-300">
+          "Bought the Casio Classwiz calculator. Punctual meeting at Canteen, item condition was just like brand new with fresh battery. Highly recommend!"
+        </p>
+        <span class="text-[10px] text-gray-400 mt-2 block">Item: Casio fx-991EX • Yesterday</span>
+      </div>
+
+      <!-- Review 2 -->
+      <div class="bg-white dark:bg-gray-800 p-4 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm">
+        <div class="flex items-center justify-between mb-2">
+          <div class="flex items-center gap-2">
+            <span class="font-bold text-xs text-gray-900 dark:text-white">Aravind S (PSG Tech Mech)</span>
+            <span class="text-emerald-500 text-xs">✓ Verified Buyer</span>
+          </div>
+          <span class="text-amber-500 font-bold text-xs">⭐⭐⭐⭐⭐ 5.0</span>
+        </div>
+        <p class="text-xs text-gray-600 dark:text-gray-300">
+          "Smooth barter transaction! Traded my Engineering Physics textbook for a drawing board and drafter. Transparent and very polite seller."
+        </p>
+        <span class="text-[10px] text-gray-400 mt-2 block">Item: Mini Drafter Set • 3 days ago</span>
+      </div>
+
+      <!-- Review 3 -->
+      <div class="bg-white dark:bg-gray-800 p-4 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm">
+        <div class="flex items-center justify-between mb-2">
+          <div class="flex items-center gap-2">
+            <span class="font-bold text-xs text-gray-900 dark:text-white">Meenakshi V (GCT CSE)</span>
+            <span class="text-emerald-500 text-xs">✓ Verified Buyer</span>
+          </div>
+          <span class="text-amber-500 font-bold text-xs">⭐⭐⭐⭐ 4.0</span>
+        </div>
+        <p class="text-xs text-gray-600 dark:text-gray-300">
+          "Rented the commuter cycle for a week. Riding was comfortable, gears shifted cleanly. Returned safely at Main Gate."
+        </p>
+        <span class="text-[10px] text-gray-400 mt-2 block">Item: Geared Bicycle • 5 days ago</span>
+      </div>
+    </div>
+
+  </div>
+
+  <script type="module" src="../js/theme.js"></script>
+  <script type="module" src="../js/i18n.js"></script>
+  <script type="module" src="../js/mode.js"></script>
+  <script type="module" src="../js/navbar.js"></script>
+</body>
+</html>

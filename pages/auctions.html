@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Live Auctions & Bidding - CCM 2.0</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' }</script>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen">
+  <nav id="main-navbar"></nav>
+
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+    
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+      <div>
+        <h1 class="text-2xl sm:text-3xl font-black flex items-center gap-2">
+          <span>🔨</span> Campus Live Auctions & Bidding
+        </h1>
+        <p class="text-xs text-gray-400 mt-1">
+          Bid on rare college gear, laptops, cycles & project supplies before the timer expires!
+        </p>
+      </div>
+
+      <button id="btn-create-auction" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow transition">
+        + Create Auction
+      </button>
+    </div>
+
+    <!-- Live Auctions Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="auctions-grid">
+      <div class="col-span-full text-center py-16 text-gray-400 text-xs animate-pulse">Loading live auctions...</div>
+    </div>
+
+  </div>
+
+  <!-- Bid Modal -->
+  <div id="bid-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl max-w-sm w-full shadow-2xl space-y-4">
+      <h3 class="text-base font-black flex items-center gap-1.5">
+        <span>🔨</span> Place a Bid
+      </h3>
+      <div class="p-3 bg-gray-50 dark:bg-gray-700 rounded-xl text-xs space-y-1">
+        <div class="font-bold text-sm" id="bid-item-title">Item</div>
+        <div class="flex justify-between text-gray-400">
+          <span>Current Highest:</span>
+          <span class="font-black text-blue-600 text-sm" id="bid-current-high">₹0</span>
+        </div>
+        <div class="flex justify-between text-gray-400">
+          <span>Minimum Increment:</span>
+          <span class="font-bold text-gray-700 dark:text-gray-300" id="bid-min-inc">+₹50</span>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold mb-1">Your Bid Amount (₹) *</label>
+        <input type="number" id="bid-amount-input" class="w-full px-3 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-lg font-black focus:ring-2 focus:ring-blue-500">
+      </div>
+
+      <div class="flex gap-2 pt-2">
+        <button id="close-bid-btn" class="flex-1 py-2.5 bg-gray-100 dark:bg-gray-700 text-xs font-bold rounded-xl hover:bg-gray-200">
+          Cancel
+        </button>
+        <button id="submit-bid-btn" class="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow">
+          Submit Bid
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="../js/theme.js"></script>
+  <script type="module" src="../js/i18n.js"></script>
+  <script type="module" src="../js/mode.js"></script>
+  <script type="module" src="../js/navbar.js"></script>
+  <script type="module">
+    import { supabase, getCurrentUser } from '../js/supabase.js'
+
+    let currentUser = null
+    let activeAuctions = []
+    let selectedAuction = null
+
+    // Sample Live Auctions with timestamps
+    const SAMPLE_AUCTIONS = [
+      {
+        id: 'auc-1',
+        title: 'Apple iPad 9th Gen (64GB WiFi) with Stylus',
+        description: 'Perfect for paperless note-taking. Battery health 96%. Includes magnetic folio case.',
+        starting_price: 12000,
+        current_highest_bid: 14500,
+        min_bid: 200,
+        highest_bidder: 'Ramesh K (CIT)',
+        endTime: Date.now() + (3 * 3600 * 1000 + 45 * 60 * 1000), // 3h 45m left
+        photos: ['https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=600'],
+        bids_count: 8
+      },
+      {
+        id: 'auc-2',
+        title: 'Trek Marlin 5 Mountain Cycle (Shimano 21-Speed)',
+        description: 'High-end campus bike with RockShox suspension and hydraulic brakes.',
+        starting_price: 8000,
+        current_highest_bid: 9800,
+        min_bid: 250,
+        highest_bidder: 'Praveen T (PSG)',
+        endTime: Date.now() + (1 * 3600 * 1000 + 15 * 60 * 1000), // 1h 15m left
+        photos: ['https://images.unsplash.com/photo-1485965120184-e220f721d03e?w=600'],
+        bids_count: 14
+      },
+      {
+        id: 'auc-3',
+        title: 'Sony WH-1000XM4 Active Noise Cancelling Headphones',
+        description: 'Essential for hostel room deep study sessions. 30hr battery life.',
+        starting_price: 7500,
+        current_highest_bid: 8900,
+        min_bid: 100,
+        highest_bidder: 'Siddharth M (GCT)',
+        endTime: Date.now() + (5 * 3600 * 1000 + 20 * 60 * 1000), // 5h 20m left
+        photos: ['https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600'],
+        bids_count: 11
+      }
+    ]
+
+    async function initAuctions() {
+      currentUser = await getCurrentUser()
+      activeAuctions = [...SAMPLE_AUCTIONS]
+      renderAuctions()
+      setInterval(updateCountdowns, 1000)
+    }
+
+    function formatTimeRemaining(ms) {
+      if (ms <= 0) return 'AUCTION ENDED'
+      const h = Math.floor(ms / (1000 * 60 * 60))
+      const m = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60))
+      const s = Math.floor((ms % (1000 * 60)) / 1000)
+      return `${h}h ${m}m ${s}s left`
+    }
+
+    function renderAuctions() {
+      const grid = document.getElementById('auctions-grid')
+      grid.innerHTML = activeAuctions.map(auc => {
+        const remaining = Math.max(0, auc.endTime - Date.now())
+        const isEnded = remaining <= 0
+
+        return `
+          <div class="bg-white dark:bg-gray-800 rounded-3xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden flex flex-col justify-between hover-lift">
+            <div>
+              <div class="relative">
+                <img src="${auc.photos[0]}" class="w-full h-48 object-cover">
+                <!-- Countdown Timer Pill -->
+                <div class="absolute top-2 right-2 px-3 py-1 bg-black/75 backdrop-blur text-amber-400 font-mono text-xs font-black rounded-full shadow countdown-box" data-end="${auc.endTime}">
+                  ⏱️ ${formatTimeRemaining(remaining)}
+                </div>
+              </div>
+
+              <div class="p-5">
+                <h3 class="font-bold text-base text-gray-900 dark:text-white truncate">${auc.title}</h3>
+                <p class="text-xs text-gray-400 mt-1 line-clamp-2">${auc.description}</p>
+
+                <!-- Current Highest Bid Strip -->
+                <div class="mt-4 p-3.5 bg-blue-50/70 dark:bg-blue-950/40 rounded-2xl border border-blue-100 dark:border-blue-900">
+                  <div class="flex justify-between items-baseline">
+                    <span class="text-xs text-gray-500">Current Highest Bid:</span>
+                    <span class="text-2xl font-black text-blue-600 dark:text-blue-400">₹${auc.current_highest_bid}</span>
+                  </div>
+                  <div class="flex justify-between text-[11px] text-gray-400 mt-1">
+                    <span>Highest Bidder: <b class="text-gray-700 dark:text-gray-300">${auc.highest_bidder}</b></span>
+                    <span>${auc.bids_count} bids placed</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Action Button -->
+            <div class="p-5 pt-0">
+              <button onclick="openBidModal('${auc.id}')" ${isEnded ? 'disabled' : ''} class="w-full ${isEnded ? 'bg-gray-400' : 'bg-blue-600 hover:bg-blue-700'} text-white font-black py-3 rounded-xl text-xs shadow transition flex items-center justify-center gap-2">
+                <span>🔨</span> ${isEnded ? 'Auction Concluded' : 'Place Higher Bid'}
+              </button>
+            </div>
+
+          </div>
+        `
+      }).join('')
+    }
+
+    function updateCountdowns() {
+      document.querySelectorAll('.countdown-box').forEach(el => {
+        const endTime = parseInt(el.dataset.end)
+        const rem = Math.max(0, endTime - Date.now())
+        el.textContent = `⏱️ ${formatTimeRemaining(rem)}`
+      })
+    }
+
+    window.openBidModal = (id) => {
+      if (!currentUser) {
+        alert('Please login to participate in bidding')
+        window.location.href = 'login.html'
+        return
+      }
+      selectedAuction = activeAuctions.find(a => a.id === id)
+      if (!selectedAuction) return
+
+      document.getElementById('bid-item-title').textContent = selectedAuction.title
+      document.getElementById('bid-current-high').textContent = `₹${selectedAuction.current_highest_bid}`
+      document.getElementById('bid-min-inc').textContent = `+₹${selectedAuction.min_bid}`
+      document.getElementById('bid-amount-input').value = selectedAuction.current_highest_bid + selectedAuction.min_bid
+      document.getElementById('bid-modal').classList.remove('hidden')
+    }
+
+    document.getElementById('close-bid-btn').onclick = () => {
+      document.getElementById('bid-modal').classList.add('hidden')
+    }
+
+    document.getElementById('submit-bid-btn').onclick = () => {
+      const bidVal = parseFloat(document.getElementById('bid-amount-input').value)
+      const minRequired = selectedAuction.current_highest_bid + selectedAuction.min_bid
+      if (bidVal < minRequired) {
+        alert(`Minimum required bid is ₹${minRequired}`)
+        return
+      }
+
+      selectedAuction.current_highest_bid = bidVal
+      selectedAuction.highest_bidder = (currentUser.email?.split('@')[0] || 'You') + ' (Leading)'
+      selectedAuction.bids_count += 1
+
+      alert(`🎉 Congratulations! Your bid of ₹${bidVal} is now the highest active bid!`)
+      document.getElementById('bid-modal').classList.add('hidden')
+      renderAuctions()
+    }
+
+    document.getElementById('btn-create-auction').onclick = () => {
+      alert('To list an auction, create a product from the Sell page and toggle Auction type!')
+      window.location.href = 'add-product.html'
+    }
+
+    initAuctions()
+  </script>
+</body>
+</html>

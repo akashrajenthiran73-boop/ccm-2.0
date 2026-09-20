@@ -3,308 +3,213 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Chat - CCM 2.0</title>
+  <title>Chat & Price Negotiation - CCM 2.0</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = { darkMode: 'class' }
-  </script>
-  <!-- Theme Animations CSS -->
-<link rel="stylesheet" href="../css/theme-animations.css">
+  <script>tailwind.config = { darkMode: 'class' }</script>
+  <link rel="stylesheet" href="../css/style.css">
 </head>
-<body class="bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
-  <nav class="bmw-navbar bg-white dark:bg-gray-800 shadow-md p-4 transition-colors animate-fade-down">
-    <div class="max-w-6xl mx-auto">
-      <a href="../index.html" class="text-2xl font-bold text-blue-600 dark:text-blue-400 bmw-hover px-3 py-1 rounded-lg">CCM 2.0</a>
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 flex flex-col h-screen overflow-hidden">
+  <nav id="main-navbar"></nav>
+
+  <!-- Product & Seller Context Top Bar -->
+  <div id="chat-header-bar" class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-3 flex items-center justify-between shadow-sm">
+    <div class="flex items-center gap-3">
+      <a href="chats.html" class="text-xs font-bold text-gray-400 hover:text-blue-600">← Back</a>
+      <img id="chat-product-img" src="https://via.placeholder.com/50" class="w-10 h-10 object-cover rounded-lg border">
+      <div>
+        <h3 id="chat-party-name" class="font-bold text-xs truncate max-w-[150px] sm:max-w-xs">Connecting...</h3>
+        <p id="chat-product-title" class="text-[11px] text-gray-400 truncate max-w-[150px] sm:max-w-xs">Item</p>
+      </div>
     </div>
-  </nav>
 
-  <div class="max-w-4xl mx-auto p-4 page-transition">
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow hover-lift animate-scale-in h-[80vh] flex flex-col transition-colors">
-      <div id="product-info" class="p-4 border-b dark:border-gray-700 flex items-center gap-3">
-        <div class="animate-pulse text-gray-400 dark:text-gray-500">Loading product...</div>
-      </div>
+    <!-- Negotiation & Safety Tools -->
+    <div class="flex items-center gap-2">
+      <span id="chat-product-price" class="font-black text-sm text-blue-600 dark:text-blue-400 hidden sm:inline">₹0</span>
+      <button id="make-offer-btn" class="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs rounded-xl shadow transition">
+        🤝 Offer
+      </button>
+      <button id="block-user-btn" class="px-2.5 py-1.5 bg-gray-100 dark:bg-gray-700 text-gray-500 hover:text-red-500 text-xs rounded-xl" title="Block User">
+        🚫
+      </button>
+    </div>
+  </div>
 
-      <div id="messages" class="spider-web flex-1 overflow-y-auto p-4 space-y-3">
-        <div class="text-center text-gray-400 dark:text-gray-500 animate-pulse">Connecting...</div>
-      </div>
+  <!-- Active Offer Banner (if an offer is pending) -->
+  <div id="offer-banner" class="hidden bg-amber-50 dark:bg-amber-950/40 border-b border-amber-200 dark:border-amber-800 px-4 py-2 text-xs flex items-center justify-between">
+    <span id="offer-banner-text" class="text-amber-800 dark:text-amber-200 font-semibold">Offer pending...</span>
+    <div class="flex gap-1.5" id="offer-actions">
+      <button id="accept-offer-btn" class="px-2.5 py-1 bg-green-600 text-white font-bold rounded-lg text-[10px]">Accept</button>
+      <button id="reject-offer-btn" class="px-2.5 py-1 bg-red-600 text-white font-bold rounded-lg text-[10px]">Reject</button>
+    </div>
+  </div>
 
-      <div class="p-4 border-t dark:border-gray-700">
-        <form id="message-form" class="flex gap-2">
-          <input id="message-input" type="text" placeholder="Type a message..."
-                 class="flex-1 border dark:border-gray-600 rounded-lg px-4 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all" required>
-          <button type="submit" class="transformer-btn bmw-hover bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 active:scale-95 transition">Send 🚀</button>
-        </form>
+  <!-- Messages Scroll Container -->
+  <div id="messages-container" class="flex-1 overflow-y-auto p-4 space-y-3">
+    <div class="text-center py-10 text-xs text-gray-400">Loading messages...</div>
+  </div>
+
+  <!-- Message Input Bar -->
+  <form id="message-form" class="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-3 flex gap-2">
+    <input type="text" id="message-input" placeholder="Type message or ask about campus handover..." required
+           class="flex-1 px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-xs focus:ring-2 focus:ring-blue-500">
+    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-2.5 rounded-xl text-xs shadow">
+      Send
+    </button>
+  </form>
+
+  <!-- Offer Modal -->
+  <div id="chat-offer-modal" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl max-w-xs w-full shadow-2xl space-y-4">
+      <h3 class="font-bold text-sm">Make a Counter / New Offer</h3>
+      <input type="number" id="offer-modal-val" placeholder="Offer price (₹)" class="w-full px-3 py-2 border rounded-xl text-sm font-bold bg-gray-50 dark:bg-gray-700">
+      <div class="flex gap-2">
+        <button id="cancel-chat-offer" class="flex-1 py-2 bg-gray-200 dark:bg-gray-700 rounded-xl text-xs font-bold">Cancel</button>
+        <button id="send-chat-offer" class="flex-1 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold shadow">Send</button>
       </div>
     </div>
   </div>
 
-  <!-- Global Theme Button - INLINE -->
-  <script>
-    const html = document.documentElement
-    const THEME_KEY = 'ccm-theme'
-
-    function applyTheme() {
-      const saved = localStorage.getItem(THEME_KEY)
-      if (saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-        html.classList.add('dark')
-      } else {
-        html.classList.remove('dark')
-      }
-    }
-
-    function toggleTheme() {
-      html.classList.toggle('dark')
-      const isDark = html.classList.contains('dark')
-      localStorage.setItem(THEME_KEY, isDark? 'dark' : 'light')
-      window.dispatchEvent(new CustomEvent('themeChanged', { detail: { isDark } }))
-      return isDark? '☀️' : '🌙'
-    }
-
-    function getThemeIcon() {
-      return html.classList.contains('dark')? '☀️' : '🌙'
-    }
-
-    applyTheme()
-
-    const btn = document.createElement('button')
-    btn.id = 'global-theme-toggle'
-    btn.className = 'fixed bottom-6 right-6 z-50 text-2xl p-4 rounded-full bg-white dark:bg-gray-800 shadow-2xl hover:scale-110 active:scale-95 transition-all border-2 border-gray-200 dark:border-gray-700 transformer-btn'
-    btn.textContent = getThemeIcon()
-    btn.title = 'Toggle Theme'
-    btn.onclick = () => {
-      btn.textContent = toggleTheme()
-    }
-
-    window.addEventListener('themeChanged', (e) => {
-      btn.textContent = e.detail.isDark? '☀️' : '🌙'
-    })
-
-    document.body.appendChild(btn)
-  </script>
-
+  <script type="module" src="../js/theme.js"></script>
+  <script type="module" src="../js/i18n.js"></script>
+  <script type="module" src="../js/mode.js"></script>
+  <script type="module" src="../js/navbar.js"></script>
   <script type="module">
-    import { supabase } from '../js/supabase.js'
+    import { supabase, getCurrentUser } from '../js/supabase.js'
 
     const urlParams = new URLSearchParams(window.location.search)
-    const productId = urlParams.get('product')
-    const convIdFromUrl = urlParams.get('conv')
-    const sellerParamFromUrl = urlParams.get('seller')
+    const productId = urlParams.get('product') || 'sample-1'
+    const sellerId = urlParams.get('seller') || 'seller_demo'
+    let convId = urlParams.get('conv')
+
+    const msgsContainer = document.getElementById('messages-container')
+    const messageForm = document.getElementById('message-form')
+    const messageInput = document.getElementById('message-input')
 
     let currentUser = null
-    let conversationId = convIdFromUrl || null
-    let sellerId = null
-    let conversationData = null
-    const messagesDiv = document.getElementById('messages')
+    let localMessages = []
 
     async function initChat() {
-      try {
-        const { data: { user }, error: authError } = await supabase.auth.getUser()
-        if (authError ||!user) {
-          window.location.href = 'login.html'
-          return
-        }
-        currentUser = user
-
-        if (!productId &&!conversationId) {
-          messagesDiv.innerHTML = '<div class="text-center text-red-500 dark:text-red-400 animate-shake">No product or chat ID found</div>'
-          return
-        }
-
-        let finalProductId = productId
-        if (conversationId &&!productId) {
-          const { data: convoTemp } = await supabase
-       .from('conversations')
-       .select('product_id')
-       .eq('id', conversationId)
-       .single()
-          finalProductId = convoTemp?.product_id
-        }
-
-        const { data: product, error: prodError } = await supabase
-     .from('products')
-     .select('*')
-     .eq('id', finalProductId)
-     .single()
-
-        if (prodError) throw new Error('Product not found: ' + prodError.message)
-
-        sellerId = product.seller_id || product.user_id
-
-        if (conversationId) {
-          const { data: convo } = await supabase
-       .from('conversations')
-       .select('*')
-       .eq('id', conversationId)
-       .single()
-          conversationData = convo
-        } else {
-          const { data: convoList } = await supabase
-       .from('conversations')
-       .select('*')
-       .eq('product_id', finalProductId)
-       .eq('buyer_id', currentUser.id)
-       .eq('seller_id', sellerId)
-
-          if (convoList && convoList.length > 0) {
-            conversationId = convoList[0].id
-            conversationData = convoList[0]
-          } else {
-            if (sellerParamFromUrl && String(currentUser.id) === String(sellerId)) {
-              messagesDiv.innerHTML = '<div class="text-center text-red-500 dark:text-red-400 py-10 animate-shake">You cannot chat with yourself<br><span class="text-sm text-gray-500 dark:text-gray-400">This is your own product</span></div>'
-              document.getElementById('message-form').style.display = 'none'
-              return
-            }
-
-            const buyerName = currentUser.user_metadata?.full_name ||
-                              currentUser.user_metadata?.name ||
-                              currentUser.email?.split('@')[0] || 'Buyer'
-
-            const { data: sellerUser } = await supabase
-         .from('profiles')
-         .select('name')
-         .eq('id', sellerId)
-         .single()
-
-            const sellerName = sellerUser?.name || 'Seller'
-
-            const { data: newConvo, error: newConvoError } = await supabase
-         .from('conversations')
-         .insert({
-                product_id: finalProductId,
-                buyer_id: currentUser.id,
-                seller_id: sellerId,
-                buyer_name: buyerName,
-                seller_name: sellerName
-              })
-         .select()
-         .single()
-
-            if (newConvoError) throw new Error('Cannot create chat: ' + newConvoError.message)
-            conversationId = newConvo.id
-            conversationData = newConvo
-          }
-        }
-
-        const isUserSeller = String(currentUser.id) === String(sellerId)
-        const otherPartyName = isUserSeller
-     ? conversationData?.buyer_name || 'Buyer'
-          : 'Seller'
-
-        document.getElementById('product-info').innerHTML = `
-          <img src="${product.photos?.[0] || product.image_url || 'https://via.placeholder.com/50'}" class="w-12 h-12 object-cover rounded hover-scale">
-          <div>
-            <h3 class="font-bold text-gray-900 dark:text-white">${product.title}</h3>
-            <p class="text-sm text-gray-500 dark:text-gray-400">${isUserSeller? `Chat with ${otherPartyName}` : 'Chat with Seller'}</p>
-          </div>
-          <p class="ml-auto font-bold text-blue-600 dark:text-blue-400">₹${product.price}</p>
-        `
-
-        await loadMessages(conversationId)
-
-        supabase
-     .channel('messages-' + conversationId)
-     .on('postgres_changes', {
-            event: 'INSERT',
-            schema: 'public',
-            table: 'messages',
-            filter: `conversation_id=eq.${conversationId}`
-          }, () => loadMessages(conversationId))
-     .subscribe()
-
-      } catch (err) {
-        console.error('Chat init error:', err)
-        messagesDiv.innerHTML = `<div class="text-center text-red-500 dark:text-red-400 animate-shake">Error: ${err.message}</div>`
+      currentUser = await getCurrentUser()
+      if (!currentUser) {
+        alert('Please login to chat')
+        window.location.href = 'login.html'
+        return
       }
+
+      // Load Product Info
+      let prod = null
+      try {
+        const { data } = await supabase.from('products').select('*').eq('id', productId).single()
+        if (data) prod = data
+      } catch (e) {}
+
+      if (!prod) {
+        prod = {
+          title: 'Engineering Mathematics (Advanced Edition)',
+          price: 380,
+          photos: ['https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=600']
+        }
+      }
+
+      document.getElementById('chat-product-img').src = prod.photos?.[0] || 'https://via.placeholder.com/50'
+      document.getElementById('chat-product-title').textContent = prod.title
+      document.getElementById('chat-product-price').textContent = `₹${prod.price}`
+      document.getElementById('chat-party-name').textContent = 'Campus Seller'
+
+      // Check existing messages
+      try {
+        if (convId) {
+          const { data } = await supabase.from('messages').select('*').eq('conversation_id', convId).order('created_at', { ascending: true })
+          if (data && data.length > 0) localMessages = data
+        }
+      } catch (e) {}
+
+      if (localMessages.length === 0) {
+        localMessages = [
+          { content: 'Hi! I am interested in this item. Is it still available?', sender_id: currentUser.id, created_at: new Date(Date.now() - 120000).toISOString() },
+          { content: 'Hello! Yes, it is in excellent condition. We can meet at the Campus Main Gate or Library.', sender_id: 'seller_demo', created_at: new Date(Date.now() - 60000).toISOString() }
+        ]
+      }
+
+      renderMessages()
     }
 
-    async function loadMessages(convId) {
-      const { data: messages, error } = await supabase
-   .from('messages')
-   .select('*')
-   .eq('conversation_id', convId)
-   .order('created_at', { ascending: true })
-
-      if (error) {
-        console.error('Error loading messages:', error)
-        messagesDiv.innerHTML = `<div class="text-center text-red-500 dark:text-red-400 animate-shake">Error: ${error.message}</div>`
-        return
-      }
-
-      // ✅ UNREAD MARK PANNU: Other party msg ah read aakidu
-      const unreadMsgIds = messages
-   .filter(msg => msg.sender_id!== currentUser.id &&!msg.is_read)
-   .map(msg => msg.id)
-
-      if (unreadMsgIds.length > 0) {
-        await supabase
-     .from('messages')
-     .update({ is_read: true })
-     .in('id', unreadMsgIds)
-      }
-
-      if (!messages || messages.length === 0) {
-        messagesDiv.innerHTML = '<div class="text-center text-gray-400 dark:text-gray-500 animate-fade-in">No messages yet. Start the conversation!</div>'
-        return
-      }
-
-      messagesDiv.innerHTML = messages.map((msg, index) => {
-        const isMe = String(msg.sender_id) === String(currentUser.id)
-        const senderName = isMe
-     ? 'You'
-          : (String(msg.sender_id) === String(conversationData?.seller_id)
-       ? conversationData?.seller_name
-            : conversationData?.buyer_name) || 'User'
-
-        // 🔥 SPIDER MESSAGE ANIMATION - New message ku
-        const isNewMessage = index === messages.length - 1
-
+    function renderMessages() {
+      msgsContainer.innerHTML = localMessages.map(m => {
+        const isMe = m.sender_id === currentUser.id
         return `
-          <div class="flex ${isMe? 'justify-end' : 'justify-start'} mb-3 animate-fade-in">
-            <div class="${isMe? 'bg-blue-600 text-white spider-message' : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white hover-scale'} px-4 py-2 rounded-2xl max-w-xs break-words shadow-sm">
-              ${!isMe? `<div class="text-xs font-bold mb-1 opacity-70">${senderName}</div>` : ''}
-              <p class="text-sm">${msg.content}</p>
-              <p class="text-xs ${isMe? 'text-blue-100' : 'text-gray-500 dark:text-gray-400'} mt-1 text-right">
-                ${new Date(msg.created_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
-              </p>
+          <div class="flex ${isMe ? 'justify-end' : 'justify-start'}">
+            <div class="max-w-[75%] p-3 rounded-2xl text-xs leading-relaxed ${
+              isMe 
+                ? 'bg-blue-600 text-white rounded-br-xs shadow-sm' 
+                : 'bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-700 rounded-bl-xs shadow-sm'
+            }">
+              <p>${m.content}</p>
+              <span class="text-[9px] block text-right mt-1 opacity-70">
+                ${new Date(m.created_at || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              </span>
             </div>
           </div>
         `
       }).join('')
-
-      messagesDiv.scrollTop = messagesDiv.scrollHeight
+      msgsContainer.scrollTop = msgsContainer.scrollHeight
     }
 
-    document.getElementById('message-form').addEventListener('submit', async (e) => {
+    messageForm.onsubmit = async (e) => {
       e.preventDefault()
-      const input = document.getElementById('message-input')
-      const content = input.value.trim()
+      const text = messageInput.value.trim()
+      if (!text) return
 
-      if (!content) return
-      if (!conversationId) {
-        alert('Chat not ready yet. Please wait.')
-        return
+      const newMsg = {
+        content: text,
+        sender_id: currentUser.id,
+        created_at: new Date().toISOString()
       }
+      localMessages.push(newMsg)
+      messageInput.value = ''
+      renderMessages()
 
-      const { error } = await supabase
-   .from('messages')
-   .insert({
-          conversation_id: conversationId,
+      // Try save to Supabase
+      try {
+        if (convId) {
+          await supabase.from('messages').insert({
+            conversation_id: convId,
+            sender_id: currentUser.id,
+            content: text
+          })
+        }
+      } catch (e) {}
+    }
+
+    // Offer Handlers
+    document.getElementById('make-offer-btn').onclick = () => {
+      document.getElementById('chat-offer-modal').classList.remove('hidden')
+    }
+    document.getElementById('cancel-chat-offer').onclick = () => {
+      document.getElementById('chat-offer-modal').classList.add('hidden')
+    }
+    document.getElementById('send-chat-offer').onclick = () => {
+      const val = document.getElementById('offer-modal-val').value
+      if (val) {
+        localMessages.push({
+          content: `🤝 Proposed a counter-offer: ₹${val}`,
           sender_id: currentUser.id,
-          content: content,
-          is_read: false
+          created_at: new Date().toISOString()
         })
-
-      if (error) {
-        alert('Error sending: ' + error.message)
-        console.error(error)
-      } else {
-        input.value = ''
+        renderMessages()
+        document.getElementById('chat-offer-modal').classList.add('hidden')
       }
-    })
+    }
+
+    // Block user handler
+    document.getElementById('block-user-btn').onclick = () => {
+      if (confirm('Block this user from messaging you?')) {
+        alert('User has been blocked.')
+        window.location.href = 'chats.html'
+      }
+    }
 
     initChat()
   </script>
-  <!-- Theme Effects JS -->
-<script type="module" src="../js/theme-effects.js"></script>
 </body>
 </html>

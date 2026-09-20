@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notifications - CCM 2.0</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' }</script>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen">
+  <nav id="main-navbar"></nav>
+
+  <div class="max-w-3xl mx-auto px-4 sm:px-6 py-8">
+    <div class="flex items-center justify-between mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
+      <div>
+        <h1 class="text-2xl font-black flex items-center gap-2">
+          <span>🔔</span> Notifications Center
+        </h1>
+        <p class="text-xs text-gray-400 mt-1">Order alerts, auction bids, barter requests, and campus safety notices</p>
+      </div>
+      <button id="mark-all-read-btn" class="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline">
+        ✓ Mark all as read
+      </button>
+    </div>
+
+    <!-- Notifications List -->
+    <div class="space-y-3" id="notifications-container">
+      <div class="text-center py-16 text-xs text-gray-400">Loading notifications...</div>
+    </div>
+  </div>
+
+  <script type="module" src="../js/theme.js"></script>
+  <script type="module" src="../js/i18n.js"></script>
+  <script type="module" src="../js/mode.js"></script>
+  <script type="module" src="../js/navbar.js"></script>
+  <script type="module">
+    import { supabase, getCurrentUser } from '../js/supabase.js'
+
+    const container = document.getElementById('notifications-container')
+
+    const SAMPLE_NOTIFS = [
+      { id: 'n1', icon: '📦', title: 'Order Confirmed', message: 'Your order for "Engineering Mathematics Kreyszig" has been confirmed by seller. Meet at Central Library Front.', time: '10 mins ago', type: 'order', is_read: false },
+      { id: 'n2', icon: '🔨', title: 'Auction Bid Alert', message: 'You have been outbid on "Apple iPad 9th Gen". The new highest bid is ₹14,500.', time: '1 hour ago', type: 'bid', is_read: false },
+      { id: 'n3', icon: '🔄', title: 'Barter Exchange Request', message: 'Student Dharani R proposed a trade: Python Book ↔ Casio fx-991EX Calculator.', time: '2 hours ago', type: 'exchange', is_read: true },
+      { id: 'n4', icon: '📉', title: 'Price Drop Alert', message: 'An item in your wishlist "Hercules Roadeo Cycle" dropped price by ₹400!', time: 'Yesterday', type: 'price_drop', is_read: true },
+      { id: 'n5', icon: '🛡️', title: 'Campus Safety Announcement', message: 'Security Reminder: Always complete product handovers at designated Campus Meeting Points (Main Gate / Library).', time: '2 days ago', type: 'safety', is_read: true }
+    ]
+
+    async function loadNotifications() {
+      const user = await getCurrentUser()
+      let notifs = []
+      if (user) {
+        try {
+          const { data } = await supabase.from('notifications').select('*').eq('user_id', user.id).order('created_at', { ascending: false })
+          if (data && data.length > 0) notifs = data
+        } catch (e) {}
+      }
+
+      if (notifs.length === 0) {
+        notifs = SAMPLE_NOTIFS
+      }
+
+      container.innerHTML = notifs.map(n => `
+        <div class="p-4 rounded-2xl border transition flex items-start gap-3.5 ${
+          !n.is_read 
+            ? 'bg-blue-50/60 dark:bg-blue-950/30 border-blue-200 dark:border-blue-900 shadow-xs' 
+            : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 shadow-sm'
+        }">
+          <span class="text-2xl">${n.icon || '🔔'}</span>
+          <div class="flex-1">
+            <div class="flex items-center justify-between">
+              <h4 class="font-bold text-xs text-gray-900 dark:text-white">${n.title || 'Notification'}</h4>
+              <span class="text-[10px] text-gray-400">${n.time || new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+            </div>
+            <p class="text-xs text-gray-600 dark:text-gray-300 mt-1">${n.message}</p>
+          </div>
+        </div>
+      `).join('')
+    }
+
+    document.getElementById('mark-all-read-btn').onclick = () => {
+      SAMPLE_NOTIFS.forEach(n => n.is_read = true)
+      loadNotifications()
+      alert('All notifications marked as read.')
+    }
+
+    loadNotifications()
+  </script>
+</body>
+</html>

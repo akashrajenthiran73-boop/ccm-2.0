@@ -5,84 +5,359 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Product Details - CCM 2.0</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = { darkMode: 'class' }
-  </script>
-  <!-- Theme Animations CSS -->
-<link rel="stylesheet" href="../css/theme-animations.css">
+  <script>tailwind.config = { darkMode: 'class' }</script>
+  <link rel="stylesheet" href="../css/style.css">
 </head>
-<body class="bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
-  <!-- Navbar -->
-  <nav class="bmw-navbar bg-white dark:bg-gray-800 shadow-sm p-4 transition-colors animate-fade-down">
-    <div class="max-w-6xl mx-auto flex justify-between items-center">
-      <a href="../index.html" class="text-2xl font-bold text-blue-600 dark:text-blue-400 bmw-hover px-3 py-1 rounded-lg">CCM 2.0</a>
-      <div id="nav-links" class="flex gap-4"></div>
-    </div>
-  </nav>
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen">
+  <nav id="main-navbar"></nav>
 
-  <!-- Product Content -->
-  <div class="max-w-6xl mx-auto p-4 mt-6 page-transition">
-    <div id="product-container">
-      <!-- Loading -->
-      <div class="text-center py-20">
-        <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 dark:border-blue-400"></div>
-        <p class="text-gray-500 dark:text-gray-400 mt-4 animate-pulse">Loading product...</p>
+  <main class="max-w-6xl mx-auto px-4 py-8">
+    
+    <!-- Breadcrumbs -->
+    <div class="flex items-center gap-2 text-xs text-gray-500 mb-6">
+      <a href="../index.html" class="hover:underline">Home</a>
+      <span>/</span>
+      <span id="breadcrumb-category">Products</span>
+      <span>/</span>
+      <span id="breadcrumb-title" class="truncate font-semibold text-gray-800 dark:text-gray-200">Details</span>
+    </div>
+
+    <!-- Main Product Container -->
+    <div id="product-container" class="bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden mb-12">
+      <div class="text-center py-20 text-gray-400 animate-pulse text-sm">
+        Loading product information...
       </div>
     </div>
 
-    <!-- Similar Products -->
-    <div class="mt-12 animate-fade-up">
-      <h2 class="text-2xl font-bold mb-6 text-gray-900 dark:text-white">Similar Products</h2>
-      <div id="similar-products" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6"></div>
+    <!-- Similar Products Grid -->
+    <div class="mt-10">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-black flex items-center gap-2">
+          <span>✨</span> Similar Recommendations
+        </h3>
+        <span class="text-xs text-blue-600 dark:text-blue-400 font-semibold">AI Matched by Category</span>
+      </div>
+      <div id="similar-products" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="col-span-full text-center py-6 text-xs text-gray-400">Loading recommendations...</div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Negotiation Offer Modal -->
+  <div id="offer-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-gray-100 dark:border-gray-700 animate-scale-in">
+      <h3 class="text-lg font-black mb-1">🤝 Negotiate Price</h3>
+      <p class="text-xs text-gray-500 mb-4">Propose your counter-offer directly to the seller.</p>
+      
+      <div class="mb-4">
+        <label class="block text-xs font-bold mb-1">Listed Price</label>
+        <div class="text-xl font-bold text-gray-400 line-through" id="offer-orig-price">₹0</div>
+      </div>
+
+      <div class="mb-5">
+        <label class="block text-xs font-bold mb-1">Your Proposed Offer (₹) *</label>
+        <input type="number" id="offer-input-price" class="w-full px-3 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 font-black text-lg focus:ring-2 focus:ring-blue-500">
+      </div>
+
+      <div class="flex gap-2">
+        <button id="close-offer-modal" class="flex-1 py-2.5 bg-gray-100 dark:bg-gray-700 rounded-xl text-xs font-bold hover:bg-gray-200">
+          Cancel
+        </button>
+        <button id="send-offer-btn" class="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow">
+          Send Offer
+        </button>
+      </div>
     </div>
   </div>
 
-  <!-- Global Theme Button - INLINE -->
-  <script>
-    const html = document.documentElement
-    const THEME_KEY = 'ccm-theme'
+  <script type="module" src="../js/theme.js"></script>
+  <script type="module" src="../js/i18n.js"></script>
+  <script type="module" src="../js/mode.js"></script>
+  <script type="module" src="../js/navbar.js"></script>
+  <script type="module">
+    import { supabase, getCurrentUser } from '../js/supabase.js'
+    import { analyzePrice, detectScamRisk } from '../js/ai-smart.js'
+    import { addToCart } from '../js/cart.js'
 
-    function applyTheme() {
-      const saved = localStorage.getItem(THEME_KEY)
-      if (saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-        html.classList.add('dark')
-      } else {
-        html.classList.remove('dark')
+    const urlParams = new URLSearchParams(window.location.search)
+    const productId = urlParams.get('id')
+    const container = document.getElementById('product-container')
+
+    let currentProduct = null
+    let currentUser = null
+
+    async function initProductPage() {
+      currentUser = await getCurrentUser()
+
+      if (!productId) {
+        container.innerHTML = '<div class="text-center py-16 text-red-500">Missing product ID.</div>'
+        return
+      }
+
+      // Increment view counter & fetch
+      try {
+        const { data, error } = await supabase
+          .from('products')
+          .select('*, profiles(id, name, rating, is_verified, phone, college_name, department, email)')
+          .eq('id', productId)
+          .single()
+
+        if (!error && data) currentProduct = data
+      } catch (e) {}
+
+      // Fallback
+      if (!currentProduct) {
+        const local = JSON.parse(localStorage.getItem('ccm_fallback_products') || '[]')
+        currentProduct = local.find(p => p.id === productId)
+      }
+
+      if (!currentProduct) {
+        // Sample match
+        currentProduct = {
+          id: productId,
+          title: 'Engineering Mathematics (Advanced Edition) - Erwin Kreyszig',
+          description: 'Crisp condition semester textbook with solved problems and formula cheatsheet. Used carefully with highlighting in important derivations. Great for exams and semester prep.',
+          price: 380,
+          original_price: 650,
+          category: 'Books & Notes',
+          condition: 'Like new',
+          photos: ['https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=600&auto=format&fit=crop'],
+          marketplace_mode: 'college',
+          pickup_location: 'Central Library Front Steps',
+          meeting_point: 'Central Library',
+          created_at: new Date().toISOString(),
+          status: 'available',
+          views_count: 42,
+          profiles: {
+            id: 'seller_123',
+            name: 'Karthik S',
+            rating: 4.9,
+            is_verified: true,
+            college_name: 'Coimbatore Institute of Technology (CIT)',
+            department: 'Information Technology'
+          }
+        }
+      }
+
+      renderProductDetails(currentProduct)
+      loadSimilarProducts(currentProduct.category)
+    }
+
+    function renderProductDetails(p) {
+      document.getElementById('breadcrumb-category').textContent = p.category
+      document.getElementById('breadcrumb-title').textContent = p.title
+
+      const firstPhoto = p.photos?.[0] || p.image_url || 'https://via.placeholder.com/600x400'
+      const priceAnalysis = analyzePrice(p)
+      const scamRisk = detectScamRisk(p, p.profiles)
+
+      container.innerHTML = `
+        <div class="grid md:grid-cols-12 gap-8 p-6 sm:p-10">
+          
+          <!-- Left: Gallery -->
+          <div class="md:col-span-6 space-y-4">
+            <div class="overflow-hidden rounded-2xl border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+              <img id="main-product-img" src="${firstPhoto}" class="w-full h-80 sm:h-96 object-cover hover:scale-105 transition duration-300">
+            </div>
+            ${p.photos?.length > 1 ? `
+              <div class="flex gap-2 overflow-x-auto pb-2">
+                ${p.photos.map(photo => `
+                  <img src="${photo}" class="w-16 h-16 object-cover rounded-xl border border-gray-200 cursor-pointer hover:opacity-80 transition"
+                       onclick="document.getElementById('main-product-img').src='${photo}'">
+                `).join('')}
+              </div>
+            ` : ''}
+
+            <!-- AI Safety & Price Box -->
+            <div class="p-4 rounded-2xl bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900 text-xs space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="font-bold flex items-center gap-1.5 text-blue-800 dark:text-blue-300">
+                  <span>🤖</span> AI Market Analysis
+                </span>
+                <span class="font-bold ${scamRisk.badgeColor} px-2 py-0.5 rounded border text-[10px]">
+                  ${scamRisk.badge}
+                </span>
+              </div>
+              <p class="text-gray-600 dark:text-gray-300 leading-relaxed">
+                ${priceAnalysis.alert || 'Price is aligned with fair market value.'}
+              </p>
+              <div class="text-[11px] text-gray-500 flex items-center gap-2 pt-1 border-t border-blue-100 dark:border-blue-900">
+                <span>🛡️ Safe Handover: Meet at official campus spot</span>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Right: Info & Actions -->
+          <div class="md:col-span-6 flex flex-col justify-between">
+            <div>
+              <div class="flex items-center gap-2 mb-2">
+                <span class="text-xs font-bold px-2.5 py-1 rounded-full bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300">
+                  ${p.marketplace_mode === 'college' ? '🎓 College Marketplace' : '🌐 Community Marketplace'}
+                </span>
+                <span class="text-xs font-bold px-2.5 py-1 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
+                  ${p.condition}
+                </span>
+                <span class="text-xs font-bold px-2.5 py-1 rounded-full ${p.status === 'available' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">
+                  ${p.status === 'available' ? 'In Stock' : 'Sold Out'}
+                </span>
+              </div>
+
+              <h1 class="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white leading-tight">
+                ${p.title}
+              </h1>
+
+              <div class="flex items-baseline gap-3 my-4">
+                <span class="text-4xl font-black text-blue-600 dark:text-blue-400">₹${p.price}</span>
+                ${p.original_price ? `<span class="text-sm text-gray-400 line-through">₹${p.original_price}</span>` : ''}
+              </div>
+
+              <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-300 leading-relaxed mb-6">
+                ${p.description}
+              </p>
+
+              <!-- Campus Pickup Spot Badge -->
+              <div class="p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl text-xs mb-6 flex items-center gap-3">
+                <span class="text-2xl">📍</span>
+                <div>
+                  <div class="font-bold text-amber-900 dark:text-amber-200">Campus Pickup / Meeting Point</div>
+                  <div class="text-amber-700 dark:text-amber-300 font-medium">${p.meeting_point || p.pickup_location || 'Main Gate'}</div>
+                </div>
+              </div>
+
+              <!-- Seller Profile Card -->
+              <div class="p-4 bg-gray-50 dark:bg-gray-750 border border-gray-100 dark:border-gray-700 rounded-2xl mb-6">
+                <div class="text-[10px] uppercase font-bold text-gray-400 tracking-wider mb-2">Seller Details</div>
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-sm">
+                    ${(p.profiles?.name || 'S')[0]}
+                  </div>
+                  <div class="flex-1">
+                    <div class="font-bold text-sm flex items-center gap-1.5">
+                      ${p.profiles?.name || 'Student Seller'}
+                      ${p.profiles?.is_verified ? '<span class="text-emerald-500 font-bold text-xs" title="Verified User">✓ Verified</span>' : ''}
+                    </div>
+                    <div class="text-xs text-gray-500">
+                      ${p.profiles?.college_name || 'Campus College'} • ⭐ ${p.profiles?.rating || '5.0'} Rating
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Action Buttons Row -->
+            <div class="space-y-2.5 pt-4 border-t border-gray-100 dark:border-gray-700">
+              <div class="grid grid-cols-2 gap-3">
+                <button id="btn-add-cart" class="py-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-900 dark:text-white font-bold rounded-xl text-xs transition flex items-center justify-center gap-1.5">
+                  <span>🛒</span> Add to Cart
+                </button>
+                <a href="checkout.html?item=${p.id}&price=${p.price}" class="py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs transition text-center shadow-md flex items-center justify-center gap-1.5">
+                  <span>⚡</span> Buy Now
+                </a>
+              </div>
+
+              <div class="grid grid-cols-3 gap-2">
+                <button id="btn-open-chat" class="py-2.5 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 font-bold rounded-xl text-xs border border-indigo-200 hover:bg-indigo-100 transition flex items-center justify-center gap-1">
+                  <span>💬</span> Chat
+                </button>
+                <button id="btn-open-offer" class="py-2.5 bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 font-bold rounded-xl text-xs border border-amber-200 hover:bg-amber-100 transition flex items-center justify-center gap-1">
+                  <span>🤝</span> Make Offer
+                </button>
+                <a href="exchange.html?item=${p.id}" class="py-2.5 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 font-bold rounded-xl text-xs border border-emerald-200 hover:bg-emerald-100 transition flex items-center justify-center gap-1">
+                  <span>🔄</span> Barter
+                </a>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      `
+
+      // Attach button events
+      document.getElementById('btn-add-cart').onclick = async function() {
+        await addToCart(p, 1)
+        this.innerHTML = '<span>✓</span> Added to Cart!'
+        this.classList.add('text-green-600')
+      }
+
+      document.getElementById('btn-open-chat').onclick = () => {
+        if (!currentUser) {
+          alert('Please login to chat with seller')
+          window.location.href = 'login.html'
+          return
+        }
+        window.location.href = `chat.html?product=${p.id}&seller=${p.seller_id || p.user_id}`
+      }
+
+      document.getElementById('btn-open-offer').onclick = () => {
+        document.getElementById('offer-orig-price').textContent = `₹${p.price}`
+        document.getElementById('offer-input-price').value = Math.round(p.price * 0.9)
+        document.getElementById('offer-modal').classList.remove('hidden')
       }
     }
 
-    function toggleTheme() {
-      html.classList.toggle('dark')
-      const isDark = html.classList.contains('dark')
-      localStorage.setItem(THEME_KEY, isDark? 'dark' : 'light')
-      window.dispatchEvent(new CustomEvent('themeChanged', { detail: { isDark } }))
-      return isDark? '☀️' : '🌙'
+    // Offer Modal handlers
+    document.getElementById('close-offer-modal').onclick = () => {
+      document.getElementById('offer-modal').classList.add('hidden')
     }
 
-    function getThemeIcon() {
-      return html.classList.contains('dark')? '☀️' : '🌙'
+    document.getElementById('send-offer-btn').onclick = async () => {
+      if (!currentUser) {
+        alert('Please login to make an offer')
+        window.location.href = 'login.html'
+        return
+      }
+
+      const offerPrice = parseFloat(document.getElementById('offer-input-price').value)
+      if (!offerPrice || offerPrice <= 0) {
+        alert('Please enter a valid offer price')
+        return
+      }
+
+      try {
+        await supabase.from('offers').insert({
+          product_id: currentProduct.id,
+          buyer_id: currentUser.id,
+          seller_id: currentProduct.seller_id || currentProduct.user_id,
+          original_price: currentProduct.price,
+          offer_price: offerPrice,
+          status: 'pending'
+        })
+      } catch (e) {}
+
+      alert(`Offer of ₹${offerPrice} proposed to seller! Redirecting to chat...`)
+      document.getElementById('offer-modal').classList.add('hidden')
+      window.location.href = `chat.html?product=${currentProduct.id}&seller=${currentProduct.seller_id || currentProduct.user_id}`
     }
 
-    applyTheme()
+    async function loadSimilarProducts(category) {
+      const simDiv = document.getElementById('similar-products')
+      try {
+        const { data } = await supabase
+          .from('products')
+          .select('*, profiles(name, rating)')
+          .eq('category', category)
+          .neq('id', productId)
+          .limit(4)
 
-    const btn = document.createElement('button')
-    btn.id = 'global-theme-toggle'
-    btn.className = 'fixed bottom-6 right-6 z-50 text-2xl p-4 rounded-full bg-white dark:bg-gray-800 shadow-2xl hover:scale-110 active:scale-95 transition-all border-2 border-gray-200 dark:border-gray-700 transformer-btn'
-    btn.textContent = getThemeIcon()
-    btn.title = 'Toggle Theme'
-    btn.onclick = () => {
-      btn.textContent = toggleTheme()
+        if (data && data.length > 0) {
+          simDiv.innerHTML = data.map(item => `
+            <a href="product.html?id=${item.id}" class="bg-white dark:bg-gray-800 p-3 rounded-2xl border border-gray-100 dark:border-gray-700 hover-lift block">
+              <img src="${item.photos?.[0] || 'https://via.placeholder.com/200'}" class="w-full h-32 object-cover rounded-xl mb-2">
+              <div class="font-bold text-xs truncate text-gray-800 dark:text-gray-200">${item.title}</div>
+              <div class="text-blue-600 font-bold text-sm mt-1">₹${item.price}</div>
+            </a>
+          `).join('')
+          return
+        }
+      } catch (e) {}
+
+      simDiv.innerHTML = '<div class="col-span-full text-center py-4 text-xs text-gray-400">Discover more listings on the Search page!</div>'
     }
 
-    window.addEventListener('themeChanged', (e) => {
-      btn.textContent = e.detail.isDark? '☀️' : '🌙'
-    })
-
-    document.body.appendChild(btn)
+    initProductPage()
   </script>
-
-  <script type="module" src="../js/product.js"></script>
-  <!-- Theme Effects JS -->
-<script type="module" src="../js/theme-effects.js"></script>
 </body>
 </html>

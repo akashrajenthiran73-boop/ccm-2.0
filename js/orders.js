@@ -10,7 +10,7 @@ async function loadOrders() {
     return
   }
 
-  // Buyer ah vaanguna orders fetch pannu
+  
   const { data: orders, error } = await supabase
     .from('orders')
     .select(`

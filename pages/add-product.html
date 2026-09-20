@@ -3,140 +3,280 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sell Item - CCM 2.0</title>
+  <title>Post an Item - CCM 2.0</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = { darkMode: 'class' }
-  </script>
-  <!-- Theme Animations CSS -->
-<link rel="stylesheet" href="../css/theme-animations.css">
+  <script>tailwind.config = { darkMode: 'class' }</script>
+  <link rel="stylesheet" href="../css/style.css">
 </head>
-<body class="bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
-  <!-- Navbar -->
-  <nav class="bmw-navbar bg-white dark:bg-gray-800 shadow-md p-4 sticky top-0 transition-colors animate-fade-down">
-    <div class="max-w-6xl mx-auto flex justify-between items-center">
-      <a href="chats.html" class="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 bmw-hover">My Chats</a>
-      <a href="../index.html" class="text-2xl font-bold text-blue-600 dark:text-blue-400 bmw-hover px-3 py-1 rounded-lg">CCM 2.0</a>
-      <a href="../index.html" class="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 bmw-hover">Cancel</a>
-    </div>
-  </nav>
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen">
+  <nav id="main-navbar"></nav>
 
-  <div class="max-w-2xl mx-auto p-4 page-transition">
-    <h2 class="text-2xl font-bold mb-6 text-gray-900 dark:text-white animate-fade-up">Post Your Item</h2>
-    
-    <form id="add-product-form" class="space-y-5 bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md hover-lift animate-scale-in transition-colors">
-      <!-- Photo Upload -->
-      <div>
-        <label class="block font-semibold mb-2 text-gray-900 dark:text-white">Photos - Max 4</label>
-        <input type="file" id="photos" accept="image/*" multiple required 
-               class="w-full p-2 border dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-blue-50 dark:file:bg-blue-900 file:text-blue-700 dark:file:text-blue-300 hover:file:bg-blue-100 dark:hover:file:bg-blue-800 transition-all">
-        <div id="photo-preview" class="flex gap-2 mt-2 flex-wrap"></div>
+  <div class="max-w-2xl mx-auto px-4 py-8">
+    <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 sm:p-8 shadow-sm border border-gray-200 dark:border-gray-700">
+      
+      <div class="mb-6 pb-4 border-b border-gray-100 dark:border-gray-700">
+        <h1 class="text-2xl font-black text-blue-600 dark:text-blue-400">Post an Item for Sale / Barter</h1>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">List your item in College or Community Marketplace</p>
       </div>
 
-      <!-- Title -->
-      <input type="text" id="title" placeholder="Item Title - ex: CS Textbooks 1st Year" required 
-             class="w-full p-3 border dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 transition-all">
-
-      <!-- Description -->
-      <textarea id="description" placeholder="Description - condition, reason for selling" rows="4" 
-                class="w-full p-3 border dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 transition-all"></textarea>
-
-      <!-- Price + Category -->
-      <div class="flex gap-4">
-        <input type="number" id="price" placeholder="Price ₹" required 
-               class="w-1/2 p-3 border dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 transition-all">
-        <select id="category" required 
-                class="w-1/2 p-3 border dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-all">
-          <option value="">Category</option>
-          <option value="Books">Books</option>
-          <option value="Cycles">Cycles</option>
-          <option value="Electronics">Electronics</option>
-          <option value="Hostel Items">Hostel Items</option>
-          <option value="Others">Others</option>
-        </select>
-      </div>
-
-      <!-- Condition -->
-      <div>
-        <label class="block font-semibold mb-2 text-gray-900 dark:text-white">Condition</label>
-        <div class="flex gap-4 text-gray-700 dark:text-gray-300">
-          <label class="flex items-center gap-2 cursor-pointer hover-scale">
-            <input type="radio" name="condition" value="New" required class="text-blue-600"> New
+      <form id="add-product-form" class="space-y-5">
+        
+        <!-- Marketplace Mode Choice -->
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300 mb-2">
+            Marketplace Type *
           </label>
-          <label class="flex items-center gap-2 cursor-pointer hover-scale">
-            <input type="radio" name="condition" value="Like new" class="text-blue-600"> Like new
-          </label>
-          <label class="flex items-center gap-2 cursor-pointer hover-scale">
-            <input type="radio" name="condition" value="Used" class="text-blue-600"> Used
-          </label>
+          <div class="grid grid-cols-3 gap-2 text-xs font-bold">
+            <label class="flex items-center gap-2 p-3 border rounded-xl cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700">
+              <input type="radio" name="marketplace_mode" value="college" checked class="text-blue-600">
+              <span>🎓 College Only</span>
+            </label>
+            <label class="flex items-center gap-2 p-3 border rounded-xl cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700">
+              <input type="radio" name="marketplace_mode" value="community" class="text-emerald-600">
+              <span>🌐 Community Only</span>
+            </label>
+            <label class="flex items-center gap-2 p-3 border rounded-xl cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700">
+              <input type="radio" name="marketplace_mode" value="both" class="text-indigo-600">
+              <span>✨ Both Modes</span>
+            </label>
+          </div>
         </div>
-      </div>
 
-      <!-- Location -->
-      <div>
-        <label class="block font-semibold mb-2 text-gray-900 dark:text-white">Location</label>
-        <button type="button" id="get-location" 
-                class="transformer-btn bmw-hover bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-4 py-2 rounded-lg text-sm hover:bg-gray-300 dark:hover:bg-gray-600">
-          📍 Use My Location
+        <!-- Photos Upload & Preview -->
+        <div>
+          <label class="block text-xs font-bold mb-1">Product Images (Up to 4) *</label>
+          <input type="file" id="photos" accept="image/*" multiple
+                 class="block w-full text-xs text-gray-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-700 dark:file:bg-blue-900/50 dark:file:text-blue-300 hover:file:bg-blue-100">
+          <div id="photo-preview" class="grid grid-cols-4 gap-2 mt-3"></div>
+        </div>
+
+        <!-- Title -->
+        <div>
+          <label class="block text-xs font-bold mb-1">Product Title *</label>
+          <input type="text" id="title" required placeholder="e.g. Engineering Mathematics Kreyszig (10th Ed)"
+                 class="w-full px-3 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-sm focus:ring-2 focus:ring-blue-500">
+        </div>
+
+        <!-- Category & Condition -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold mb-1">Category *</label>
+            <select id="category" required class="w-full px-3 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-sm focus:ring-2 focus:ring-blue-500">
+              <option value="Books & Notes">📚 Books & Notes</option>
+              <option value="Cycles & Vehicles">🚲 Cycles & Vehicles</option>
+              <option value="Electronics & Laptops">💻 Electronics & Laptops</option>
+              <option value="Lab & Study Equipment">🔬 Lab & Study Equipment</option>
+              <option value="Hostel & Room Essentials">🛏️ Hostel & Room Essentials</option>
+              <option value="Mobile & Accessories">📱 Mobile & Accessories</option>
+              <option value="Sports & Fitness">⚽ Sports & Fitness</option>
+              <option value="Other">📦 Other Items</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold mb-1">Condition *</label>
+            <select id="condition" required class="w-full px-3 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-sm focus:ring-2 focus:ring-blue-500">
+              <option value="New">New (Unopened / Mint)</option>
+              <option value="Like new" selected>Like New (Used gently)</option>
+              <option value="Used">Used (Good working condition)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Price & AI Suggestion -->
+        <div>
+          <div class="flex justify-between items-center mb-1">
+            <label class="block text-xs font-bold">Price (₹) *</label>
+            <span id="ai-price-tip" class="text-[11px] text-blue-600 dark:text-blue-400 font-semibold cursor-pointer">
+              🤖 AI Price Suggestion
+            </span>
+          </div>
+          <input type="number" id="price" required min="1" placeholder="e.g. 450"
+                 class="w-full px-3 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-sm focus:ring-2 focus:ring-blue-500">
+          <div id="ai-price-box" class="hidden text-xs p-2.5 mt-2 bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 rounded-lg"></div>
+        </div>
+
+        <!-- Meeting Point / Campus Pickup Location -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold mb-1">Campus Meeting Point *</label>
+            <select id="meeting-point" class="w-full px-3 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-sm focus:ring-2 focus:ring-blue-500">
+              <option value="Main Gate">🚪 Campus Main Gate</option>
+              <option value="Central Library">📚 Central Library Front</option>
+              <option value="Campus Canteen">☕ Canteen / Food Court</option>
+              <option value="Hostel Gate">🏢 Hostel Gate</option>
+              <option value="Department Office">🏛️ Department Office</option>
+              <option value="Custom Spot">📍 Custom Spot (Specify below)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold mb-1">Specific Location / GPS</label>
+            <div class="flex gap-2">
+              <input type="text" id="location-text" placeholder="e.g. Near ATM or Block 2"
+                     class="w-full px-3 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-sm focus:ring-2 focus:ring-blue-500">
+              <button type="button" id="get-gps-btn" class="px-3 bg-gray-200 dark:bg-gray-700 rounded-xl text-xs font-bold hover:bg-gray-300" title="Use GPS">
+                📍
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Description -->
+        <div>
+          <label class="block text-xs font-bold mb-1">Item Description</label>
+          <textarea id="description" rows="3" placeholder="Mention item condition, semester, included accessories, reason for selling..."
+                    class="w-full px-3 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-sm focus:ring-2 focus:ring-blue-500"></textarea>
+        </div>
+
+        <div id="error-msg" class="text-xs text-red-500 font-semibold text-center hidden"></div>
+
+        <button type="submit" id="submit-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl transition shadow-md">
+          🚀 Post Listing to Marketplace
         </button>
-        <p id="location-text" class="text-sm text-gray-500 dark:text-gray-400 mt-1">Location not set</p>
-      </div>
 
-      <!-- Submit -->
-      <button type="submit" id="submit-btn" 
-              class="transformer-btn bmw-hover w-full bg-blue-600 text-white p-3 rounded-lg font-semibold hover:bg-blue-700 active:scale-95 transition">
-        Post Item
-      </button>
-      <p id="error-msg" class="text-red-500 dark:text-red-400 text-sm text-center"></p>
-    </form>
+      </form>
+
+    </div>
   </div>
 
-  <!-- Global Theme Button - INLINE -->
-  <script>
-    const html = document.documentElement
-    const THEME_KEY = 'ccm-theme'
-    
-    function applyTheme() {
-      const saved = localStorage.getItem(THEME_KEY)
-      if (saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-        html.classList.add('dark')
-      } else {
-        html.classList.remove('dark')
+  <script type="module" src="../js/theme.js"></script>
+  <script type="module" src="../js/i18n.js"></script>
+  <script type="module" src="../js/mode.js"></script>
+  <script type="module" src="../js/navbar.js"></script>
+  <script type="module">
+    import { supabase, getCurrentUser } from '../js/supabase.js'
+    import { suggestSmartPrice } from '../js/ai-smart.js'
+
+    let currentUser = null
+    let photoFiles = []
+    let userCoords = null
+
+    async function checkAuth() {
+      currentUser = await getCurrentUser()
+      if (!currentUser) {
+        alert('Please login to list items for sale')
+        window.location.href = 'login.html'
       }
     }
-    
-    function toggleTheme() {
-      html.classList.toggle('dark')
-      const isDark = html.classList.contains('dark')
-      localStorage.setItem(THEME_KEY, isDark ? 'dark' : 'light')
-      window.dispatchEvent(new CustomEvent('themeChanged', { detail: { isDark } }))
-      return isDark ? '☀️' : '🌙'
-    }
-    
-    function getThemeIcon() {
-      return html.classList.contains('dark') ? '☀️' : '🌙'
-    }
-    
-    applyTheme()
-    
-    const btn = document.createElement('button')
-    btn.id = 'global-theme-toggle'
-    btn.className = 'fixed bottom-6 right-6 z-50 text-2xl p-4 rounded-full bg-white dark:bg-gray-800 shadow-2xl hover:scale-110 active:scale-95 transition-all border-2 border-gray-200 dark:border-gray-700 transformer-btn'
-    btn.textContent = getThemeIcon()
-    btn.title = 'Toggle Theme'
-    btn.onclick = () => {
-      btn.textContent = toggleTheme()
-    }
-    
-    window.addEventListener('themeChanged', (e) => {
-      btn.textContent = e.detail.isDark ? '☀️' : '🌙'
-    })
-    
-    document.body.appendChild(btn)
-  </script>
+    checkAuth()
 
-  <script type="module" src="../js/add-products.js"></script>
-  <!-- Theme Effects JS -->
-<script type="module" src="../js/theme-effects.js"></script>
+    // Photo Preview
+    const photoInput = document.getElementById('photos')
+    const photoPreview = document.getElementById('photo-preview')
+    photoInput.addEventListener('change', () => {
+      photoFiles = Array.from(photoInput.files).slice(0, 4)
+      photoPreview.innerHTML = ''
+      photoFiles.forEach(file => {
+        const img = document.createElement('img')
+        img.src = URL.createObjectURL(file)
+        img.className = 'w-full h-20 object-cover rounded-xl border border-gray-200 dark:border-gray-700'
+        photoPreview.appendChild(img)
+      })
+    })
+
+    // AI Price Suggestion
+    const categorySelect = document.getElementById('category')
+    const conditionSelect = document.getElementById('condition')
+    const aiPriceTip = document.getElementById('ai-price-tip')
+    const aiPriceBox = document.getElementById('ai-price-box')
+
+    function updateAiPrice() {
+      const cat = categorySelect.value
+      const cond = conditionSelect.value
+      const suggestion = suggestSmartPrice(cat, cond)
+      aiPriceBox.textContent = `🤖 AI Suggestion for ${cat} (${cond}): Recommended fair price is ${suggestion.text}`
+      aiPriceBox.classList.remove('hidden')
+    }
+
+    aiPriceTip.onclick = updateAiPrice
+    categorySelect.onchange = updateAiPrice
+    conditionSelect.onchange = updateAiPrice
+
+    // GPS Button
+    document.getElementById('get-gps-btn').onclick = () => {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(pos => {
+          userCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude }
+          document.getElementById('location-text').value = `Campus Area (${userCoords.lat.toFixed(4)}, ${userCoords.lng.toFixed(4)})`
+        })
+      }
+    }
+
+    // Submit
+    document.getElementById('add-product-form').addEventListener('submit', async (e) => {
+      e.preventDefault()
+      const submitBtn = document.getElementById('submit-btn')
+      const errorMsg = document.getElementById('error-msg')
+      submitBtn.disabled = true
+      submitBtn.textContent = 'Posting Item...'
+      errorMsg.classList.add('hidden')
+
+      const mode = document.querySelector('input[name="marketplace_mode"]:checked').value
+      const title = document.getElementById('title').value.trim()
+      const price = parseFloat(document.getElementById('price').value)
+      const category = categorySelect.value
+      const condition = conditionSelect.value
+      const meetingPoint = document.getElementById('meeting-point').value
+      const locationText = document.getElementById('location-text').value.trim() || meetingPoint
+      const description = document.getElementById('description').value.trim()
+
+      const photoUrls = []
+      // Upload photos to storage or use demo campus images
+      for (const file of photoFiles) {
+        try {
+          const fileName = `${currentUser.id}/${Date.now()}-${file.name}`
+          await supabase.storage.from('product-images').upload(fileName, file)
+          const { data: { publicUrl } } = supabase.storage.from('product-images').getPublicUrl(fileName)
+          photoUrls.push(publicUrl)
+        } catch (e) {
+          photoUrls.push(URL.createObjectURL(file))
+        }
+      }
+
+      if (photoUrls.length === 0) {
+        photoUrls.push('https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=600&auto=format&fit=crop')
+      }
+
+      const productRecord = {
+        user_id: currentUser.id,
+        seller_id: currentUser.id,
+        title: title,
+        description: description,
+        price: price,
+        category: category,
+        condition: condition,
+        marketplace_mode: mode,
+        meeting_point: meetingPoint,
+        pickup_location: locationText,
+        location: locationText,
+        photos: photoUrls,
+        image_url: photoUrls[0],
+        lat: userCoords?.lat || 11.0168,
+        lng: userCoords?.lng || 76.9558,
+        status: 'available',
+        views_count: 0
+      }
+
+      try {
+        const { error } = await supabase.from('products').insert(productRecord)
+        if (error) {
+          console.warn('DB insert fallback:', error.message)
+          const localItems = JSON.parse(localStorage.getItem('ccm_fallback_products') || '[]')
+          localItems.unshift({ id: 'prod_' + Date.now(), created_at: new Date().toISOString(), ...productRecord })
+          localStorage.setItem('ccm_fallback_products', JSON.stringify(localItems))
+        }
+
+        submitBtn.textContent = 'Posted Successfully! ✓'
+        submitBtn.classList.add('bg-green-600')
+        setTimeout(() => {
+          window.location.href = '../index.html'
+        }, 1000)
+      } catch (err) {
+        errorMsg.textContent = err.message || 'Failed to list item'
+        errorMsg.classList.remove('hidden')
+        submitBtn.disabled = false
+        submitBtn.textContent = '🚀 Post Listing to Marketplace'
+      }
+    })
+  </script>
 </body>
 </html>

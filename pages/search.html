@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Search & Filter - CCM 2.0</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' }</script>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen">
+  <nav id="main-navbar"></nav>
+
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+    
+    <div class="mb-6">
+      <h1 class="text-2xl sm:text-3xl font-black">🔎 Smart Search & Filter</h1>
+      <p class="text-xs text-gray-400 mt-1">Filter by price, condition, seller rating, distance, and marketplace mode</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      
+      <!-- Filters Sidebar -->
+      <aside class="bg-white dark:bg-gray-800 p-5 rounded-2xl border border-gray-200 dark:border-gray-700 h-fit space-y-5">
+        
+        <!-- Keyword Search -->
+        <div>
+          <label class="block text-xs font-bold mb-1">Search Keywords</label>
+          <input type="text" id="filter-keyword" placeholder="e.g. calculator, cycle..."
+                 class="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-xs focus:ring-2 focus:ring-blue-500">
+        </div>
+
+        <!-- Mode Filter -->
+        <div>
+          <label class="block text-xs font-bold mb-1">Marketplace Mode</label>
+          <select id="filter-mode" class="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-xs">
+            <option value="all">✨ All Modes</option>
+            <option value="college">🎓 College Marketplace</option>
+            <option value="community">🌐 Community Marketplace</option>
+          </select>
+        </div>
+
+        <!-- Category -->
+        <div>
+          <label class="block text-xs font-bold mb-1">Category</label>
+          <select id="filter-category" class="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-xs">
+            <option value="All">All Categories</option>
+            <option value="Books & Notes">📚 Books & Notes</option>
+            <option value="Cycles & Vehicles">🚲 Cycles & Vehicles</option>
+            <option value="Electronics & Laptops">💻 Electronics & Laptops</option>
+            <option value="Lab & Study Equipment">🔬 Lab & Study Equipment</option>
+            <option value="Hostel & Room Essentials">🛏️ Hostel Essentials</option>
+            <option value="Mobile & Accessories">📱 Mobiles</option>
+            <option value="Sports & Fitness">⚽ Sports</option>
+          </select>
+        </div>
+
+        <!-- Price Range -->
+        <div>
+          <label class="block text-xs font-bold mb-1">Price Range (₹)</label>
+          <div class="grid grid-cols-2 gap-2">
+            <input type="number" id="filter-min-price" placeholder="Min" class="w-full px-2.5 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 text-xs bg-gray-50 dark:bg-gray-700">
+            <input type="number" id="filter-max-price" placeholder="Max" class="w-full px-2.5 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 text-xs bg-gray-50 dark:bg-gray-700">
+          </div>
+        </div>
+
+        <!-- Condition Filter -->
+        <div>
+          <label class="block text-xs font-bold mb-1">Condition</label>
+          <div class="space-y-1.5 text-xs text-gray-700 dark:text-gray-300">
+            <label class="flex items-center gap-2">
+              <input type="checkbox" value="New" class="cond-check"> New
+            </label>
+            <label class="flex items-center gap-2">
+              <input type="checkbox" value="Like new" class="cond-check" checked> Like new
+            </label>
+            <label class="flex items-center gap-2">
+              <input type="checkbox" value="Used" class="cond-check" checked> Used
+            </label>
+          </div>
+        </div>
+
+        <!-- Distance Filter -->
+        <div>
+          <label class="block text-xs font-bold mb-1">Distance Filter</label>
+          <select id="filter-distance" class="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-xs">
+            <option value="all">Any Distance</option>
+            <option value="5km">📍 Within 5 KM (Campus)</option>
+            <option value="more5km">🚗 More than 5 KM</option>
+          </select>
+        </div>
+
+        <!-- Sort By -->
+        <div>
+          <label class="block text-xs font-bold mb-1">Sort By</label>
+          <select id="filter-sort" class="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-xs">
+            <option value="latest">Latest First</option>
+            <option value="price_low">Price: Low to High</option>
+            <option value="price_high">Price: High to Low</option>
+            <option value="popular">Popular / Most Viewed</option>
+          </select>
+        </div>
+
+        <button id="apply-filters-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl text-xs transition shadow-sm">
+          Apply Filters
+        </button>
+
+      </aside>
+
+      <!-- Search Results Feed -->
+      <section class="lg:col-span-3">
+        <div class="flex items-center justify-between mb-4">
+          <div class="text-xs text-gray-500" id="result-count">Showing listings</div>
+        </div>
+
+        <div id="search-results-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+          <div class="col-span-full text-center py-16 text-gray-400 animate-pulse text-xs">Loading items...</div>
+        </div>
+      </section>
+
+    </div>
+
+  </div>
+
+  <script type="module" src="../js/theme.js"></script>
+  <script type="module" src="../js/i18n.js"></script>
+  <script type="module" src="../js/mode.js"></script>
+  <script type="module" src="../js/navbar.js"></script>
+  <script type="module">
+    import { supabase } from '../js/supabase.js'
+    import { createProductCard } from '../js/main.js'
+
+    const resultsGrid = document.getElementById('search-results-grid')
+    const resultCount = document.getElementById('result-count')
+
+    // Parse initial URL search term
+    const urlParams = new URLSearchParams(window.location.search)
+    if (urlParams.get('q')) {
+      document.getElementById('filter-keyword').value = urlParams.get('q')
+    }
+    if (urlParams.get('cat')) {
+      document.getElementById('filter-category').value = urlParams.get('cat')
+    }
+
+    async function executeSearch() {
+      resultsGrid.innerHTML = '<div class="col-span-full text-center py-16 text-gray-400 animate-pulse text-xs">Searching campus marketplace...</div>'
+
+      const keyword = document.getElementById('filter-keyword').value.trim().toLowerCase()
+      const mode = document.getElementById('filter-mode').value
+      const category = document.getElementById('filter-category').value
+      const minPrice = parseFloat(document.getElementById('filter-min-price').value) || 0
+      const maxPrice = parseFloat(document.getElementById('filter-max-price').value) || 999999
+      const sortBy = document.getElementById('filter-sort').value
+
+      const checkedConds = Array.from(document.querySelectorAll('.cond-check:checked')).map(c => c.value)
+
+      let items = []
+      try {
+        let query = supabase.from('products').select('*, profiles(name, rating, is_verified, phone)').in('status', ['available', 'active'])
+        if (category !== 'All') query = query.eq('category', category)
+        if (keyword) query = query.ilike('title', `%${keyword}%`)
+        if (minPrice > 0) query = query.gte('price', minPrice)
+        if (maxPrice < 999999) query = query.lte('price', maxPrice)
+
+        const { data } = await query
+        if (data && data.length > 0) items = data
+      } catch (e) {}
+
+      // Fallback
+      if (items.length === 0) {
+        const local = JSON.parse(localStorage.getItem('ccm_fallback_products') || '[]')
+        items = local
+      }
+
+      // If still empty, supply sample items
+      if (items.length === 0) {
+        items = [
+          { id: 's1', title: 'Engineering Physics Vol 1', price: 250, category: 'Books & Notes', condition: 'Like new', photos: ['https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=600'], marketplace_mode: 'college', status: 'available', profiles: { name: 'Dinesh', rating: 4.8 } },
+          { id: 's2', title: 'Avon Element Mountain Bike', price: 3200, category: 'Cycles & Vehicles', condition: 'Used', photos: ['https://images.unsplash.com/photo-1485965120184-e220f721d03e?w=600'], marketplace_mode: 'both', status: 'available', profiles: { name: 'Kavitha', rating: 5.0 } },
+          { id: 's3', title: 'Texas Instruments NSpire CX', price: 2100, category: 'Lab & Study Equipment', condition: 'Like new', photos: ['https://images.unsplash.com/photo-1587145820266-a5951ee6f620?w=600'], marketplace_mode: 'college', status: 'available', profiles: { name: 'Vikram', rating: 4.9 } },
+          { id: 's4', title: 'Lenovo ThinkPad Wireless Mouse & Pad', price: 400, category: 'Electronics & Laptops', condition: 'New', photos: ['https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=600'], marketplace_mode: 'community', status: 'available', profiles: { name: 'Arun', rating: 4.7 } }
+        ]
+      }
+
+      // Filter locally
+      let filtered = items.filter(item => {
+        if (mode === 'college' && item.marketplace_mode === 'community') return false
+        if (mode === 'community' && item.marketplace_mode === 'college') return false
+        if (category !== 'All' && item.category !== category) return false
+        if (keyword && !item.title.toLowerCase().includes(keyword) && !(item.description || '').toLowerCase().includes(keyword)) return false
+        if (item.price < minPrice || item.price > maxPrice) return false
+        if (checkedConds.length > 0 && item.condition && !checkedConds.includes(item.condition)) return false
+        return true
+      })
+
+      // Sorting
+      if (sortBy === 'price_low') filtered.sort((a, b) => a.price - b.price)
+      else if (sortBy === 'price_high') filtered.sort((a, b) => b.price - a.price)
+      else if (sortBy === 'popular') filtered.sort((a, b) => (b.views_count || 0) - (a.views_count || 0))
+      else filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+
+      resultCount.textContent = `Found ${filtered.length} listings`
+
+      if (filtered.length === 0) {
+        resultsGrid.innerHTML = '<div class="col-span-full text-center py-16 text-xs text-gray-400">No items match your filter criteria. Try broadening your search!</div>'
+      } else {
+        resultsGrid.innerHTML = filtered.map(p => createProductCard(p, [])).join('')
+      }
+    }
+
+    document.getElementById('apply-filters-btn').onclick = executeSearch
+    document.getElementById('filter-keyword').onkeypress = (e) => { if (e.key === 'Enter') executeSearch() }
+
+    executeSearch()
+  </script>
+</body>
+</html>

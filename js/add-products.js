@@ -11,28 +11,28 @@ const submitBtn = document.getElementById('submit-btn')
 let selectedLocation = null
 let photoFiles = []
 
-// 1. Check login - illana login page anupu
+// 1. Check login 
 const { data: { user } } = await supabase.auth.getUser()
 if (!user) {
   alert('Login panni thaan item post panna mudiyum da')
   window.location.href = 'login.html'
 }
 
-// 2. Photo Preview - ANIMATIONS ADD PANNITEN
+// 2. Photo Preview 
 photoInput.addEventListener('change', () => {
   photoFiles = Array.from(photoInput.files).slice(0, 4) // Max 4
   photoPreview.innerHTML = ''
   photoFiles.forEach((file, index) => {
     const img = document.createElement('img')
     img.src = URL.createObjectURL(file)
-    // 🔥 hover-scale animate-scale-in add panniten
+    
     img.className = 'w-20 h-20 object-cover rounded-lg hover-scale animate-scale-in cursor-pointer'
-    img.style.animationDelay = `${index * 0.1}s` // Oru oru photo kum delay
+    img.style.animationDelay = `${index * 0.1}s`
     photoPreview.appendChild(img)
   })
 })
 
-// 3. GPS Location - ANIMATION ADD PANNITEN
+// 3. GPS Location 
 getLocationBtn.addEventListener('click', () => {
   if (navigator.geolocation) {
     locationText.textContent = 'Getting location...'
@@ -80,14 +80,14 @@ form.addEventListener('submit', async (e) => {
       
       if (error) throw error
       
-      // Public URL eduthuko
+      // Public URL 
       const { data: { publicUrl } } = supabase.storage
         .from('product-images')
         .getPublicUrl(fileName)
       photoUrls.push(publicUrl)
     }
 
-    // 4b. Product data DB la save pannu
+    
     
     console.log("User:", user);
     console.log("User ID:", user.id);

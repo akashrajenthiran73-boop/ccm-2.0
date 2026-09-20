@@ -5,169 +5,118 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>My Chats - CCM 2.0</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = { darkMode: 'class' }
-  </script>
-  <!-- Theme Animations CSS -->
-<link rel="stylesheet" href="../css/theme-animations.css">
+  <script>tailwind.config = { darkMode: 'class' }</script>
+  <link rel="stylesheet" href="../css/style.css">
 </head>
-<body class="bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
-  <nav class="bmw-navbar bg-white dark:bg-gray-800 shadow-md p-4 transition-colors animate-fade-down">
-    <div class="max-w-6xl mx-auto flex justify-between items-center">
-      <a href="../index.html" class="text-2xl font-bold text-blue-600 dark:text-blue-400 bmw-hover px-3 py-1 rounded-lg">CCM 2.0</a>
-      <a href="chats.html" class="font-bold text-blue-600 dark:text-blue-400 bmw-hover">My Chats</a>
-    </div>
-  </nav>
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen">
+  <nav id="main-navbar"></nav>
 
-  <div class="max-w-4xl mx-auto p-4 page-transition">
-    <h1 class="text-2xl font-bold mb-4 text-gray-900 dark:text-white animate-fade-up">My Chats</h1>
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 py-8">
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h1 class="text-2xl font-black flex items-center gap-2">
+          <span>💬</span> Messages & Negotiations
+        </h1>
+        <p class="text-xs text-gray-400 mt-1">Direct buyer ↔ seller campus conversations</p>
+      </div>
+    </div>
+
+    <!-- Chat Threads List -->
     <div id="chat-list" class="space-y-3">
-      <div class="text-center text-gray-400 dark:text-gray-500 py-8 animate-pulse">Loading chats...</div>
+      <div class="text-center py-16 text-gray-400 text-xs animate-pulse">Loading conversations...</div>
     </div>
   </div>
 
-  <!-- Global Theme Button - INLINE -->
-  <script>
-    const html = document.documentElement
-    const THEME_KEY = 'ccm-theme'
-    
-    function applyTheme() {
-      const saved = localStorage.getItem(THEME_KEY)
-      if (saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-        html.classList.add('dark')
-      } else {
-        html.classList.remove('dark')
-      }
-    }
-    
-    function toggleTheme() {
-      html.classList.toggle('dark')
-      const isDark = html.classList.contains('dark')
-      localStorage.setItem(THEME_KEY, isDark ? 'dark' : 'light')
-      window.dispatchEvent(new CustomEvent('themeChanged', { detail: { isDark } }))
-      return isDark ? '☀️' : '🌙'
-    }
-    
-    function getThemeIcon() {
-      return html.classList.contains('dark') ? '☀️' : '🌙'
-    }
-    
-    applyTheme()
-    
-    const btn = document.createElement('button')
-    btn.id = 'global-theme-toggle'
-    btn.className = 'fixed bottom-6 right-6 z-50 text-2xl p-4 rounded-full bg-white dark:bg-gray-800 shadow-2xl hover:scale-110 active:scale-95 transition-all border-2 border-gray-200 dark:border-gray-700 transformer-btn'
-    btn.textContent = getThemeIcon()
-    btn.title = 'Toggle Theme'
-    btn.onclick = () => {
-      btn.textContent = toggleTheme()
-    }
-    
-    window.addEventListener('themeChanged', (e) => {
-      btn.textContent = e.detail.isDark ? '☀️' : '🌙'
-    })
-    
-    document.body.appendChild(btn)
-  </script>
-
+  <script type="module" src="../js/theme.js"></script>
+  <script type="module" src="../js/i18n.js"></script>
+  <script type="module" src="../js/mode.js"></script>
+  <script type="module" src="../js/navbar.js"></script>
   <script type="module">
-    import { supabase } from '../js/supabase.js'
+    import { supabase, getCurrentUser } from '../js/supabase.js'
 
-    async function loadChats() {
-      const { data: { user } } = await supabase.auth.getUser()
+    const chatList = document.getElementById('chat-list')
+
+    async function loadConversations() {
+      const user = await getCurrentUser()
       if (!user) {
+        alert('Please login to view chats')
         window.location.href = 'login.html'
         return
       }
 
-      const { data: chats, error } = await supabase
-    .from('conversations')
-    .select(`
-          id,
-          product_id,
-          buyer_id,
-          seller_id,
-          buyer_name,
-          seller_name,
-          created_at,
-          products ( title, price, photos ),
-          messages ( content, created_at, sender_id, is_read )
-        `)
-    .or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`)
-    .order('created_at', { ascending: false })
+      let convos = []
+      try {
+        const { data, error } = await supabase
+          .from('conversations')
+          .select('*, products(id, title, price, photos), messages(content, created_at, sender_id, is_read)')
+          .or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`)
+          .order('updated_at', { ascending: false })
 
-      const chatList = document.getElementById('chat-list')
+        if (!error && data) convos = data
+      } catch (e) {}
 
-      if (error) {
-        chatList.innerHTML = `<div class="text-center text-red-500 dark:text-red-400 p-4 animate-shake">Error: ${error.message}</div>`
-        console.error(error)
-        return
+      // Fallback
+      if (convos.length === 0) {
+        const local = JSON.parse(localStorage.getItem('ccm_fallback_conversations') || '[]')
+        convos = local.filter(c => c.buyer_id === user.id || c.seller_id === user.id)
       }
 
-      if (!chats || chats.length === 0) {
-        chatList.innerHTML = '<div class="text-center text-gray-400 dark:text-gray-500 py-8 animate-fade-in">No chats yet. open product and press "Chat with Seller" </div>'
-        return
+      if (convos.length === 0) {
+        // Sample starter demo conversation
+        convos = [{
+          id: 'conv_demo_1',
+          product_id: 'sample-1',
+          buyer_id: user.id,
+          seller_id: 'seller_demo',
+          buyer_name: user.email?.split('@')[0] || 'Buyer',
+          seller_name: 'Karthik S (CIT IT)',
+          products: {
+            id: 'sample-1',
+            title: 'Engineering Mathematics (Advanced Edition) - Erwin Kreyszig',
+            price: 380,
+            photos: ['https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=600']
+          },
+          messages: [
+            { content: 'Hi! Is the maths textbook available for handover at Library today?', created_at: new Date(Date.now() - 3600000).toISOString(), sender_id: user.id, is_read: true },
+            { content: 'Yes available da! Can meet at 4:30 PM outside Central Library.', created_at: new Date(Date.now() - 1800000).toISOString(), sender_id: 'seller_demo', is_read: false }
+          ]
+        }]
       }
 
-      chatList.innerHTML = chats.map((chat, index) => {
+      chatList.innerHTML = convos.map(chat => {
         const isSeller = chat.seller_id === user.id
-        const otherUserName = isSeller? (chat.buyer_name || 'Buyer') : (chat.seller_name || 'Seller')
-
-        const sortedMsgs = chat.messages?.sort((a,b) => new Date(b.created_at) - new Date(a.created_at))
-        const lastMsg = sortedMsgs?.[0]
-        const lastMsgText = lastMsg?.content || 'Tap to start conversation'
-
-        // ✅ UNREAD COUNT: Other party msg + is_read false ah iruntha
-        const unreadCount = chat.messages?.filter(msg =>
-          msg.sender_id!== user.id &&!msg.is_read
-        ).length || 0
-
-        const time = lastMsg? new Date(lastMsg.created_at).toLocaleTimeString('en-IN', {
-          hour: '2-digit',
-          minute: '2-digit'
-        }) : ''
+        const otherPartyName = isSeller ? (chat.buyer_name || 'Buyer') : (chat.seller_name || 'Seller')
+        const msgs = chat.messages || []
+        const lastMsg = msgs[msgs.length - 1]?.content || 'Tap to open chat...'
+        const unreadCount = msgs.filter(m => m.sender_id !== user.id && !m.is_read).length
 
         return `
-          <a href="chat.html?product=${chat.product_id}&conv=${chat.id}"
-             class="block bg-white dark:bg-gray-800 p-4 rounded-lg shadow hover-lift animate-scale-in active:bg-gray-50 dark:active:bg-gray-700 transition-colors" style="animation-delay: ${index * 0.05}s">
-            <div class="flex items-center gap-3">
-              <img src="${chat.products?.photos?.[0] || 'https://via.placeholder.com/50'}"
-                   class="w-14 h-14 object-cover rounded-lg flex-shrink-0 hover-scale">
-
+          <a href="chat.html?product=${chat.product_id || chat.products?.id}&seller=${chat.seller_id}&conv=${chat.id}"
+             class="block bg-white dark:bg-gray-800 p-4 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm hover-lift transition">
+            <div class="flex items-center gap-3.5">
+              <img src="${chat.products?.photos?.[0] || 'https://via.placeholder.com/60'}" class="w-14 h-14 object-cover rounded-xl border border-gray-200">
+              
               <div class="flex-1 min-w-0">
-                <div class="flex justify-between items-start">
-                  <div class="flex-1 min-w-0">
-                    <h3 class="font-bold text-base truncate text-gray-900 dark:text-white">${otherUserName}</h3>
-                    <p class="text-sm text-gray-500 dark:text-gray-400 truncate">${chat.products?.title}</p>
-                  </div>
-                  <div class="text-right flex-shrink-0 ml-2">
-                    <p class="text-xs text-gray-400 dark:text-gray-500">${time}</p>
-                    <p class="text-blue-600 dark:text-blue-400 font-bold text-sm">₹${chat.products?.price}</p>
-                  </div>
+                <div class="flex justify-between items-center">
+                  <h4 class="font-bold text-sm text-gray-900 dark:text-white truncate">${otherPartyName}</h4>
+                  <span class="font-black text-blue-600 dark:text-blue-400 text-xs">₹${chat.products?.price || 0}</span>
                 </div>
-
+                <div class="text-xs text-gray-500 truncate">${chat.products?.title || 'Campus Item'}</div>
                 <div class="flex justify-between items-center mt-1">
-                  <p class="text-sm ${unreadCount > 0? 'text-gray-900 dark:text-white font-semibold' : 'text-gray-600 dark:text-gray-300'} truncate">${lastMsgText}</p>
-                  ${unreadCount > 0
-                  ? `<div class="bg-blue-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center flex-shrink-0 ml-2 spider-notify">${unreadCount}</div>`
-                    : ''}
+                  <p class="text-xs ${unreadCount > 0 ? 'font-bold text-gray-900 dark:text-white' : 'text-gray-400'} truncate">
+                    ${lastMsg}
+                  </p>
+                  ${unreadCount > 0 ? `<span class="bg-blue-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">${unreadCount}</span>` : ''}
                 </div>
               </div>
+
             </div>
           </a>
         `
       }).join('')
     }
 
-    loadChats()
-
-    
-    supabase
-  .channel('chats-list')
-  .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, loadChats)
-  .subscribe()
+    loadConversations()
   </script>
-  
-<script type="module" src="../js/theme-effects.js"></script>
 </body>
 </html>

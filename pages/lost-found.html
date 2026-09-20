@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Campus Lost & Found - CCM 2.0</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' }</script>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen">
+  <nav id="main-navbar"></nav>
+
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+    
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+      <div>
+        <h1 class="text-2xl sm:text-3xl font-black flex items-center gap-2">
+          <span>🔍</span> Campus Lost & Found Portal
+        </h1>
+        <p class="text-xs text-gray-400 mt-1">
+          Report misplaced student ID cards, notebooks, keys, and tech gear across campus
+        </p>
+      </div>
+
+      <!-- Action Button -->
+      <button id="open-report-modal" class="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow transition">
+        + Report Lost or Found Item
+      </button>
+    </div>
+
+    <!-- Mode Tabs: Lost vs Found -->
+    <div class="flex items-center bg-gray-200 dark:bg-gray-800 p-1 rounded-xl text-xs font-bold w-fit mb-6">
+      <button id="tab-found" class="px-4 py-2 rounded-lg bg-emerald-600 text-white shadow transition">
+        🟢 Items Found (Claim Here)
+      </button>
+      <button id="tab-lost" class="px-4 py-2 rounded-lg text-gray-600 dark:text-gray-300 hover:text-blue-600 transition">
+        🔴 Items Reported Lost
+      </button>
+    </div>
+
+    <!-- Lost & Found Grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5" id="lf-grid">
+      <div class="col-span-full text-center py-16 text-xs text-gray-400">Loading lost and found items...</div>
+    </div>
+
+  </div>
+
+  <!-- Report Item Modal -->
+  <div id="report-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl max-w-md w-full shadow-2xl space-y-4">
+      <h3 class="text-base font-black">Report Item to Lost & Found</h3>
+      
+      <div>
+        <label class="block text-xs font-bold mb-1">Report Type *</label>
+        <div class="grid grid-cols-2 gap-2 text-xs font-bold">
+          <label class="p-2.5 border rounded-xl flex items-center gap-2 cursor-pointer">
+            <input type="radio" name="lf-type" value="found" checked> 🟢 I Found an Item
+          </label>
+          <label class="p-2.5 border rounded-xl flex items-center gap-2 cursor-pointer">
+            <input type="radio" name="lf-type" value="lost"> 🔴 I Lost an Item
+          </label>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold mb-1">Item Title / Name *</label>
+        <input type="text" id="lf-title" required placeholder="e.g. Blue Titan Watch or College ID Badge"
+               class="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-xs">
+      </div>
+
+      <div class="grid grid-cols-2 gap-2">
+        <div>
+          <label class="block text-xs font-bold mb-1">Campus Location *</label>
+          <input type="text" id="lf-loc" required placeholder="e.g. Canteen Table 4"
+                 class="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-xs">
+        </div>
+        <div>
+          <label class="block text-xs font-bold mb-1">Date *</label>
+          <input type="date" id="lf-date" class="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-xs">
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold mb-1">Description & Distinguishing Marks</label>
+        <textarea id="lf-desc" rows="2" placeholder="Color, brand, contents, where it is deposited..."
+                  class="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-xs"></textarea>
+      </div>
+
+      <div class="flex gap-2 pt-2">
+        <button id="close-modal-btn" class="flex-1 py-2.5 bg-gray-100 dark:bg-gray-700 text-xs font-bold rounded-xl">Cancel</button>
+        <button id="submit-lf-btn" class="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow">Submit Report</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="../js/theme.js"></script>
+  <script type="module" src="../js/i18n.js"></script>
+  <script type="module" src="../js/mode.js"></script>
+  <script type="module" src="../js/navbar.js"></script>
+  <script type="module">
+    import { supabase, getCurrentUser, safeDbInsert } from '../js/supabase.js'
+
+    let currentUser = null
+    let activeType = 'found'
+
+    const SAMPLE_LF_ITEMS = [
+      { id: 'lf-1', type: 'found', title: 'College Student ID Card (CIT ECE)', location: 'Central Library 2nd Floor', date: '2026-09-19', description: 'Belongs to Roll 22EC089. Handed over to Library Security Desk.', photo: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400' },
+      { id: 'lf-2', type: 'found', title: 'Stainless Steel Water Flask (Milton 1L)', location: 'Physics Lab Bench 6', date: '2026-09-18', description: 'Silver finish with Marvel sticker. In EEE Dept Staff Room.', photo: 'https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=400' },
+      { id: 'lf-3', type: 'lost', title: 'Black HP USB-C Laptop Charger 65W', location: 'Canteen Reading Room', date: '2026-09-20', description: 'Has red tape mark near adapter pin. Reward for return!', photo: 'https://images.unsplash.com/photo-1583863788434-e58a36330cf0?w=400' }
+    ]
+
+    async function initLF() {
+      currentUser = await getCurrentUser()
+      renderGrid()
+    }
+
+    function renderGrid() {
+      const grid = document.getElementById('lf-grid')
+      const stored = JSON.parse(localStorage.getItem('ccm_lf_items') || '[]')
+      const all = [...stored, ...SAMPLE_LF_ITEMS]
+
+      const filtered = all.filter(i => i.type === activeType)
+
+      if (filtered.length === 0) {
+        grid.innerHTML = `<div class="col-span-full text-center py-16 text-xs text-gray-400">No items reported under ${activeType.toUpperCase()}.</div>`
+        return
+      }
+
+      grid.innerHTML = filtered.map(item => `
+        <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 shadow-sm hover-lift flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${item.type === 'found' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}">
+                ${item.type === 'found' ? '🟢 FOUND ITEM' : '🔴 REPORTED LOST'}
+              </span>
+              <span class="text-[10px] text-gray-400">${item.date || 'Recent'}</span>
+            </div>
+
+            <h4 class="font-bold text-sm text-gray-900 dark:text-white">${item.title}</h4>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">${item.description}</p>
+
+            <div class="mt-3 p-2 bg-gray-50 dark:bg-gray-750 rounded-xl text-[11px] text-gray-500">
+              📍 Location: <b class="text-gray-700 dark:text-gray-300">${item.location}</b>
+            </div>
+          </div>
+
+          <div class="mt-4 pt-3 border-t border-gray-100 dark:border-gray-700">
+            ${item.type === 'found' ? `
+              <button onclick="claimItem('${item.title}')" class="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow transition">
+                🙋 This is Mine! (Claim Request)
+              </button>
+            ` : `
+              <button onclick="contactOwner('${item.title}')" class="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow transition">
+                💬 I Found This! (Contact)
+              </button>
+            `}
+          </div>
+        </div>
+      `).join('')
+    }
+
+    window.claimItem = (title) => {
+      if (!currentUser) {
+        alert('Please login to verify your claim with your College ID')
+        window.location.href = 'login.html'
+        return
+      }
+      alert(`Claim request registered for "${title}". Security desk / finder will verify your details.`)
+    }
+
+    window.contactOwner = (title) => {
+      alert(`Thank you for helping! We have notified the student who lost "${title}".`)
+    }
+
+    // Modal
+    document.getElementById('open-report-modal').onclick = () => {
+      document.getElementById('lf-date').value = new Date().toISOString().split('T')[0]
+      document.getElementById('report-modal').classList.remove('hidden')
+    }
+    document.getElementById('close-modal-btn').onclick = () => {
+      document.getElementById('report-modal').classList.add('hidden')
+    }
+
+    document.getElementById('submit-lf-btn').onclick = () => {
+      const title = document.getElementById('lf-title').value.trim()
+      const loc = document.getElementById('lf-loc').value.trim()
+      const desc = document.getElementById('lf-desc').value.trim()
+      const date = document.getElementById('lf-date').value
+      const type = document.querySelector('input[name="lf-type"]:checked').value
+
+      if (!title || !loc) {
+        alert('Please fill out title and location')
+        return
+      }
+
+      const item = { id: 'lf-' + Date.now(), type, title, location: loc, description: desc, date }
+      const list = JSON.parse(localStorage.getItem('ccm_lf_items') || '[]')
+      list.unshift(item)
+      localStorage.setItem('ccm_lf_items', JSON.stringify(list))
+
+      alert('Item reported to Campus Lost & Found!')
+      document.getElementById('report-modal').classList.add('hidden')
+      renderGrid()
+    }
+
+    // Tabs
+    document.getElementById('tab-found').onclick = () => {
+      activeType = 'found'
+      document.getElementById('tab-found').className = 'px-4 py-2 rounded-lg bg-emerald-600 text-white shadow transition'
+      document.getElementById('tab-lost').className = 'px-4 py-2 rounded-lg text-gray-600 dark:text-gray-300 hover:text-blue-600 transition'
+      renderGrid()
+    }
+    document.getElementById('tab-lost').onclick = () => {
+      activeType = 'lost'
+      document.getElementById('tab-lost').className = 'px-4 py-2 rounded-lg bg-red-600 text-white shadow transition'
+      document.getElementById('tab-found').className = 'px-4 py-2 rounded-lg text-gray-600 dark:text-gray-300 hover:text-blue-600 transition'
+      renderGrid()
+    }
+
+    initLF()
+  </script>
+</body>
+</html>

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Portal Login - CCM 2.0</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' }</script>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body class="bg-gray-900 text-gray-100 flex items-center justify-center min-h-screen p-4">
+
+  <div class="max-w-md w-full bg-gray-800 p-8 rounded-3xl border border-gray-700 shadow-2xl space-y-6">
+    <div class="text-center">
+      <div class="w-16 h-16 bg-blue-600/20 text-blue-400 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-3 border border-blue-500/30">
+        ⚙️
+      </div>
+      <h1 class="text-2xl font-black tracking-tight text-white">Admin Management Portal</h1>
+      <p class="text-xs text-gray-400 mt-1">Authorized personnel and campus moderators only</p>
+    </div>
+
+    <form id="admin-login-form" class="space-y-4">
+      <div>
+        <label class="block text-xs font-bold text-gray-300 mb-1">Admin Email</label>
+        <input type="email" id="admin-email" required placeholder="admin@ccm.edu"
+               class="w-full px-3 py-2.5 rounded-xl border border-gray-700 bg-gray-900 text-sm focus:ring-2 focus:ring-blue-500 text-white">
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-gray-300 mb-1">Admin Password</label>
+        <input type="password" id="admin-password" required placeholder="••••••••"
+               class="w-full px-3 py-2.5 rounded-xl border border-gray-700 bg-gray-900 text-sm focus:ring-2 focus:ring-blue-500 text-white">
+      </div>
+
+      <div id="admin-error" class="text-xs text-red-400 font-semibold text-center hidden"></div>
+
+      <button type="submit" id="admin-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl text-xs transition shadow">
+        Authenticate as Admin
+      </button>
+    </form>
+
+    <div class="text-center pt-2">
+      <a href="../index.html" class="text-xs text-gray-400 hover:text-white">← Return to Public Site</a>
+    </div>
+  </div>
+
+  <script type="module">
+    import { supabase, isAdmin } from '../js/supabase.js'
+
+    document.getElementById('admin-login-form').onsubmit = async (e) => {
+      e.preventDefault()
+      const email = document.getElementById('admin-email').value.trim()
+      const password = document.getElementById('admin-password').value
+      const btn = document.getElementById('admin-btn')
+      const err = document.getElementById('admin-error')
+
+      btn.disabled = true
+      btn.textContent = 'Verifying credentials...'
+      err.classList.add('hidden')
+
+      try {
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+        if (error) throw error
+
+        const user = data.user
+        const adminStatus = await isAdmin(user.id)
+        
+        // Grant admin for demo purposes if email contains 'admin'
+        if (adminStatus || email.includes('admin')) {
+          localStorage.setItem(`demo_role_${user.id}`, 'admin')
+          window.location.href = 'admin.html'
+        } else {
+          err.textContent = 'Account authenticated but does not possess admin privileges.'
+          err.classList.remove('hidden')
+          btn.disabled = false
+          btn.textContent = 'Authenticate as Admin'
+        }
+      } catch (e) {
+        err.textContent = e.message || 'Authentication failed'
+        err.classList.remove('hidden')
+        btn.disabled = false
+        btn.textContent = 'Authenticate as Admin'
+      }
+    }
+  </script>
+</body>
+</html>

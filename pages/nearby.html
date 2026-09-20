@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nearby Marketplace & Campus Map - CCM 2.0</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' }</script>
+  <link rel="stylesheet" href="../css/style.css">
+  
+  <!-- Leaflet CSS & JS for Interactive Campus Map -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    #campus-map { height: 400px; width: 100%; border-radius: 1rem; z-index: 10; }
+  </style>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen">
+  <nav id="main-navbar"></nav>
+
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+    
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+      <div>
+        <h1 class="text-2xl sm:text-3xl font-black flex items-center gap-2">
+          <span>📍</span> Nearby Marketplace & Campus Map
+        </h1>
+        <p class="text-xs text-gray-400 mt-1">
+          Explore items available within campus radius & designated safe meeting points
+        </p>
+      </div>
+
+      <!-- Radius Filter Pills -->
+      <div class="flex items-center gap-2 bg-white dark:bg-gray-800 p-1.5 rounded-2xl border border-gray-200 dark:border-gray-700 text-xs font-bold">
+        <button id="rad-all" class="px-3 py-1.5 rounded-xl bg-blue-600 text-white shadow-sm transition">All Items</button>
+        <button id="rad-5km" class="px-3 py-1.5 rounded-xl text-gray-600 dark:text-gray-300 hover:text-blue-600 transition">📍 Within 5 KM</button>
+        <button id="rad-more" class="px-3 py-1.5 rounded-xl text-gray-600 dark:text-gray-300 hover:text-blue-600 transition">More than 5 KM</button>
+      </div>
+    </div>
+
+    <!-- Map Container -->
+    <div class="bg-white dark:bg-gray-800 p-4 rounded-3xl shadow-sm border border-gray-200 dark:border-gray-700 mb-8">
+      <div class="flex items-center justify-between mb-3 text-xs">
+        <div class="font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+          <span class="w-3 h-3 rounded-full bg-blue-600 inline-block"></span> Campus Landmarks & Meeting Points
+          <span class="w-3 h-3 rounded-full bg-emerald-500 inline-block ml-3"></span> Active Product Locations
+        </div>
+        <button id="detect-loc-btn" class="px-3 py-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 rounded-lg font-semibold flex items-center gap-1">
+          <span>🎯</span> Locate Me
+        </button>
+      </div>
+      <div id="campus-map"></div>
+    </div>
+
+    <!-- Nearby Products Feed -->
+    <div class="mb-4 flex items-center justify-between">
+      <h3 class="font-black text-lg">Nearby Items for Pickup</h3>
+      <span class="text-xs text-gray-400" id="nearby-count">Calculating distances...</span>
+    </div>
+
+    <div id="nearby-products-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
+      <div class="col-span-full text-center py-12 text-xs text-gray-400">Loading nearby listings...</div>
+    </div>
+
+  </div>
+
+  <script type="module" src="../js/theme.js"></script>
+  <script type="module" src="../js/i18n.js"></script>
+  <script type="module" src="../js/mode.js"></script>
+  <script type="module" src="../js/navbar.js"></script>
+  <script type="module">
+    import { supabase } from '../js/supabase.js'
+    import { createProductCard } from '../js/main.js'
+
+    // Campus base coordinates (Coimbatore Campus)
+    const CAMPUS_COORDS = [11.0270, 77.0275]
+    let map = null
+    let userMarker = null
+    let userCoords = { lat: 11.0270, lng: 77.0275 }
+    let radiusFilter = 'all'
+
+    // Safe Campus Meeting Points
+    const CAMPUS_POINTS = [
+      { name: 'Campus Main Gate', coords: [11.0275, 77.0260], icon: '🚪', desc: 'Security monitored campus entrance' },
+      { name: 'Central Library Front', coords: [11.0282, 77.0280], icon: '📚', desc: 'Central study hall lobby' },
+      { name: 'Campus Canteen / Food Court', coords: [11.0260, 77.0290], icon: '☕', desc: 'Open cafeteria seating' },
+      { name: 'Hostel Block 3 Entrance', coords: [11.0295, 77.0300], icon: '🏢', desc: 'Hostel security desk' }
+    ]
+
+    // Sample Nearby Items
+    const NEARBY_SAMPLE_ITEMS = [
+      { id: 'nb-1', title: 'Calculus & Linear Algebra Textbook', price: 300, category: 'Books & Notes', condition: 'Like new', coords: [11.0278, 77.0270], meeting_point: 'Central Library', photos: ['https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=600'], marketplace_mode: 'college', status: 'available', profiles: { name: 'Sanjay M', rating: 5.0 } },
+      { id: 'nb-2', title: 'Firefox Geared Bicycle (Dual Disc)', price: 3900, category: 'Cycles & Vehicles', condition: 'Used', coords: [11.0265, 77.0255], meeting_point: 'Main Gate', photos: ['https://images.unsplash.com/photo-1485965120184-e220f721d03e?w=600'], marketplace_mode: 'both', status: 'available', profiles: { name: 'Praveen K', rating: 4.8 } },
+      { id: 'nb-3', title: 'Digital Multimeter & Soldering Kit', price: 550, category: 'Lab & Study Equipment', condition: 'New', coords: [11.0290, 77.0285], meeting_point: 'Department Office', photos: ['https://images.unsplash.com/photo-1587145820266-a5951ee6f620?w=600'], marketplace_mode: 'college', status: 'available', profiles: { name: 'Revathi S', rating: 4.9 } },
+      { id: 'nb-4', title: 'Hostel Room Cooler 20L', price: 1600, category: 'Hostel & Room Essentials', condition: 'Used', coords: [11.0600, 77.0500], meeting_point: 'Off-campus PG', photos: ['https://images.unsplash.com/photo-1518455027359-f3f8164ba6bd?w=600'], marketplace_mode: 'community', status: 'available', profiles: { name: 'Anand T', rating: 4.6 } }
+    ]
+
+    // Haversine formula for distance in KM
+    function calculateDistance(lat1, lon1, lat2, lon2) {
+      const R = 6371
+      const dLat = (lat2 - lat1) * Math.PI / 180
+      const dLon = (lon2 - lon1) * Math.PI / 180
+      const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                Math.sin(dLon/2) * Math.sin(dLon/2)
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))
+      return R * c
+    }
+
+    function initMap() {
+      map = L.map('campus-map').setView(CAMPUS_COORDS, 15)
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+      }).addTo(map)
+
+      // Add Campus Landmarks
+      CAMPUS_POINTS.forEach(pt => {
+        L.marker(pt.coords).addTo(map).bindPopup(`
+          <div class="text-xs">
+            <b class="text-blue-600">${pt.icon} ${pt.name}</b><br>
+            <span class="text-gray-500">${pt.desc}</span>
+          </div>
+        `)
+      })
+
+      // Add Product Markers
+      NEARBY_SAMPLE_ITEMS.forEach(item => {
+        if (item.coords) {
+          L.circleMarker(item.coords, {
+            radius: 8,
+            fillColor: '#10B981',
+            color: '#059669',
+            weight: 2,
+            opacity: 1,
+            fillOpacity: 0.8
+          }).addTo(map).bindPopup(`
+            <div class="text-xs">
+              <b class="text-gray-900">${item.title}</b><br>
+              <span class="text-blue-600 font-bold">₹${item.price}</span><br>
+              <a href="product.html?id=${item.id}" class="text-blue-500 underline">View Item</a>
+            </div>
+          `)
+        }
+      })
+    }
+
+    function renderNearbyFeed() {
+      const grid = document.getElementById('nearby-products-grid')
+      const countEl = document.getElementById('nearby-count')
+
+      const itemsWithDist = NEARBY_SAMPLE_ITEMS.map(item => {
+        const d = calculateDistance(userCoords.lat, userCoords.lng, item.coords[0], item.coords[1])
+        return { ...item, distanceKm: d }
+      })
+
+      let filtered = itemsWithDist
+      if (radiusFilter === '5km') {
+        filtered = itemsWithDist.filter(i => i.distanceKm <= 5)
+      } else if (radiusFilter === 'more') {
+        filtered = itemsWithDist.filter(i => i.distanceKm > 5)
+      }
+
+      filtered.sort((a, b) => a.distanceKm - b.distanceKm)
+      countEl.textContent = `${filtered.length} items found nearby`
+
+      grid.innerHTML = filtered.map(item => {
+        const card = createProductCard(item, [])
+        // Inject distance pill
+        return card.replace(
+          '<!-- AI Badges -->',
+          `<div class="inline-flex items-center gap-1 px-2 py-0.5 mb-1 text-[10px] font-bold rounded bg-emerald-50 dark:bg-emerald-950 text-emerald-600 border border-emerald-200">📍 ${item.distanceKm.toFixed(1)} km from you</div>`
+        )
+      }).join('')
+    }
+
+    // Geolocation trigger
+    document.getElementById('detect-loc-btn').onclick = () => {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(pos => {
+          userCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude }
+          if (map) {
+            map.setView([userCoords.lat, userCoords.lng], 15)
+            if (userMarker) map.removeLayer(userMarker)
+            userMarker = L.marker([userCoords.lat, userCoords.lng]).addTo(map).bindPopup('<b>Your Current Location</b>').openPopup()
+          }
+          renderNearbyFeed()
+        })
+      }
+    }
+
+    // Radius Filter buttons
+    const radAll = document.getElementById('rad-all')
+    const rad5 = document.getElementById('rad-5km')
+    const radMore = document.getElementById('rad-more')
+
+    function setActiveRad(btn, type) {
+      [radAll, rad5, radMore].forEach(b => b.className = 'px-3 py-1.5 rounded-xl text-gray-600 dark:text-gray-300 hover:text-blue-600 transition')
+      btn.className = 'px-3 py-1.5 rounded-xl bg-blue-600 text-white shadow-sm transition'
+      radiusFilter = type
+      renderNearbyFeed()
+    }
+
+    radAll.onclick = () => setActiveRad(radAll, 'all')
+    rad5.onclick = () => setActiveRad(rad5, '5km')
+    radMore.onclick = () => setActiveRad(radMore, 'more')
+
+    initMap()
+    renderNearbyFeed()
+  </script>
+</body>
+</html>

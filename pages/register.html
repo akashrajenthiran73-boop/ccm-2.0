@@ -3,163 +3,288 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Register - CCM 2.0</title>
+  <title>Register - Campus Community Marketplace</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = { darkMode: 'class' }
-  </script>
-  <!-- Theme Animations CSS -->
-<link rel="stylesheet" href="../css/theme-animations.css">
+  <script>tailwind.config = { darkMode: 'class' }</script>
+  <link rel="stylesheet" href="../css/style.css">
 </head>
-<body class="bg-gray-50 dark:bg-gray-900 flex items-center justify-center min-h-screen transition-colors duration-200">
-  <div class="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-md w-full max-w-md hover-lift animate-scale-in transition-colors">
-    <h2 class="text-2xl font-bold text-center mb-6 text-blue-600 dark:text-blue-400 animate-fade-up">CCM 2.0 Signup</h2>
-    
-    <form id="register-form" class="space-y-4">
-      <input type="text" id="name" placeholder="Full Name" required 
-             class="w-full p-3 border dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 transition-all">
-      
-      <input type="email" id="email" placeholder="Email" required 
-             class="w-full p-3 border dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 transition-all">
-      
-      <input type="password" id="password" placeholder="Password min 6 chars" required 
-             class="w-full p-3 border dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 transition-all">
-      
-      <select id="user_type" required 
-              class="w-full p-3 border dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-all">
-        <option value="">Select Account Type</option>
-        <option value="student">Student - College Email</option>
-        <option value="local_seller">Local Seller - Phone OTP</option>
-      </select>
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen">
+  <nav id="main-navbar"></nav>
 
-      <input type="tel" id="phone" placeholder="Phone Number" 
-             class="w-full p-3 border dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 transition-all">
+  <div class="max-w-xl mx-auto px-4 py-8">
+    <div class="bg-white dark:bg-gray-800 p-6 sm:p-8 rounded-2xl shadow-md border border-gray-200 dark:border-gray-700">
+      
+      <div class="text-center mb-6">
+        <h2 class="text-2xl font-black text-blue-600 dark:text-blue-400">Join CCM 2.0</h2>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+          Create your account for College or Community Marketplace
+        </p>
+      </div>
 
-      <button type="submit" id="register-btn" class="transformer-btn bmw-hover w-full bg-blue-600 text-white p-3 rounded-lg font-semibold hover:bg-blue-700 active:scale-95 transition">
-        Create Account
-      </button>
-      <p id="error-msg" class="text-red-500 dark:text-red-400 text-sm text-center"></p>
-    </form>
+      <!-- Registration Type Tabs -->
+      <div class="flex border-b border-gray-200 dark:border-gray-700 mb-6 font-bold text-xs">
+        <button id="tab-student" class="flex-1 py-3 text-center border-b-2 border-blue-600 text-blue-600 dark:text-blue-400">
+          🎓 Student
+        </button>
+        <button id="tab-staff" class="flex-1 py-3 text-center border-b-2 border-transparent text-gray-500 hover:text-blue-600">
+          👨‍🏫 Staff
+        </button>
+        <button id="tab-community" class="flex-1 py-3 text-center border-b-2 border-transparent text-gray-500 hover:text-blue-600">
+          🌐 Community User
+        </button>
+      </div>
 
-    <p class="text-center mt-4 text-gray-600 dark:text-gray-300">
-      Already have account? <a href="login.html" class="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 bmw-hover">Login</a>
-    </p>
+      <form id="register-form" class="space-y-4">
+        <input type="hidden" id="user-type" value="student">
+
+        <!-- Common Fields -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold mb-1">Full Name *</label>
+            <input type="text" id="full-name" required placeholder="e.g. Akash Raj"
+                   class="w-full px-3 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-sm focus:ring-2 focus:ring-blue-500">
+          </div>
+          <div>
+            <label class="block text-xs font-bold mb-1">Username *</label>
+            <input type="text" id="username" required placeholder="e.g. akash_cit"
+                   class="w-full px-3 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-sm focus:ring-2 focus:ring-blue-500">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold mb-1">Email Address *</label>
+            <input type="email" id="email" required placeholder="name@college.edu or gmail"
+                   class="w-full px-3 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-sm focus:ring-2 focus:ring-blue-500">
+          </div>
+          <div>
+            <label class="block text-xs font-bold mb-1">Mobile Number *</label>
+            <input type="tel" id="mobile" required placeholder="e.g. 9876543210"
+                   class="w-full px-3 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-sm focus:ring-2 focus:ring-blue-500">
+          </div>
+        </div>
+
+        <!-- College Specific Fields -->
+        <div id="college-fields-container" class="space-y-3 pt-2 border-t border-gray-100 dark:border-gray-700">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-bold mb-1" id="label-college-id">College Roll / ID No. *</label>
+              <input type="text" id="college-id" placeholder="e.g. 21IT045"
+                     class="w-full px-3 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-sm focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div>
+              <label class="block text-xs font-bold mb-1">College Name *</label>
+              <input type="text" id="college-name" placeholder="e.g. CIT Coimbatore"
+                     class="w-full px-3 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-sm focus:ring-2 focus:ring-blue-500">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-bold mb-1">Department *</label>
+              <input type="text" id="department" placeholder="e.g. Information Technology"
+                     class="w-full px-3 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-sm focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div id="course-field-wrap">
+              <label class="block text-xs font-bold mb-1">Course *</label>
+              <input type="text" id="course" placeholder="e.g. B.Tech IT"
+                     class="w-full px-3 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-sm focus:ring-2 focus:ring-blue-500">
+            </div>
+          </div>
+
+          <div id="student-academic-wrap" class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-bold mb-1">Year</label>
+              <select id="year" class="w-full px-3 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-sm focus:ring-2 focus:ring-blue-500">
+                <option value="1st Year">1st Year</option>
+                <option value="2nd Year">2nd Year</option>
+                <option value="3rd Year" selected>3rd Year</option>
+                <option value="4th Year">4th Year</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-bold mb-1">Semester</label>
+              <select id="semester" class="w-full px-3 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-sm focus:ring-2 focus:ring-blue-500">
+                <option value="Sem 1">Sem 1</option>
+                <option value="Sem 2">Sem 2</option>
+                <option value="Sem 3">Sem 3</option>
+                <option value="Sem 4">Sem 4</option>
+                <option value="Sem 5">Sem 5</option>
+                <option value="Sem 6" selected>Sem 6</option>
+                <option value="Sem 7">Sem 7</option>
+                <option value="Sem 8">Sem 8</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Location & Address -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-gray-100 dark:border-gray-700">
+          <div>
+            <label class="block text-xs font-bold mb-1">City / Location *</label>
+            <input type="text" id="location" required placeholder="e.g. Coimbatore"
+                   class="w-full px-3 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-sm focus:ring-2 focus:ring-blue-500">
+          </div>
+          <div>
+            <label class="block text-xs font-bold mb-1">Hostel / Campus Address</label>
+            <input type="text" id="address" placeholder="e.g. Kaveri Hostel Room 204"
+                   class="w-full px-3 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-sm focus:ring-2 focus:ring-blue-500">
+          </div>
+        </div>
+
+        <!-- Password -->
+        <div class="pt-2 border-t border-gray-100 dark:border-gray-700">
+          <label class="block text-xs font-bold mb-1">Password (min 6 characters) *</label>
+          <input type="password" id="password" required minlength="6" placeholder="••••••••"
+                 class="w-full px-3 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-sm focus:ring-2 focus:ring-blue-500">
+        </div>
+
+        <!-- Error & Info Message -->
+        <div id="error-msg" class="text-xs text-red-500 font-semibold text-center hidden"></div>
+
+        <button type="submit" id="submit-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition shadow-md">
+          Create Account
+        </button>
+      </form>
+
+      <div class="mt-6 text-center text-xs text-gray-500 dark:text-gray-400">
+        Already have an account? 
+        <a href="login.html" class="text-blue-600 dark:text-blue-400 font-bold hover:underline">Login here</a>
+      </div>
+
+    </div>
   </div>
 
-  <!-- Global Theme Button - INLINE -->
-  <script>
-    const html = document.documentElement
-    const THEME_KEY = 'ccm-theme'
-    
-    function applyTheme() {
-      const saved = localStorage.getItem(THEME_KEY)
-      if (saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-        html.classList.add('dark')
-      } else {
-        html.classList.remove('dark')
-      }
-    }
-    
-    function toggleTheme() {
-      html.classList.toggle('dark')
-      const isDark = html.classList.contains('dark')
-      localStorage.setItem(THEME_KEY, isDark ? 'dark' : 'light')
-      window.dispatchEvent(new CustomEvent('themeChanged', { detail: { isDark } }))
-      return isDark ? '☀️' : '🌙'
-    }
-    
-    function getThemeIcon() {
-      return html.classList.contains('dark') ? '☀️' : '🌙'
-    }
-    
-    applyTheme()
-    
-    const btn = document.createElement('button')
-    btn.id = 'global-theme-toggle'
-    btn.className = 'fixed bottom-6 right-6 z-50 text-2xl p-4 rounded-full bg-white dark:bg-gray-800 shadow-2xl hover:scale-110 active:scale-95 transition-all border-2 border-gray-200 dark:border-gray-700 transformer-btn'
-    btn.textContent = getThemeIcon()
-    btn.title = 'Toggle Theme'
-    btn.onclick = () => {
-      btn.textContent = toggleTheme()
-    }
-    
-    window.addEventListener('themeChanged', (e) => {
-      btn.textContent = e.detail.isDark ? '☀️' : '🌙'
-    })
-    
-    document.body.appendChild(btn)
-  </script>
-
+  <script type="module" src="../js/theme.js"></script>
+  <script type="module" src="../js/i18n.js"></script>
+  <script type="module" src="../js/mode.js"></script>
+  <script type="module" src="../js/navbar.js"></script>
   <script type="module">
     import { supabase } from '../js/supabase.js'
-    
-    const form = document.getElementById('register-form')
+
+    const userTypeInput = document.getElementById('user-type')
+    const collegeContainer = document.getElementById('college-fields-container')
+    const studentAcademicWrap = document.getElementById('student-academic-wrap')
+    const courseWrap = document.getElementById('course-field-wrap')
+    const labelCollegeId = document.getElementById('label-college-id')
     const errorMsg = document.getElementById('error-msg')
-    const registerBtn = document.getElementById('register-btn')
+    const submitBtn = document.getElementById('submit-btn')
 
-    form.addEventListener('submit', async (e) => {
+    const tabStudent = document.getElementById('tab-student')
+    const tabStaff = document.getElementById('tab-staff')
+    const tabCommunity = document.getElementById('tab-community')
+
+    function setTab(type) {
+      userTypeInput.value = type
+      const activeClass = 'flex-1 py-3 text-center border-b-2 border-blue-600 text-blue-600 dark:text-blue-400'
+      const inactiveClass = 'flex-1 py-3 text-center border-b-2 border-transparent text-gray-500 hover:text-blue-600'
+      tabStudent.className = type === 'student' ? activeClass : inactiveClass
+      tabStaff.className = type === 'staff' ? activeClass : inactiveClass
+      tabCommunity.className = type === 'community_user' ? activeClass : inactiveClass
+
+      if (type === 'student') {
+        collegeContainer.style.display = 'block'
+        studentAcademicWrap.style.display = 'grid'
+        courseWrap.style.display = 'block'
+        labelCollegeId.textContent = 'College Roll / ID No. *'
+      } else if (type === 'staff') {
+        collegeContainer.style.display = 'block'
+        studentAcademicWrap.style.display = 'none'
+        courseWrap.style.display = 'none'
+        labelCollegeId.textContent = 'Staff / Faculty ID No. *'
+      } else {
+        collegeContainer.style.display = 'none'
+      }
+    }
+
+    tabStudent.onclick = () => setTab('student')
+    tabStaff.onclick = () => setTab('staff')
+    tabCommunity.onclick = () => setTab('community_user')
+
+    // Parse URL param if direct link (e.g. ?type=staff)
+    const urlParams = new URLSearchParams(window.location.search)
+    const typeParam = urlParams.get('type')
+    if (typeParam === 'staff') setTab('staff')
+    else if (typeParam === 'community') setTab('community_user')
+
+    document.getElementById('register-form').addEventListener('submit', async (e) => {
       e.preventDefault()
-      errorMsg.textContent = ''
-      registerBtn.disabled = true
-      registerBtn.textContent = 'Creating Account...'
-      registerBtn.classList.add('animate-pulse')
-      
-      const name = document.getElementById('name').value
-      const email = document.getElementById('email').value
+      errorMsg.classList.add('hidden')
+      submitBtn.disabled = true
+      submitBtn.textContent = 'Creating Account...'
+
+      const email = document.getElementById('email').value.trim()
       const password = document.getElementById('password').value
-      const user_type = document.getElementById('user_type').value
-      const phone = document.getElementById('phone').value
+      const fullName = document.getElementById('full-name').value.trim()
+      const username = document.getElementById('username').value.trim()
+      const mobile = document.getElementById('mobile').value.trim()
+      const userType = userTypeInput.value
+      const location = document.getElementById('location').value.trim()
+      const address = document.getElementById('address').value.trim()
+      const collegeId = document.getElementById('college-id')?.value.trim() || ''
+      const collegeName = document.getElementById('college-name')?.value.trim() || ''
+      const department = document.getElementById('department')?.value.trim() || ''
+      const course = document.getElementById('course')?.value.trim() || ''
+      const year = document.getElementById('year')?.value || ''
+      const semester = document.getElementById('semester')?.value || ''
 
-      // 1. Supabase Auth la user create pannu
-      const { data, error } = await supabase.auth.signUp({
-        email: email,
-        password: password
-      })
+      try {
+        // 1. Supabase Auth Sign Up
+        const { data, error: authError } = await supabase.auth.signUp({
+          email: email,
+          password: password,
+          options: {
+            data: { full_name: fullName, username: username, user_type: userType }
+          }
+        })
 
-      if (error) {
-        errorMsg.textContent = error.message
-        errorMsg.classList.add('animate-shake')
-        registerBtn.disabled = false
-        registerBtn.textContent = 'Create Account'
-        registerBtn.classList.remove('animate-pulse')
-        setTimeout(() => errorMsg.classList.remove('animate-shake'), 500)
-        return
-      }
+        if (authError) throw authError
 
-      // 2. Profiles table la extra details save pannu
-      if (data.user) {
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert({
-            id: data.user.id,
-            name: name,
-            user_type: user_type,
-            phone: phone
-          })
-        
-        if (profileError) {
-          errorMsg.textContent = profileError.message
-          errorMsg.classList.add('animate-shake')
-          registerBtn.disabled = false
-          registerBtn.textContent = 'Create Account'
-          registerBtn.classList.remove('animate-pulse')
-          setTimeout(() => errorMsg.classList.remove('animate-shake'), 500)
-          return
+        const userId = data.user?.id
+        if (userId) {
+          // 2. Save complete Profile Details
+          const profileData = {
+            id: userId,
+            name: fullName,
+            full_name: fullName,
+            username: username,
+            email: email,
+            phone: mobile,
+            mobile_number: mobile,
+            user_type: userType,
+            college_id_number: collegeId,
+            college_name: collegeName || 'Campus College',
+            department: department,
+            course: course,
+            year: year,
+            semester: semester,
+            location: location,
+            address: address,
+            is_verified: userType !== 'community_user',
+            role: 'user'
+          }
+
+          const { error: profError } = await supabase.from('profiles').upsert(profileData)
+          if (profError) {
+            console.warn('Profile save note:', profError.message)
+            // Cache locally so experience is uninterrupted
+            localStorage.setItem(`ccm_profile_${userId}`, JSON.stringify(profileData))
+          }
         }
-      }
 
-      // Success
-      registerBtn.classList.remove('animate-pulse')
-      registerBtn.classList.add('transformer-success')
-      registerBtn.textContent = 'Success! ✓'
-      
-      setTimeout(() => {
-        alert('Account created! Check email for verification. Apram login pannu.')
-        window.location.href = 'login.html'
-      }, 800)
+        submitBtn.textContent = 'Account Created! Redirecting...'
+        submitBtn.classList.add('bg-green-600')
+        setTimeout(() => {
+          window.location.href = '../index.html'
+        }, 1000)
+
+      } catch (err) {
+        errorMsg.textContent = err.message || 'Registration failed. Please check your details.'
+        errorMsg.classList.remove('hidden')
+        submitBtn.disabled = false
+        submitBtn.textContent = 'Create Account'
+      }
     })
   </script>
-  <!-- Theme Effects JS -->
-<script type="module" src="../js/theme-effects.js"></script>
 </body>
 </html>

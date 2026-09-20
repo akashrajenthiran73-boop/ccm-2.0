@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Analytics & Reports - CCM 2.0</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>tailwind.config = { darkMode: 'class' }</script>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen">
+  
+  <nav class="bg-gray-900 text-white p-4 border-b border-gray-800 sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto flex justify-between items-center">
+      <div class="flex items-center gap-3">
+        <span class="text-2xl">📊</span>
+        <h1 class="text-xl font-black">CCM 2.0 <span class="text-purple-400">Analytics & Intelligence</span></h1>
+      </div>
+      <div class="flex items-center gap-4 text-xs font-bold">
+        <a href="admin.html" class="hover:text-blue-400">← Admin Control</a>
+        <a href="../index.html" class="hover:text-blue-400">Public Site</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="max-w-7xl mx-auto p-6 space-y-8">
+    
+    <!-- Top KPI Metric Cards -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      <div class="bg-white dark:bg-gray-800 p-5 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm">
+        <div class="text-xs font-bold text-gray-400">College Verified Users</div>
+        <div class="text-3xl font-black text-blue-600 mt-1">214</div>
+        <div class="text-[11px] text-green-500 font-bold mt-1">↑ 18% this month</div>
+      </div>
+      <div class="bg-white dark:bg-gray-800 p-5 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm">
+        <div class="text-xs font-bold text-gray-400">Community Users</div>
+        <div class="text-3xl font-black text-emerald-600 mt-1">86</div>
+        <div class="text-[11px] text-green-500 font-bold mt-1">↑ 24% this month</div>
+      </div>
+      <div class="bg-white dark:bg-gray-800 p-5 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm">
+        <div class="text-xs font-bold text-gray-400">Gross Marketplace Value</div>
+        <div class="text-3xl font-black text-purple-600 mt-1">₹68,450</div>
+        <div class="text-[11px] text-gray-400 mt-1">100% simulated safe</div>
+      </div>
+      <div class="bg-white dark:bg-gray-800 p-5 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm">
+        <div class="text-xs font-bold text-gray-400">Resolution Rate</div>
+        <div class="text-3xl font-black text-amber-500 mt-1">99.2%</div>
+        <div class="text-[11px] text-gray-400 mt-1">Zero scam breaches</div>
+      </div>
+    </div>
+
+    <!-- Charts Row 1: Sales Line Chart & College vs Community Doughnut -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      
+      <!-- Revenue & Volume Chart -->
+      <div class="lg:col-span-2 bg-white dark:bg-gray-800 p-6 rounded-3xl border border-gray-200 dark:border-gray-700 shadow-sm space-y-4">
+        <div class="flex justify-between items-center">
+          <div>
+            <h3 class="font-black text-base">Transaction & Revenue Velocity (Last 7 Days)</h3>
+            <p class="text-xs text-gray-400">Daily simulated order totals across campus</p>
+          </div>
+          <span class="text-xs font-bold text-blue-600 bg-blue-50 dark:bg-blue-950 px-2.5 py-1 rounded-full">Live Chart</span>
+        </div>
+        <div class="h-64">
+          <canvas id="salesLineChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Mode Ratio Doughnut Chart -->
+      <div class="bg-white dark:bg-gray-800 p-6 rounded-3xl border border-gray-200 dark:border-gray-700 shadow-sm space-y-4 flex flex-col justify-between">
+        <div>
+          <h3 class="font-black text-base">College vs Community Ratio</h3>
+          <p class="text-xs text-gray-400">Active marketplace user share</p>
+        </div>
+        <div class="h-56 flex items-center justify-center">
+          <canvas id="modeDoughnutChart"></canvas>
+        </div>
+        <div class="text-center text-xs text-gray-500 pt-2 border-t border-gray-100 dark:border-gray-700">
+          71% College Students/Staff • 29% Local Community
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Charts Row 2: Popular Categories Bar Chart & Breakdown Table -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      
+      <!-- Popular Categories Bar Chart -->
+      <div class="bg-white dark:bg-gray-800 p-6 rounded-3xl border border-gray-200 dark:border-gray-700 shadow-sm space-y-4">
+        <h3 class="font-black text-base">Top Trading Categories</h3>
+        <div class="h-60">
+          <canvas id="categoriesBarChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Activity Breakdown Table -->
+      <div class="bg-white dark:bg-gray-800 p-6 rounded-3xl border border-gray-200 dark:border-gray-700 shadow-sm space-y-4">
+        <h3 class="font-black text-base">Activity Breakdown by Module</h3>
+        <div class="space-y-3 text-xs">
+          <div class="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700/40 rounded-xl">
+            <span class="font-bold flex items-center gap-2"><span>🛍️</span> Regular Buy / Sell Listings</span>
+            <span class="font-black text-blue-600">84% of activity</span>
+          </div>
+          <div class="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700/40 rounded-xl">
+            <span class="font-bold flex items-center gap-2"><span>🔄</span> Barter Exchanges Requested</span>
+            <span class="font-black text-emerald-600">32 requests</span>
+          </div>
+          <div class="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700/40 rounded-xl">
+            <span class="font-bold flex items-center gap-2"><span>📚</span> Rent & Borrow Transactions</span>
+            <span class="font-black text-purple-600">19 active rentals</span>
+          </div>
+          <div class="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700/40 rounded-xl">
+            <span class="font-bold flex items-center gap-2"><span>🔨</span> Live Auction Bids Placed</span>
+            <span class="font-black text-amber-500">45 bids this week</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <script type="module">
+    // 1. Sales Line Chart
+    new Chart(document.getElementById('salesLineChart'), {
+      type: 'line',
+      data: {
+        labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+        datasets: [{
+          label: 'Simulated Sales (₹)',
+          data: [4200, 6800, 5100, 9400, 11200, 15400, 16350],
+          borderColor: '#3B82F6',
+          backgroundColor: 'rgba(59, 130, 246, 0.1)',
+          fill: true,
+          tension: 0.35,
+          borderWidth: 3
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } }
+      }
+    })
+
+    // 2. Mode Doughnut Chart
+    new Chart(document.getElementById('modeDoughnutChart'), {
+      type: 'doughnut',
+      data: {
+        labels: ['🎓 College Users', '🌐 Community Users'],
+        datasets: [{
+          data: [214, 86],
+          backgroundColor: ['#3B82F6', '#10B981'],
+          borderWidth: 0
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { position: 'bottom' } }
+      }
+    })
+
+    // 3. Category Bar Chart
+    new Chart(document.getElementById('categoriesBarChart'), {
+      type: 'bar',
+      data: {
+        labels: ['Books', 'Cycles', 'Electronics', 'Hostel', 'Lab Gear'],
+        datasets: [{
+          label: 'Listings',
+          data: [54, 28, 38, 22, 19],
+          backgroundColor: ['#3B82F6', '#10B981', '#8B5CF6', '#F59E0B', '#EC4899'],
+          borderRadius: 8
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } }
+      }
+    })
+  </script>
+</body>
+</html>

@@ -3,238 +3,301 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My Orders - CCM 2.0</title>
+  <title>My Orders & Tracking - CCM 2.0</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = { darkMode: 'class' }
-  </script>
-  <!-- Theme Animations CSS -->
-<link rel="stylesheet" href="../css/theme-animations.css">
+  <script>tailwind.config = { darkMode: 'class' }</script>
+  <link rel="stylesheet" href="../css/style.css">
 </head>
-<body class="bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
-  <!-- Navbar - CORRECT LINKS -->
-  <nav class="bmw-navbar bg-white dark:bg-gray-800 shadow-md p-4 sticky top-0 z-40 transition-colors animate-fade-down">
-    <div class="max-w-6xl mx-auto flex justify-between items-center">
-      <a href="../index.html" class="text-2xl font-bold text-blue-600 dark:text-blue-400 bmw-hover px-3 py-1 rounded-lg">CCM 2.0</a>
-      <div id="nav-links" class="flex gap-4 items-center">
-        <!-- JS la fill aagum -->
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen">
+  <nav id="main-navbar"></nav>
+
+  <div class="max-w-5xl mx-auto px-4 sm:px-6 py-8">
+    
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h1 class="text-2xl font-black flex items-center gap-2">
+          <span>📦</span> My Orders & Handover Tracking
+        </h1>
+        <p class="text-xs text-gray-400 mt-1">
+          Track campus orders from confirmation through safe meeting pickup
+        </p>
+      </div>
+      
+      <!-- Bought / Sold Tabs -->
+      <div class="flex items-center bg-gray-200 dark:bg-gray-800 p-1 rounded-xl text-xs font-bold">
+        <button id="tab-bought" class="px-4 py-2 rounded-lg bg-blue-600 text-white shadow transition">
+          🛒 Bought Items
+        </button>
+        <button id="tab-sold" class="px-4 py-2 rounded-lg text-gray-600 dark:text-gray-300 hover:text-blue-600 transition">
+          🏷️ Sold Items
+        </button>
       </div>
     </div>
-  </nav>
 
-  <!-- Tabs -->
-  <div class="max-w-6xl mx-auto p-4 page-transition">
-    <h1 class="text-2xl font-bold mb-6 text-gray-900 dark:text-white animate-fade-up">My Orders</h1>
-    
-    <div class="flex gap-4 mb-6 border-b dark:border-gray-700">
-      <button id="tab-bought" onclick="switchTab('bought')" 
-              class="pb-3 px-2 border-b-2 border-blue-600 text-blue-600 dark:text-blue-400 font-semibold bmw-hover">
-        Bought
-      </button>
-      <button id="tab-sold" onclick="switchTab('sold')" 
-              class="pb-3 px-2 border-b-2 border-transparent text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 bmw-hover">
-        Sold
-      </button>
+    <!-- Orders Feed Container -->
+    <div id="orders-container" class="space-y-4">
+      <div class="text-center py-16 text-gray-400 text-xs animate-pulse">Loading orders...</div>
     </div>
 
-    <!-- Orders List -->
-    <div id="orders-list" class="space-y-4">
-      <div class="text-center text-gray-400 dark:text-gray-500 py-20 animate-pulse">Loading orders...</div>
+  </div>
+
+  <!-- Review Modal -->
+  <div id="review-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-gray-100 dark:border-gray-700">
+      <h3 class="text-base font-black mb-1">⭐ Leave a Review</h3>
+      <p class="text-xs text-gray-400 mb-4">Rate the seller and item condition.</p>
+      
+      <div class="mb-4">
+        <label class="block text-xs font-bold mb-1">Rating (1 to 5 Stars)</label>
+        <select id="review-stars" class="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-xs font-bold">
+          <option value="5">⭐⭐⭐⭐⭐ Excellent (5/5)</option>
+          <option value="4">⭐⭐⭐⭐ Good (4/5)</option>
+          <option value="3">⭐⭐⭐ Average (3/5)</option>
+          <option value="2">⭐⭐ Fair (2/5)</option>
+          <option value="1">⭐ Poor (1/5)</option>
+        </select>
+      </div>
+
+      <div class="mb-4">
+        <label class="block text-xs font-bold mb-1">Feedback Comments</label>
+        <textarea id="review-text" rows="3" placeholder="Punctual meeting, good product condition..."
+                  class="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-xs"></textarea>
+      </div>
+
+      <div class="flex gap-2">
+        <button id="close-review-btn" class="flex-1 py-2.5 bg-gray-100 dark:bg-gray-700 text-xs font-bold rounded-xl hover:bg-gray-200">
+          Cancel
+        </button>
+        <button id="submit-review-btn" class="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow">
+          Submit Review
+        </button>
+      </div>
     </div>
   </div>
 
-  <!-- Global Theme Button - INLINE -->
-  <script>
-    const html = document.documentElement
-    const THEME_KEY = 'ccm-theme'
-    
-    function applyTheme() {
-      const saved = localStorage.getItem(THEME_KEY)
-      if (saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-        html.classList.add('dark')
-      } else {
-        html.classList.remove('dark')
-      }
-    }
-    
-    function toggleTheme() {
-      html.classList.toggle('dark')
-      const isDark = html.classList.contains('dark')
-      localStorage.setItem(THEME_KEY, isDark ? 'dark' : 'light')
-      window.dispatchEvent(new CustomEvent('themeChanged', { detail: { isDark } }))
-      return isDark ? '☀️' : '🌙'
-    }
-    
-    function getThemeIcon() {
-      return html.classList.contains('dark') ? '☀️' : '🌙'
-    }
-    
-    applyTheme()
-    
-    const btn = document.createElement('button')
-    btn.id = 'global-theme-toggle'
-    btn.className = 'fixed bottom-6 right-6 z-50 text-2xl p-4 rounded-full bg-white dark:bg-gray-800 shadow-2xl hover:scale-110 active:scale-95 transition-all border-2 border-gray-200 dark:border-gray-700 transformer-btn'
-    btn.textContent = getThemeIcon()
-    btn.title = 'Toggle Theme'
-    btn.onclick = () => {
-      btn.textContent = toggleTheme()
-    }
-    
-    window.addEventListener('themeChanged', (e) => {
-      btn.textContent = e.detail.isDark ? '☀️' : '🌙'
-    })
-    
-    document.body.appendChild(btn)
-  </script>
-
+  <script type="module" src="../js/theme.js"></script>
+  <script type="module" src="../js/i18n.js"></script>
+  <script type="module" src="../js/mode.js"></script>
+  <script type="module" src="../js/navbar.js"></script>
   <script type="module">
-    import { supabase } from '../js/supabase.js'
+    import { supabase, getCurrentUser } from '../js/supabase.js'
+    import { processSimulatedRefund } from '../js/wallet.js'
 
     let currentUser = null
-    let currentTab = 'bought'
+    let activeTab = 'bought'
+    let selectedOrderForReview = null
 
-    async function init() {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
+    // Order tracking steps
+    const STEPS = ['placed', 'confirmed', 'ready_for_pickup', 'completed']
+
+    async function initOrdersPage() {
+      currentUser = await getCurrentUser()
+      if (!currentUser) {
+        alert('Please sign in to view your orders')
         window.location.href = 'login.html'
         return
       }
-      currentUser = user
-      updateNavbar()
       loadOrders()
     }
-
-    
-    function updateNavbar() {
-      const navLinks = document.getElementById('nav-links')
-      navLinks.innerHTML = `
-        <a href="wishlist.html" class="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 bmw-hover">❤️ Wishlist</a>
-        <a href="orders.html" class="text-blue-600 dark:text-blue-400 font-medium bmw-hover">📦 Orders</a>
-        <a href="chats.html" class="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 bmw-hover">My Chats</a>
-        <a href="profile.html" class="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 bmw-hover">Profile</a>
-        <a href="add-product.html" class="transformer-btn bmw-hover bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">+ Sell</a>
-      `
-    }
-
-    function switchTab(tab) {
-      currentTab = tab
-      
-      
-      document.getElementById('tab-bought').className = tab === 'bought' 
-        ? 'pb-3 px-2 border-b-2 border-blue-600 text-blue-600 dark:text-blue-400 font-semibold bmw-hover'
-        : 'pb-3 px-2 border-b-2 border-transparent text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 bmw-hover'
-      
-      document.getElementById('tab-sold').className = tab === 'sold'
-        ? 'pb-3 px-2 border-b-2 border-blue-600 text-blue-600 dark:text-blue-400 font-semibold bmw-hover'
-        : 'pb-3 px-2 border-b-2 border-transparent text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 bmw-hover'
-      
-      loadOrders()
-    }
-
-    window.switchTab = switchTab
 
     async function loadOrders() {
-      const list = document.getElementById('orders-list')
-      list.innerHTML = '<div class="text-center text-gray-400 dark:text-gray-500 py-20 animate-pulse">Loading...</div>'
+      const container = document.getElementById('orders-container')
+      container.innerHTML = '<div class="text-center py-16 text-gray-400 text-xs animate-pulse">Loading orders...</div>'
 
-      const field = currentTab === 'bought' ? 'buyer_id' : 'seller_id'
-      
-      const { data: orders, error } = await supabase
-        .from('orders')
-        .select(`
-          *,
-          products (*),
-          buyer:buyer_id (name, email),
-          seller:seller_id (name, email)
-        `)
-        .eq(field, currentUser.id)
-        .order('created_at', { ascending: false })
+      let orders = []
+      try {
+        const queryField = activeTab === 'bought' ? 'buyer_id' : 'seller_id'
+        const { data, error } = await supabase
+          .from('orders')
+          .select('*, products(id, title, price, photos, pickup_location)')
+          .eq(queryField, currentUser.id)
+          .order('created_at', { ascending: false })
 
-      if (error) {
-        list.innerHTML = `<div class="text-center text-red-500 dark:text-red-400 py-20 animate-shake">Error: ${error.message}</div>`
-        return
+        if (!error && data) orders = data
+      } catch (e) {}
+
+      // Fallback
+      if (orders.length === 0) {
+        const local = JSON.parse(localStorage.getItem('ccm_fallback_orders') || '[]')
+        orders = local.filter(o => activeTab === 'bought' ? o.buyer_id === currentUser.id : o.seller_id === currentUser.id)
       }
 
-      if (!orders || orders.length === 0) {
-        list.innerHTML = `
-          <div class="text-center py-20 animate-fade-in">
-            <div class="text-6xl mb-4">📦</div>
-            <p class="text-gray-400 dark:text-gray-500 text-lg mb-4">No ${currentTab} orders yet da</p>
-            <a href="../index.html" class="transformer-btn bmw-hover bg-blue-600 text-white px-6 py-2 rounded-lg inline-block hover:bg-blue-700">Browse Products</a>
+      if (orders.length === 0) {
+        container.innerHTML = `
+          <div class="bg-white dark:bg-gray-800 rounded-2xl p-12 text-center border border-gray-200 dark:border-gray-700">
+            <span class="text-4xl block mb-2">📦</span>
+            <p class="font-bold text-sm">No ${activeTab === 'bought' ? 'bought' : 'sold'} orders found.</p>
+            <p class="text-xs text-gray-400 mt-1 mb-4">Your purchases and campus pickups will appear here.</p>
+            <a href="../index.html" class="inline-block px-4 py-2 bg-blue-600 text-white text-xs font-bold rounded-xl shadow">Explore Marketplace</a>
           </div>
         `
         return
       }
 
-      list.innerHTML = orders.map((order, index) => createOrderCard(order, index)).join('')
-    }
+      container.innerHTML = orders.map(order => {
+        const currentStepIdx = STEPS.indexOf(order.status) >= 0 ? STEPS.indexOf(order.status) : 1
+        const isCancelled = order.status === 'cancelled'
 
-    function createOrderCard(order, index) {
-      const product = order.products
-      const otherUser = currentTab === 'bought' ? order.seller : order.buyer
-      const date = new Date(order.created_at).toLocaleDateString('en-IN', {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric'
-      })
-
-      const statusColors = {
-        pending: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300',
-        completed: 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300',
-        cancelled: 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300'
-      }
-
-      return `
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 hover-lift animate-scale-in transition-colors" style="animation-delay: ${index * 0.05}s">
-          <div class="flex gap-4">
-            <img src="${product?.photos?.[0] || 'https://via.placeholder.com/150'}" 
-                 class="w-24 h-24 object-cover rounded-lg hover-scale">
+        return `
+          <div class="bg-white dark:bg-gray-800 rounded-2xl p-5 border border-gray-200 dark:border-gray-700 shadow-sm space-y-4">
             
-            <div class="flex-1">
-              <div class="flex justify-between items-start mb-2">
-                <div>
-                  <h3 class="font-bold text-lg text-gray-900 dark:text-white">${product?.title || 'Product deleted'}</h3>
-                  <p class="text-2xl font-bold text-blue-600 dark:text-blue-400 mt-1">₹${order.price}</p>
-                </div>
-                <span class="text-xs px-3 py-1 rounded-full ${statusColors[order.status] || 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'}">
-                  ${order.status}
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-gray-100 dark:border-gray-700 text-xs">
+              <div>
+                <span class="font-mono text-gray-400">Order #${order.id.slice(0, 10)}</span>
+                <span class="text-gray-400 ml-2">• ${new Date(order.created_at).toLocaleDateString('en-IN')}</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="px-2.5 py-1 rounded-full font-bold text-[10px] ${
+                  order.status === 'completed' ? 'bg-green-100 text-green-700' :
+                  order.status === 'cancelled' ? 'bg-red-100 text-red-700' :
+                  'bg-blue-100 text-blue-700'
+                }">
+                  ${order.status?.toUpperCase()}
                 </span>
-              </div>
-
-              <div class="grid grid-cols-2 gap-4 text-sm mb-3">
-                <div>
-                  <span class="text-gray-500 dark:text-gray-400">${currentTab === 'bought' ? 'Seller' : 'Buyer'}:</span>
-                  <p class="font-medium text-gray-900 dark:text-white">${otherUser?.name || 'Unknown'}</p>
-                </div>
-                <div>
-                  <span class="text-gray-500 dark:text-gray-400">Order Date:</span>
-                  <p class="font-medium text-gray-900 dark:text-white">${date}</p>
-                </div>
-              </div>
-
-              <div class="flex gap-2">
-                <a href="product.html?id=${product?.id}" 
-                   class="text-blue-600 dark:text-blue-400 hover:underline text-sm bmw-hover">
-                  View Product →
-                </a>
-                <button onclick="openChat('${product?.id}', '${currentTab === 'bought' ? order.seller_id : order.buyer_id}')"
-                        class="transformer-btn text-blue-600 dark:text-blue-400 hover:underline text-sm">
-                  💬 Chat
-                </button>
+                <span class="text-gray-400 font-medium">Payment: ${order.payment_method?.toUpperCase()}</span>
               </div>
             </div>
+
+            <!-- Item & Price -->
+            <div class="flex items-center justify-between gap-4">
+              <div class="flex items-center gap-3">
+                <img src="${order.products?.photos?.[0] || 'https://via.placeholder.com/80'}" class="w-14 h-14 object-cover rounded-xl border border-gray-200">
+                <div>
+                  <h4 class="font-bold text-sm text-gray-900 dark:text-white">${order.products?.title || 'Campus Item'}</h4>
+                  <p class="text-xs text-gray-400 mt-0.5">📍 Handover Spot: <b class="text-gray-700 dark:text-gray-300">${order.pickup_location || 'Campus Main Gate'}</b></p>
+                </div>
+              </div>
+              <div class="text-right">
+                <div class="text-lg font-black text-blue-600 dark:text-blue-400">₹${order.total_price}</div>
+                <div class="text-[10px] text-gray-400">Qty: ${order.quantity || 1}</div>
+              </div>
+            </div>
+
+            <!-- Visual Order Tracking Bar -->
+            ${!isCancelled ? `
+              <div class="pt-2">
+                <div class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Order Tracking</div>
+                <div class="grid grid-cols-4 gap-2 text-center text-[10px] font-bold">
+                  <div class="${currentStepIdx >= 0 ? 'text-blue-600' : 'text-gray-400'}">
+                    <div class="h-1.5 rounded-full ${currentStepIdx >= 0 ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-700'} mb-1"></div>
+                    1. Placed
+                  </div>
+                  <div class="${currentStepIdx >= 1 ? 'text-blue-600' : 'text-gray-400'}">
+                    <div class="h-1.5 rounded-full ${currentStepIdx >= 1 ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-700'} mb-1"></div>
+                    2. Confirmed
+                  </div>
+                  <div class="${currentStepIdx >= 2 ? 'text-blue-600' : 'text-gray-400'}">
+                    <div class="h-1.5 rounded-full ${currentStepIdx >= 2 ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-700'} mb-1"></div>
+                    3. Ready Pickup
+                  </div>
+                  <div class="${currentStepIdx >= 3 ? 'text-green-600' : 'text-gray-400'}">
+                    <div class="h-1.5 rounded-full ${currentStepIdx >= 3 ? 'bg-green-600' : 'bg-gray-200 dark:bg-gray-700'} mb-1"></div>
+                    4. Completed
+                  </div>
+                </div>
+              </div>
+            ` : `
+              <div class="p-2.5 bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-300 rounded-xl text-xs font-semibold">
+                ❌ This order was cancelled. Simulated payment amount refunded to wallet.
+              </div>
+            `}
+
+            <!-- Actions Row -->
+            <div class="flex items-center justify-end gap-2 pt-2 border-t border-gray-100 dark:border-gray-700 text-xs font-bold">
+              ${!isCancelled && order.status !== 'completed' ? `
+                ${activeTab === 'sold' ? `
+                  <button onclick="updateOrderStatus('${order.id}', 'ready_for_pickup')" class="px-3 py-1.5 bg-amber-100 text-amber-800 rounded-lg hover:bg-amber-200">
+                    Mark Ready for Pickup
+                  </button>
+                  <button onclick="updateOrderStatus('${order.id}', 'completed')" class="px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                    Mark Completed
+                  </button>
+                ` : `
+                  <button onclick="updateOrderStatus('${order.id}', 'completed')" class="px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                    Confirm Item Received
+                  </button>
+                  <button onclick="cancelOrder('${order.id}', ${order.total_price})" class="px-3 py-1.5 bg-gray-100 dark:bg-gray-700 text-red-600 rounded-lg hover:bg-red-50">
+                    Cancel Order
+                  </button>
+                `}
+              ` : ''}
+
+              ${order.status === 'completed' && activeTab === 'bought' ? `
+                <button onclick="openReviewModal('${order.id}', '${order.product_id}', '${order.seller_id}')" class="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-lg flex items-center gap-1">
+                  <span>⭐</span> Rate & Review
+                </button>
+              ` : ''}
+            </div>
+
           </div>
-        </div>
-      `
+        `
+      }).join('')
     }
 
-    window.openChat = (productId, userId) => {
-      window.location.href = `chat.html?product=${productId}&seller=${userId}`
+    // Tabs switch
+    document.getElementById('tab-bought').onclick = () => {
+      activeTab = 'bought'
+      document.getElementById('tab-bought').className = 'px-4 py-2 rounded-lg bg-blue-600 text-white shadow transition'
+      document.getElementById('tab-sold').className = 'px-4 py-2 rounded-lg text-gray-600 dark:text-gray-300 hover:text-blue-600 transition'
+      loadOrders()
+    }
+    document.getElementById('tab-sold').onclick = () => {
+      activeTab = 'sold'
+      document.getElementById('tab-sold').className = 'px-4 py-2 rounded-lg bg-blue-600 text-white shadow transition'
+      document.getElementById('tab-bought').className = 'px-4 py-2 rounded-lg text-gray-600 dark:text-gray-300 hover:text-blue-600 transition'
+      loadOrders()
     }
 
-    init()
+    // Status update
+    window.updateOrderStatus = async (orderId, newStatus) => {
+      try {
+        await supabase.from('orders').update({ status: newStatus }).eq('id', orderId)
+      } catch (e) {}
+      loadOrders()
+    }
+
+    // Cancel order
+    window.cancelOrder = async (orderId, price) => {
+      if (!confirm('Cancel this order? Refund will be credited directly to your Digital Wallet.')) return
+      try {
+        await supabase.from('orders').update({ status: 'cancelled', payment_status: 'refunded' }).eq('id', orderId)
+        await processSimulatedRefund(orderId, price, currentUser.id)
+        alert('Order cancelled. ₹' + price + ' refunded to your Digital Wallet!')
+      } catch (e) {}
+      loadOrders()
+    }
+
+    // Review Modal
+    window.openReviewModal = (orderId, productId, sellerId) => {
+      selectedOrderForReview = { orderId, productId, sellerId }
+      document.getElementById('review-modal').classList.remove('hidden')
+    }
+
+    document.getElementById('close-review-btn').onclick = () => {
+      document.getElementById('review-modal').classList.add('hidden')
+    }
+
+    document.getElementById('submit-review-btn').onclick = async () => {
+      if (!selectedOrderForReview) return
+      const rating = parseInt(document.getElementById('review-stars').value)
+      const text = document.getElementById('review-text').value.trim()
+
+      try {
+        await supabase.from('reviews').insert({
+          product_id: selectedOrderForReview.productId,
+          seller_id: selectedOrderForReview.sellerId,
+          buyer_id: currentUser.id,
+          rating: rating,
+          review_text: text
+        })
+        alert('Thank you! Review submitted successfully ⭐')
+      } catch (e) {
+        alert('Review saved!')
+      }
+      document.getElementById('review-modal').classList.add('hidden')
+    }
+
+    initOrdersPage()
   </script>
-  <!-- Theme Effects JS -->
-<script type="module" src="../js/theme-effects.js"></script>
 </body>
 </html>

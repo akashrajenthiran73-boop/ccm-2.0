@@ -3,304 +3,237 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CCM 2.0 - Campus Community MarketPlace</title>
+  <title>CCM 2.0 - Campus Community Marketplace</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = { darkMode: 'class' }
   </script>
   <link rel="stylesheet" href="css/style.css">
-  <link rel="stylesheet" href="../css/theme-animations.css">
+  <link rel="stylesheet" href="css/theme-animations.css">
 </head>
-<body class="bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen transition-colors duration-200">
 
-  <!-- NAVBAR - OVERFLOW FIX PANNITEN -->
-  <nav class="bmw-navbar bg-white dark:bg-gray-800 shadow-md p-4 sticky top-0 z-50 relative transition-colors animate-fade-down" style="overflow: visible !important;">
-    <div class="max-w-6xl mx-auto flex justify-between items-center" style="overflow: visible !important;">
-      <h1 class="text-2xl font-bold text-blue-600 dark:text-blue-400 bmw-hover px-3 py-1 rounded-lg">CCM 2.0</h1>
+  <!-- Universal Navbar will be auto-injected by js/navbar.js -->
+  <nav id="main-navbar"></nav>
 
-      <div id="auth-section" class="flex gap-4 items-center flex-wrap" style="overflow: visible !important;">
-        <span class="text-gray-500 dark:text-gray-400">Loading...</span>
+  <!-- Hero & Marketplace Mode Switcher Banner -->
+  <div class="bg-gradient-to-r from-blue-700 via-indigo-700 to-blue-900 text-white py-8 px-4 sm:px-6 relative overflow-hidden shadow-md">
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 relative z-10">
+      
+      <!-- Text & Mode Info -->
+      <div class="max-w-2xl text-center md:text-left">
+        <div class="inline-flex items-center gap-2 px-3 py-1 bg-white/20 backdrop-blur rounded-full text-xs font-semibold mb-3">
+          <span>✨</span> Campus Community Marketplace 2.0
+        </div>
+        <h1 class="text-3xl sm:text-4xl font-black tracking-tight" id="hero-title">
+          Buy, Sell, Rent & Barter with Ease
+        </h1>
+        <p class="text-blue-100 text-sm sm:text-base mt-2" id="hero-desc">
+          Switch between your private College Marketplace and open Community Marketplace.
+        </p>
+
+        <!-- Mode Select Buttons -->
+        <div class="flex flex-wrap gap-3 mt-5 justify-center md:justify-start">
+          <button id="hero-mode-college" class="flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm bg-white text-blue-900 shadow-lg hover:scale-105 active:scale-95 transition">
+            <span class="text-lg">🎓</span>
+            <div class="text-left">
+              <div class="leading-tight">College Marketplace</div>
+              <div class="text-[10px] text-blue-600 font-normal">Students & Staff Only</div>
+            </div>
+          </button>
+          <button id="hero-mode-community" class="flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm bg-blue-800/80 hover:bg-blue-800 border border-blue-400/40 text-white shadow hover:scale-105 active:scale-95 transition">
+            <span class="text-lg">🌐</span>
+            <div class="text-left">
+              <div class="leading-tight">Community Marketplace</div>
+              <div class="text-[10px] text-blue-200 font-normal">Open Public & Campus</div>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      <!-- Quick Action Cards Grid -->
+      <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3 w-full md:w-auto">
+        <a href="pages/add-product.html" class="p-3 bg-white/10 hover:bg-white/20 backdrop-blur rounded-xl border border-white/15 text-center transition hover-lift">
+          <span class="text-2xl block mb-1">🛍️</span>
+          <span class="text-xs font-bold block">+ Sell Item</span>
+        </a>
+        <a href="pages/exchange.html" class="p-3 bg-white/10 hover:bg-white/20 backdrop-blur rounded-xl border border-white/15 text-center transition hover-lift">
+          <span class="text-2xl block mb-1">🔄</span>
+          <span class="text-xs font-bold block">Barter / Trade</span>
+        </a>
+        <a href="pages/rentals.html" class="p-3 bg-white/10 hover:bg-white/20 backdrop-blur rounded-xl border border-white/15 text-center transition hover-lift">
+          <span class="text-2xl block mb-1">📚</span>
+          <span class="text-xs font-bold block">Rent & Borrow</span>
+        </a>
+        <a href="pages/auctions.html" class="p-3 bg-white/10 hover:bg-white/20 backdrop-blur rounded-xl border border-white/15 text-center transition hover-lift">
+          <span class="text-2xl block mb-1">🔨</span>
+          <span class="text-xs font-bold block">Live Auctions</span>
+        </a>
+        <a href="pages/deals.html" class="p-3 bg-white/10 hover:bg-white/20 backdrop-blur rounded-xl border border-white/15 text-center transition hover-lift">
+          <span class="text-2xl block mb-1">⚡</span>
+          <span class="text-xs font-bold block">Flash Deals</span>
+        </a>
+        <a href="pages/lost-found.html" class="p-3 bg-white/10 hover:bg-white/20 backdrop-blur rounded-xl border border-white/15 text-center transition hover-lift">
+          <span class="text-2xl block mb-1">🔍</span>
+          <span class="text-xs font-bold block">Lost & Found</span>
+        </a>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Search & Smart Filter Strip -->
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+    <div class="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700">
+      <div class="grid grid-cols-1 sm:grid-cols-12 gap-3">
+        <div class="sm:col-span-6 relative">
+          <input type="text" id="search-input" placeholder="Search books, cycles, lab gear, laptops..."
+                 class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <span class="absolute left-3.5 top-3 text-gray-400">🔍</span>
+        </div>
+        <div class="sm:col-span-2">
+          <input type="number" id="min-price" placeholder="Min ₹"
+                 class="w-full px-3 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+        <div class="sm:col-span-2">
+          <input type="number" id="max-price" placeholder="Max ₹"
+                 class="w-full px-3 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+        <div class="sm:col-span-2 flex gap-2">
+          <button id="search-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl text-sm transition shadow-sm">
+            Search
+          </button>
+        </div>
+      </div>
+
+      <!-- Categories Scroll Strip -->
+      <div class="flex items-center gap-2 overflow-x-auto mt-4 pt-3 border-t border-gray-100 dark:border-gray-700 pb-1 text-xs" id="category-filters">
+        <button data-category="All" class="px-4 py-1.5 rounded-full font-bold whitespace-nowrap bg-blue-600 text-white shadow-sm transition">
+          All
+        </button>
+        <button data-category="Books & Notes" class="px-4 py-1.5 rounded-full font-semibold whitespace-nowrap bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition">
+          📚 Books & Notes
+        </button>
+        <button data-category="Cycles & Vehicles" class="px-4 py-1.5 rounded-full font-semibold whitespace-nowrap bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition">
+          🚲 Cycles
+        </button>
+        <button data-category="Electronics & Laptops" class="px-4 py-1.5 rounded-full font-semibold whitespace-nowrap bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition">
+          💻 Electronics
+        </button>
+        <button data-category="Lab & Study Equipment" class="px-4 py-1.5 rounded-full font-semibold whitespace-nowrap bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition">
+          🔬 Lab Equipment
+        </button>
+        <button data-category="Hostel & Room Essentials" class="px-4 py-1.5 rounded-full font-semibold whitespace-nowrap bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition">
+          🛏️ Hostel
+        </button>
+        <button id="near-me-btn" class="px-4 py-1.5 rounded-full font-bold whitespace-nowrap bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-800 hover:bg-emerald-100 transition">
+          📍 Near Me 5km
+        </button>
       </div>
     </div>
-  </nav>
-
-  <div class="max-w-6xl mx-auto p-4 page-transition">
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-2">
-      <input type="text" id="search-input" placeholder="Search books, cycles..."
-             class="w-full p-3 border dark:border-gray-600 rounded-lg md:col-span-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-all">
-      <input type="number" id="min-price" placeholder="Min ₹"
-             class="w-full p-3 border dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-all">
-      <input type="number" id="max-price" placeholder="Max ₹"
-             class="w-full p-3 border dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-all">
-    </div>
-
-    <div class="flex gap-2 mt-3 overflow-x-auto items-center" id="category-filters">
-      <button id="search-btn" class="transformer-btn bmw-hover bg-blue-600 text-white px-6 py-2 rounded-lg whitespace-nowrap hover:bg-blue-700">
-        Search
-      </button>
-      <button data-category="All" class="px-4 py-1 bg-blue-600 text-white rounded-full text-sm bmw-hover">All</button>
-      <button data-category="Books" class="px-4 py-1 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-full text-sm hover:bg-gray-300 dark:hover:bg-gray-600 bmw-hover">Books</button>
-      <button data-category="Cycles" class="px-4 py-1 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-full text-sm hover:bg-gray-300 dark:hover:bg-gray-600 bmw-hover">Cycles</button>
-      <button data-category="Electronics" class="px-4 py-1 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-full text-sm hover:bg-gray-300 dark:hover:bg-gray-600 bmw-hover">Electronics</button>
-      <button data-category="Hostel Items" class="px-4 py-1 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-full text-sm hover:bg-gray-300 dark:hover:bg-gray-600 bmw-hover">Hostel</button>
-      <button id="near-me-btn" class="px-4 py-1 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-full text-sm whitespace-nowrap hover:bg-gray-300 dark:hover:bg-gray-600 bmw-hover">📍 Near Me 5km</button>
-    </div>
   </div>
 
-  <div id="product-feed" class="max-w-6xl mx-auto p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-    <div class="col-span-full text-center text-gray-400 dark:text-gray-500 py-10 animate-pulse">Loading products...</div>
-  </div>
+  <!-- Main Product Feed Grid -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 pb-12">
+    <div class="flex items-center justify-between mb-4">
+      <div>
+        <h2 class="text-xl sm:text-2xl font-black text-gray-900 dark:text-white flex items-center gap-2">
+          <span>🛍️</span> Marketplace Listings
+        </h2>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+          Filtered by your active marketplace mode & campus location
+        </p>
+      </div>
+      <a href="pages/search.html" class="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline">
+        Advanced Filter →
+      </a>
+    </div>
 
-  <!-- Global Theme Button - INLINE -->
-  <script>
-    const html = document.documentElement
-    const THEME_KEY = 'ccm-theme'
+    <!-- Product Feed Container -->
+    <div id="product-feed" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-5">
+      <div class="col-span-full text-center py-16 text-gray-400 animate-pulse">Loading products...</div>
+    </div>
+  </main>
 
-    function applyTheme() {
-      const saved = localStorage.getItem(THEME_KEY)
-      if (saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-        html.classList.add('dark')
-      } else {
-        html.classList.remove('dark')
-      }
-    }
+  <!-- Footer -->
+  <footer class="bg-white dark:bg-gray-950 border-t border-gray-200 dark:border-gray-800 py-10 px-4 text-xs text-gray-500 dark:text-gray-400">
+    <div class="max-w-7xl mx-auto grid grid-cols-2 sm:grid-cols-4 gap-6">
+      <div>
+        <h4 class="font-bold text-gray-900 dark:text-white mb-2">Marketplace Modes</h4>
+        <ul class="space-y-1.5">
+          <li><a href="pages/marketplace-mode.html" class="hover:underline">🎓 College Marketplace</a></li>
+          <li><a href="pages/marketplace-mode.html" class="hover:underline">🌐 Community Marketplace</a></li>
+          <li><a href="pages/nearby.html" class="hover:underline">📍 Campus Pickup Spots</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4 class="font-bold text-gray-900 dark:text-white mb-2">Trading & Selling</h4>
+        <ul class="space-y-1.5">
+          <li><a href="pages/add-product.html" class="hover:underline">+ Post a Listing</a></li>
+          <li><a href="pages/exchange.html" class="hover:underline">🔄 Barter Exchange</a></li>
+          <li><a href="pages/rentals.html" class="hover:underline">📚 Rent & Borrow</a></li>
+          <li><a href="pages/auctions.html" class="hover:underline">🔨 Live Bidding</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4 class="font-bold text-gray-900 dark:text-white mb-2">Safety & Community</h4>
+        <ul class="space-y-1.5">
+          <li><a href="pages/lost-found.html" class="hover:underline">🔍 Campus Lost & Found</a></li>
+          <li><a href="pages/reports.html" class="hover:underline">🛡️ Safety & Report System</a></li>
+          <li><a href="pages/reviews.html" class="hover:underline">⭐ Seller Reputation</a></li>
+          <li><a href="pages/deals.html" class="hover:underline">⚡ Group Buying Discounts</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4 class="font-bold text-gray-900 dark:text-white mb-2">Account & Portal</h4>
+        <ul class="space-y-1.5">
+          <li><a href="pages/profile.html" class="hover:underline">👤 Profile & College ID</a></li>
+          <li><a href="pages/orders.html" class="hover:underline">📦 Order Tracking</a></li>
+          <li><a href="pages/cart.html" class="hover:underline">🛒 Cart & Checkout</a></li>
+          <li><a href="pages/admin.html" class="hover:underline">👨‍💼 Admin Portal</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="max-w-7xl mx-auto border-t border-gray-100 dark:border-gray-800 mt-8 pt-4 text-center">
+      © 2026 Campus Community Marketplace (CCM 2.0). All rights reserved. Built with Supabase & Tailwind.
+    </div>
+  </footer>
 
-    function toggleTheme() {
-      html.classList.toggle('dark')
-      const isDark = html.classList.contains('dark')
-      localStorage.setItem(THEME_KEY, isDark? 'dark' : 'light')
-      window.dispatchEvent(new CustomEvent('themeChanged', { detail: { isDark } }))
-      return isDark? '☀️' : '🌙'
-    }
-
-    function getThemeIcon() {
-      return html.classList.contains('dark')? '☀️' : '🌙'
-    }
-
-    applyTheme()
-
-    const btn = document.createElement('button')
-    btn.id = 'global-theme-toggle'
-    btn.className = 'fixed bottom-6 right-6 z-50 text-2xl p-4 rounded-full bg-white dark:bg-gray-800 shadow-2xl hover:scale-110 active:scale-95 transition-all border-2 border-gray-200 dark:border-gray-700 transformer-btn'
-    btn.textContent = getThemeIcon()
-    btn.title = 'Toggle Theme'
-    btn.onclick = () => {
-      btn.textContent = toggleTheme()
-    }
-
-    window.addEventListener('themeChanged', (e) => {
-      btn.textContent = e.detail.isDark? '☀️' : '🌙'
-    })
-
-    document.body.appendChild(btn)
-  </script>
-
-  <!-- NAVBAR + NOTIFICATION SCRIPT - FINAL -->
-  <script type="module">
-    import { supabase } from './js/supabase.js'
-
-    const authSection = document.getElementById('auth-section')
-    let currentUserId = null
-    let notificationChannel = null
-
-    // ORDER FUNCTION
-    window.placeOrder = async (productId, sellerId, price, productName) => {
-      const { data: { session } } = await supabase.auth.getSession()
-      const user = session?.user
-
-      if (!user) {
-        alert('please login for order a project')
-        window.location.href = 'pages/login.html'
-        return
-      }
-
-      if (user.id === sellerId) {
-        alert('dont order yourself😂')
-        return
-      }
-
-      const confirmOrder = confirm(`"${productName}" - ₹${price} ku order pannava?`)
-      if (!confirmOrder) return
-
-      const { error: orderError } = await supabase.from('orders').insert({
-        buyer_id: user.id,
-        seller_id: sellerId,
-        product_id: productId,
-        quantity: 1,
-        total_price: price,
-        status: 'pending'
-      })
-
-      if (orderError) {
-        alert('Order failed: ' + orderError.message)
-        return
-      }
-
-      await supabase.from('notifications').insert({
-        user_id: sellerId,
-        message: `${user.email || 'Someone'} ordered your product: "${productName}" for ₹${price}`,
-        is_read: false,
-        type: 'order'
-      })
-
-      alert('Order place aagiduchu! ✅')
-      window.location.href = 'pages/orders.html'
-    }
-
-    // LOAD NOTIFICATIONS
-    async function loadNotifications(userId) {
-      const notifList = document.getElementById('notification-list')
-      const notifBadge = document.getElementById('notification-badge')
-
-      if (!notifList ||!notifBadge) return
-
-      const { data: notifs } = await supabase
-       .from('notifications')
-       .select('*')
-       .eq('user_id', userId)
-       .order('created_at', { ascending: false })
-       .limit(10)
-
-      const unreadCount = notifs?.filter(n =>!n.is_read).length || 0
-
-      if (unreadCount > 0) {
-        notifBadge.textContent = unreadCount
-        notifBadge.classList.remove('hidden')
-      } else {
-        notifBadge.classList.add('hidden')
-      }
-
-      if (!notifs || notifs.length === 0) {
-        notifList.innerHTML = '<div class="p-4 text-gray-500 dark:text-gray-400 text-center">No notifications</div>'
-        return
-      }
-
-      notifList.innerHTML = notifs.map(n => `
-        <div class="p-3 hover:bg-gray-50 dark:hover:bg-gray-700 border-b dark:border-gray-700 cursor-pointer ${!n.is_read? 'bg-blue-50 dark:bg-blue-900/30' : ''}"
-             onclick="markNotificationRead('${n.id}')">
-          <p class="text-sm text-gray-800 dark:text-gray-200">${n.message}</p>
-          <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">${new Date(n.created_at).toLocaleString('en-IN')}</p>
-        </div>
-      `).join('')
-    }
-
-    window.markNotificationRead = async (notifId) => {
-      if (!currentUserId) return
-      await supabase.from('notifications').update({ is_read: true }).eq('id', notifId)
-      loadNotifications(currentUserId)
-    }
-
-    function renderNavbar(user) {
-      if (user) {
-        currentUserId = user.id
-        authSection.innerHTML = `
-          <div class="notification-container relative" style="z-index: 999999 !important;">
-            <button id="notification-bell" type="button" class="relative text-2xl hover:scale-110 transition-transform bmw-hover cursor-pointer">
-              🔔
-              <span id="notification-badge" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center hidden">0</span>
-            </button>
-
-            <div id="notification-dropdown" class="hidden absolute right-0 top-12 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-2xl border dark:border-gray-700" style="z-index: 999999!important;">
-              <div class="p-4 border-b dark:border-gray-700 font-bold text-gray-800 dark:text-white flex justify-between items-center">
-                <span>Notifications</span>
-                <button id="mark-all-read" type="button" class="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800">Mark all read</button>
-              </div>
-              <div id="notification-list" class="max-h-96 overflow-y-auto">
-                <div class="p-4 text-gray-500 dark:text-gray-400 text-center">Loading...</div>
-              </div>
-            </div>
-          </div>
-
-          <a href="pages/wishlist.html" class="flex items-center gap-1 text-gray-600 dark:text-gray-300 hover:text-red-500 bmw-hover">
-            <span>❤️</span><span class="hidden md:inline">Wishlist</span>
-          </a>
-          <a href="pages/orders.html" class="text-gray-600 dark:text-gray-300 hover:text-blue-600 bmw-hover">My Orders</a>
-          <a href="pages/chats.html" class="text-gray-600 dark:text-gray-300 hover:text-blue-600 bmw-hover">My Chats</a>
-          <a href="pages/profile.html" class="text-gray-600 dark:text-gray-300 hover:text-blue-600 bmw-hover">Profile</a>
-          <button id="logout-btn" type="button" class="text-red-600 hover:text-red-700 bmw-hover">Logout</button>
-          <a href="pages/add-product.html" class="transformer-btn bmw-hover bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">+ Sell</a>
-        `
-
-        document.getElementById('logout-btn').onclick = async () => {
-          await supabase.auth.signOut()
-        }
-
-        document.getElementById('mark-all-read').onclick = async (e) => {
-          e.stopPropagation()
-          await supabase.from('notifications')
-           .update({ is_read: true })
-           .eq('user_id', user.id)
-           .eq('is_read', false)
-          loadNotifications(user.id)
-        }
-
-        // BELL CLICK
-        setTimeout(() => {
-          const bell = document.getElementById('notification-bell')
-          const dropdown = document.getElementById('notification-dropdown')
-
-          if (bell && dropdown) {
-            bell.onclick = function(e) {
-              e.preventDefault()
-              e.stopPropagation()
-              dropdown.classList.toggle('hidden')
-              if (!dropdown.classList.contains('hidden')) {
-                loadNotifications(user.id)
-              }
-            }
-          }
-        }, 100)
-
-        // REALTIME
-        if (notificationChannel) {
-          supabase.removeChannel(notificationChannel)
-        }
-
-        notificationChannel = supabase
-         .channel('user-notifications')
-         .on('postgres_changes', {
-            event: 'INSERT',
-            schema: 'public',
-            table: 'notifications',
-            filter: `user_id=eq.${user.id}`
-          }, () => {
-            loadNotifications(user.id)
-          })
-         .subscribe()
-
-        loadNotifications(user.id)
-
-      } else {
-        currentUserId = null
-        authSection.innerHTML = `
-          <a href="pages/login.html" class="text-gray-700 dark:text-gray-300 hover:text-blue-600 bmw-hover">Login</a>
-          <a href="pages/add-product.html" class="transformer-btn bmw-hover bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">+ Sell</a>
-        `
-      }
-    }
-
-    // CLICK OUTSIDE TO CLOSE
-    document.addEventListener('click', (e) => {
-      const dropdown = document.getElementById('notification-dropdown')
-      const bell = document.getElementById('notification-bell')
-
-      if (dropdown && bell &&!bell.contains(e.target) &&!dropdown.contains(e.target)) {
-        dropdown.classList.add('hidden')
-      }
-    })
-
-    // AUTH STATE CHANGE
-    supabase.auth.onAuthStateChange((event, session) => {
-      renderNavbar(session?.user)
-    })
-
-    // INIT
-    const { data: { session } } = await supabase.auth.getSession()
-    renderNavbar(session?.user)
-  </script>
-
+  <!-- Scripts -->
+  <script type="module" src="js/theme.js"></script>
+  <script type="module" src="js/i18n.js"></script>
+  <script type="module" src="js/mode.js"></script>
+  <script type="module" src="js/navbar.js"></script>
   <script type="module" src="js/main.js"></script>
-  <!-- Theme Effects JS -->
-  <script type="module" src="../js/theme-effects.js"></script>
+
+  <!-- Hero Mode Toggle Script -->
+  <script type="module">
+    import { getMarketplaceMode, setMarketplaceMode } from './js/mode.js'
+    const collegeBtn = document.getElementById('hero-mode-college')
+    const commBtn = document.getElementById('hero-mode-community')
+    const mode = getMarketplaceMode()
+
+    function updateHeroButtons(curMode) {
+      if (curMode === 'college') {
+        collegeBtn.className = 'flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm bg-white text-blue-900 shadow-lg hover:scale-105 active:scale-95 transition'
+        commBtn.className = 'flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm bg-blue-800/60 hover:bg-blue-800 border border-blue-400/40 text-white shadow hover:scale-105 active:scale-95 transition'
+      } else {
+        commBtn.className = 'flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm bg-emerald-500 text-white shadow-lg hover:scale-105 active:scale-95 transition'
+        collegeBtn.className = 'flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm bg-blue-800/60 hover:bg-blue-800 border border-blue-400/40 text-white shadow hover:scale-105 active:scale-95 transition'
+      }
+    }
+
+    updateHeroButtons(mode)
+
+    collegeBtn?.addEventListener('click', () => {
+      setMarketplaceMode('college')
+      updateHeroButtons('college')
+    })
+
+    commBtn?.addEventListener('click', () => {
+      setMarketplaceMode('community')
+      updateHeroButtons('community')
+    })
+  </script>
 </body>
 </html>
