@@ -62,25 +62,17 @@
       }
 
       if (convos.length === 0) {
-        // Sample starter demo conversation
-        convos = [{
-          id: 'conv_demo_1',
-          product_id: 'sample-1',
-          buyer_id: user.id,
-          seller_id: 'seller_demo',
-          buyer_name: user.email?.split('@')[0] || 'Buyer',
-          seller_name: 'Karthik S (CIT IT)',
-          products: {
-            id: 'sample-1',
-            title: 'Engineering Mathematics (Advanced Edition) - Erwin Kreyszig',
-            price: 380,
-            photos: ['https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=600']
-          },
-          messages: [
-            { content: 'Hi! Is the maths textbook available for handover at Library today?', created_at: new Date(Date.now() - 3600000).toISOString(), sender_id: user.id, is_read: true },
-            { content: 'Yes available da! Can meet at 4:30 PM outside Central Library.', created_at: new Date(Date.now() - 1800000).toISOString(), sender_id: 'seller_demo', is_read: false }
-          ]
-        }]
+        chatList.innerHTML = `
+          <div class="text-center py-16 px-4 bg-white dark:bg-gray-800 rounded-2xl border border-dashed border-gray-200 dark:border-gray-700">
+            <span class="text-4xl block mb-2">💬</span>
+            <h4 class="text-sm font-bold text-gray-700 dark:text-gray-300">No conversations yet</h4>
+            <p class="text-xs text-gray-400 mt-1 max-w-sm mx-auto">Open any product listing in the marketplace and tap "Chat" to message the seller directly!</p>
+            <a href="../index.html" class="inline-block mt-4 px-4 py-2 bg-blue-600 text-white text-xs font-bold rounded-xl shadow">
+              Explore Listings
+            </a>
+          </div>
+        `
+        return
       }
 
       chatList.innerHTML = convos.map(chat => {

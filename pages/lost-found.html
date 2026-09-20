@@ -104,26 +104,34 @@
     let currentUser = null
     let activeType = 'found'
 
-    const SAMPLE_LF_ITEMS = [
-      { id: 'lf-1', type: 'found', title: 'College Student ID Card (CIT ECE)', location: 'Central Library 2nd Floor', date: '2026-09-19', description: 'Belongs to Roll 22EC089. Handed over to Library Security Desk.', photo: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400' },
-      { id: 'lf-2', type: 'found', title: 'Stainless Steel Water Flask (Milton 1L)', location: 'Physics Lab Bench 6', date: '2026-09-18', description: 'Silver finish with Marvel sticker. In EEE Dept Staff Room.', photo: 'https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=400' },
-      { id: 'lf-3', type: 'lost', title: 'Black HP USB-C Laptop Charger 65W', location: 'Canteen Reading Room', date: '2026-09-20', description: 'Has red tape mark near adapter pin. Reward for return!', photo: 'https://images.unsplash.com/photo-1583863788434-e58a36330cf0?w=400' }
-    ]
-
     async function initLF() {
       currentUser = await getCurrentUser()
+      try {
+        const { data } = await supabase.from('lost_found').select('*').order('created_at', { ascending: false })
+        if (data && data.length > 0) {
+          const stored = JSON.parse(localStorage.getItem('ccm_lf_items') || '[]')
+          data.forEach(d => {
+            if (!stored.some(s => s.id === d.id)) stored.push(d)
+          })
+          localStorage.setItem('ccm_lf_items', JSON.stringify(stored))
+        }
+      } catch (e) {}
       renderGrid()
     }
 
     function renderGrid() {
       const grid = document.getElementById('lf-grid')
       const stored = JSON.parse(localStorage.getItem('ccm_lf_items') || '[]')
-      const all = [...stored, ...SAMPLE_LF_ITEMS]
-
-      const filtered = all.filter(i => i.type === activeType)
+      const filtered = stored.filter(i => i.type === activeType)
 
       if (filtered.length === 0) {
-        grid.innerHTML = `<div class="col-span-full text-center py-16 text-xs text-gray-400">No items reported under ${activeType.toUpperCase()}.</div>`
+        grid.innerHTML = `
+          <div class="col-span-full text-center py-16 px-4 bg-white dark:bg-gray-800 rounded-2xl border border-dashed border-gray-200 dark:border-gray-700">
+            <span class="text-4xl block mb-2">🔍</span>
+            <h4 class="text-sm font-bold text-gray-700 dark:text-gray-300">No items reported under ${activeType.toUpperCase()}</h4>
+            <p class="text-xs text-gray-400 mt-1">If you lost or found something on campus, report it using the buttons above!</p>
+          </div>
+        `
         return
       }
 

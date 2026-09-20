@@ -157,6 +157,11 @@
       let items = []
       try {
         let query = supabase.from('products').select('*, profiles(name, rating, is_verified, phone)').in('status', ['available', 'active'])
+        if (mode === 'college') {
+          query = query.or('marketplace_mode.in.(college,both),marketplace_mode.is.null')
+        } else {
+          query = query.in('marketplace_mode', ['community', 'both'])
+        }
         if (category !== 'All') query = query.eq('category', category)
         if (keyword) query = query.ilike('title', `%${keyword}%`)
         if (minPrice > 0) query = query.gte('price', minPrice)
@@ -164,23 +169,17 @@
 
         const { data } = await query
         if (data && data.length > 0) items = data
-      } catch (e) {}
+      } catch (e) {
+        console.warn('Search query note:', e)
+      }
 
-      // Fallback
-      if (items.length === 0) {
+      // Merge local fallback items if present
+      try {
         const local = JSON.parse(localStorage.getItem('ccm_fallback_products') || '[]')
-        items = local
-      }
-
-      // If still empty, supply sample items
-      if (items.length === 0) {
-        items = [
-          { id: 's1', title: 'Engineering Physics Vol 1', price: 250, category: 'Books & Notes', condition: 'Like new', photos: ['https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=600'], marketplace_mode: 'college', status: 'available', profiles: { name: 'Dinesh', rating: 4.8 } },
-          { id: 's2', title: 'Avon Element Mountain Bike', price: 3200, category: 'Cycles & Vehicles', condition: 'Used', photos: ['https://images.unsplash.com/photo-1485965120184-e220f721d03e?w=600'], marketplace_mode: 'both', status: 'available', profiles: { name: 'Kavitha', rating: 5.0 } },
-          { id: 's3', title: 'Texas Instruments NSpire CX', price: 2100, category: 'Lab & Study Equipment', condition: 'Like new', photos: ['https://images.unsplash.com/photo-1587145820266-a5951ee6f620?w=600'], marketplace_mode: 'college', status: 'available', profiles: { name: 'Vikram', rating: 4.9 } },
-          { id: 's4', title: 'Lenovo ThinkPad Wireless Mouse & Pad', price: 400, category: 'Electronics & Laptops', condition: 'New', photos: ['https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=600'], marketplace_mode: 'community', status: 'available', profiles: { name: 'Arun', rating: 4.7 } }
-        ]
-      }
+        local.forEach(l => {
+          if (!items.some(it => it.id === l.id)) items.push(l)
+        })
+      } catch (e) {}
 
       // Filter locally
       let filtered = items.filter(item => {
@@ -202,7 +201,13 @@
       resultCount.textContent = `Found ${filtered.length} listings`
 
       if (filtered.length === 0) {
-        resultsGrid.innerHTML = '<div class="col-span-full text-center py-16 text-xs text-gray-400">No items match your filter criteria. Try broadening your search!</div>'
+        resultsGrid.innerHTML = `
+          <div class="col-span-full text-center py-16 px-4 bg-white dark:bg-gray-800 rounded-2xl border border-dashed border-gray-200 dark:border-gray-700">
+            <span class="text-4xl block mb-2">🔍</span>
+            <h4 class="text-sm font-bold text-gray-700 dark:text-gray-300">No matching listings found</h4>
+            <p class="text-xs text-gray-400 mt-1">Try adjusting your keywords, price range, or category filter.</p>
+          </div>
+        `
       } else {
         resultsGrid.innerHTML = filtered.map(p => createProductCard(p, [])).join('')
       }

@@ -87,13 +87,8 @@
       { name: 'Hostel Block 3 Entrance', coords: [11.0295, 77.0300], icon: '🏢', desc: 'Hostel security desk' }
     ]
 
-    // Sample Nearby Items
-    const NEARBY_SAMPLE_ITEMS = [
-      { id: 'nb-1', title: 'Calculus & Linear Algebra Textbook', price: 300, category: 'Books & Notes', condition: 'Like new', coords: [11.0278, 77.0270], meeting_point: 'Central Library', photos: ['https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=600'], marketplace_mode: 'college', status: 'available', profiles: { name: 'Sanjay M', rating: 5.0 } },
-      { id: 'nb-2', title: 'Firefox Geared Bicycle (Dual Disc)', price: 3900, category: 'Cycles & Vehicles', condition: 'Used', coords: [11.0265, 77.0255], meeting_point: 'Main Gate', photos: ['https://images.unsplash.com/photo-1485965120184-e220f721d03e?w=600'], marketplace_mode: 'both', status: 'available', profiles: { name: 'Praveen K', rating: 4.8 } },
-      { id: 'nb-3', title: 'Digital Multimeter & Soldering Kit', price: 550, category: 'Lab & Study Equipment', condition: 'New', coords: [11.0290, 77.0285], meeting_point: 'Department Office', photos: ['https://images.unsplash.com/photo-1587145820266-a5951ee6f620?w=600'], marketplace_mode: 'college', status: 'available', profiles: { name: 'Revathi S', rating: 4.9 } },
-      { id: 'nb-4', title: 'Hostel Room Cooler 20L', price: 1600, category: 'Hostel & Room Essentials', condition: 'Used', coords: [11.0600, 77.0500], meeting_point: 'Off-campus PG', photos: ['https://images.unsplash.com/photo-1518455027359-f3f8164ba6bd?w=600'], marketplace_mode: 'community', status: 'available', profiles: { name: 'Anand T', rating: 4.6 } }
-    ]
+    let nearbyProducts = []
+    let productMarkersLayer = null
 
     // Haversine formula for distance in KM
     function calculateDistance(lat1, lon1, lat2, lon2) {
@@ -124,9 +119,66 @@
         `)
       })
 
-      // Add Product Markers
-      NEARBY_SAMPLE_ITEMS.forEach(item => {
-        if (item.coords) {
+      productMarkersLayer = L.layerGroup().addTo(map)
+    }
+
+    async function loadNearbyProducts() {
+      const countEl = document.getElementById('nearby-count')
+      countEl.textContent = 'Loading campus listings...'
+
+      let items = []
+      try {
+        const { data } = await supabase
+          .from('products')
+          .select('*, profiles(name, rating, is_verified, phone)')
+          .in('status', ['active', 'available'])
+          .order('created_at', { ascending: false })
+          .limit(40)
+        if (data && data.length > 0) items = data
+      } catch (e) {
+        console.warn('Nearby products fetch note:', e)
+      }
+
+      // Merge local listings
+      try {
+        const local = JSON.parse(localStorage.getItem('ccm_fallback_products') || '[]')
+        local.forEach(l => {
+          if (!items.some(it => it.id === l.id)) items.push(l)
+        })
+      } catch (e) {}
+
+      // Filter by active marketplace mode
+      const mode = getMarketplaceMode()
+      nearbyProducts = items.filter(item => {
+        if (mode === 'college' && item.marketplace_mode === 'community') return false
+        if (mode === 'community' && item.marketplace_mode === 'college') return false
+        return true
+      })
+
+      // Ensure coordinates for each item
+      nearbyProducts.forEach((item, idx) => {
+        if (!item.coords) {
+          if (item.lat && item.lng) {
+            item.coords = [parseFloat(item.lat), parseFloat(item.lng)]
+          } else {
+            // Realistic dispersion around campus center
+            const angle = (idx * 137.5) * (Math.PI / 180)
+            const r = 0.002 + (idx * 0.001)
+            item.coords = [CAMPUS_COORDS[0] + r * Math.cos(angle), CAMPUS_COORDS[1] + r * Math.sin(angle)]
+          }
+        }
+      })
+
+      plotProductMarkers()
+      renderNearbyFeed()
+    }
+
+    function plotProductMarkers() {
+      if (!productMarkersLayer) return
+      productMarkersLayer.clearLayers()
+
+      nearbyProducts.forEach(item => {
+        if (item.coords && item.coords.length === 2) {
           L.circleMarker(item.coords, {
             radius: 8,
             fillColor: '#10B981',
@@ -134,11 +186,12 @@
             weight: 2,
             opacity: 1,
             fillOpacity: 0.8
-          }).addTo(map).bindPopup(`
+          }).addTo(productMarkersLayer).bindPopup(`
             <div class="text-xs">
               <b class="text-gray-900">${item.title}</b><br>
               <span class="text-blue-600 font-bold">₹${item.price}</span><br>
-              <a href="product.html?id=${item.id}" class="text-blue-500 underline">View Item</a>
+              <span class="text-[10px] text-gray-500">Meeting: ${item.meeting_point || item.pickup_location || 'Campus'}</span><br>
+              <a href="product.html?id=${item.id}" class="text-blue-500 underline font-semibold mt-1 inline-block">View Item</a>
             </div>
           `)
         }
@@ -149,7 +202,22 @@
       const grid = document.getElementById('nearby-products-grid')
       const countEl = document.getElementById('nearby-count')
 
-      const itemsWithDist = NEARBY_SAMPLE_ITEMS.map(item => {
+      if (nearbyProducts.length === 0) {
+        countEl.textContent = '0 items found nearby'
+        grid.innerHTML = `
+          <div class="col-span-full text-center py-16 px-4 bg-white dark:bg-gray-800 rounded-2xl border border-dashed border-gray-200 dark:border-gray-700">
+            <span class="text-4xl block mb-2">📍</span>
+            <h4 class="text-sm font-bold text-gray-700 dark:text-gray-300">No nearby items listed yet</h4>
+            <p class="text-xs text-gray-400 mt-1 max-w-sm mx-auto">Post an item from campus or your locality to see it on the GPS map!</p>
+            <a href="add-product.html" class="inline-flex items-center gap-2 mt-4 px-4 py-2 bg-blue-600 text-white text-xs font-bold rounded-xl shadow">
+              + Post First Item
+            </a>
+          </div>
+        `
+        return
+      }
+
+      const itemsWithDist = nearbyProducts.map(item => {
         const d = calculateDistance(userCoords.lat, userCoords.lng, item.coords[0], item.coords[1])
         return { ...item, distanceKm: d }
       })
@@ -166,10 +234,9 @@
 
       grid.innerHTML = filtered.map(item => {
         const card = createProductCard(item, [])
-        // Inject distance pill
         return card.replace(
           '<!-- AI Badges -->',
-          `<div class="inline-flex items-center gap-1 px-2 py-0.5 mb-1 text-[10px] font-bold rounded bg-emerald-50 dark:bg-emerald-950 text-emerald-600 border border-emerald-200">📍 ${item.distanceKm.toFixed(1)} km from you</div>`
+          `<div class="inline-flex items-center gap-1 px-2 py-0.5 mb-1 text-[10px] font-bold rounded bg-emerald-50 dark:bg-emerald-950 text-emerald-600 border border-emerald-200">📍 ${item.distanceKm.toFixed(1)} km away</div>`
         )
       }).join('')
     }
@@ -206,7 +273,7 @@
     radMore.onclick = () => setActiveRad(radMore, 'more')
 
     initMap()
-    renderNearbyFeed()
+    loadNearbyProducts()
   </script>
 </body>
 </html>

@@ -39,14 +39,6 @@
 
     const container = document.getElementById('notifications-container')
 
-    const SAMPLE_NOTIFS = [
-      { id: 'n1', icon: '📦', title: 'Order Confirmed', message: 'Your order for "Engineering Mathematics Kreyszig" has been confirmed by seller. Meet at Central Library Front.', time: '10 mins ago', type: 'order', is_read: false },
-      { id: 'n2', icon: '🔨', title: 'Auction Bid Alert', message: 'You have been outbid on "Apple iPad 9th Gen". The new highest bid is ₹14,500.', time: '1 hour ago', type: 'bid', is_read: false },
-      { id: 'n3', icon: '🔄', title: 'Barter Exchange Request', message: 'Student Dharani R proposed a trade: Python Book ↔ Casio fx-991EX Calculator.', time: '2 hours ago', type: 'exchange', is_read: true },
-      { id: 'n4', icon: '📉', title: 'Price Drop Alert', message: 'An item in your wishlist "Hercules Roadeo Cycle" dropped price by ₹400!', time: 'Yesterday', type: 'price_drop', is_read: true },
-      { id: 'n5', icon: '🛡️', title: 'Campus Safety Announcement', message: 'Security Reminder: Always complete product handovers at designated Campus Meeting Points (Main Gate / Library).', time: '2 days ago', type: 'safety', is_read: true }
-    ]
-
     async function loadNotifications() {
       const user = await getCurrentUser()
       let notifs = []
@@ -58,7 +50,14 @@
       }
 
       if (notifs.length === 0) {
-        notifs = SAMPLE_NOTIFS
+        container.innerHTML = `
+          <div class="text-center py-16 px-4 bg-white dark:bg-gray-800 rounded-2xl border border-dashed border-gray-200 dark:border-gray-700">
+            <span class="text-4xl block mb-2">🔔</span>
+            <h4 class="text-sm font-bold text-gray-700 dark:text-gray-300">No notifications yet</h4>
+            <p class="text-xs text-gray-400 mt-1 max-w-sm mx-auto">You're all caught up! Order alerts, bid updates, and campus marketplace announcements will appear here.</p>
+          </div>
+        `
+        return
       }
 
       container.innerHTML = notifs.map(n => `
@@ -79,10 +78,15 @@
       `).join('')
     }
 
-    document.getElementById('mark-all-read-btn').onclick = () => {
-      SAMPLE_NOTIFS.forEach(n => n.is_read = true)
+    document.getElementById('mark-all-read-btn').onclick = async () => {
+      const user = await getCurrentUser()
+      if (user) {
+        try {
+          await supabase.from('notifications').update({ is_read: true }).eq('user_id', user.id)
+        } catch (e) {}
+      }
       loadNotifications()
-      alert('All notifications marked as read.')
+      alert('Notifications marked as read.')
     }
 
     loadNotifications()

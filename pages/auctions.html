@@ -80,49 +80,21 @@
     let activeAuctions = []
     let selectedAuction = null
 
-    // Sample Live Auctions with timestamps
-    const SAMPLE_AUCTIONS = [
-      {
-        id: 'auc-1',
-        title: 'Apple iPad 9th Gen (64GB WiFi) with Stylus',
-        description: 'Perfect for paperless note-taking. Battery health 96%. Includes magnetic folio case.',
-        starting_price: 12000,
-        current_highest_bid: 14500,
-        min_bid: 200,
-        highest_bidder: 'Ramesh K (CIT)',
-        endTime: Date.now() + (3 * 3600 * 1000 + 45 * 60 * 1000), // 3h 45m left
-        photos: ['https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=600'],
-        bids_count: 8
-      },
-      {
-        id: 'auc-2',
-        title: 'Trek Marlin 5 Mountain Cycle (Shimano 21-Speed)',
-        description: 'High-end campus bike with RockShox suspension and hydraulic brakes.',
-        starting_price: 8000,
-        current_highest_bid: 9800,
-        min_bid: 250,
-        highest_bidder: 'Praveen T (PSG)',
-        endTime: Date.now() + (1 * 3600 * 1000 + 15 * 60 * 1000), // 1h 15m left
-        photos: ['https://images.unsplash.com/photo-1485965120184-e220f721d03e?w=600'],
-        bids_count: 14
-      },
-      {
-        id: 'auc-3',
-        title: 'Sony WH-1000XM4 Active Noise Cancelling Headphones',
-        description: 'Essential for hostel room deep study sessions. 30hr battery life.',
-        starting_price: 7500,
-        current_highest_bid: 8900,
-        min_bid: 100,
-        highest_bidder: 'Siddharth M (GCT)',
-        endTime: Date.now() + (5 * 3600 * 1000 + 20 * 60 * 1000), // 5h 20m left
-        photos: ['https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600'],
-        bids_count: 11
-      }
-    ]
-
     async function initAuctions() {
       currentUser = await getCurrentUser()
-      activeAuctions = [...SAMPLE_AUCTIONS]
+      try {
+        const { data } = await supabase.from('auctions').select('*').in('status', ['active', 'open']).order('created_at', { ascending: false })
+        if (data && data.length > 0) activeAuctions = data
+      } catch (e) {}
+
+      // Merge locally created auctions
+      try {
+        const stored = JSON.parse(localStorage.getItem('ccm_auctions') || '[]')
+        stored.forEach(s => {
+          if (!activeAuctions.some(a => a.id === s.id)) activeAuctions.push(s)
+        })
+      } catch (e) {}
+
       renderAuctions()
       setInterval(updateCountdowns, 1000)
     }
@@ -137,6 +109,19 @@
 
     function renderAuctions() {
       const grid = document.getElementById('auctions-grid')
+      if (activeAuctions.length === 0) {
+        grid.innerHTML = `
+          <div class="col-span-full text-center py-16 px-4 bg-white dark:bg-gray-800 rounded-2xl border border-dashed border-gray-200 dark:border-gray-700">
+            <span class="text-4xl block mb-2">🔨</span>
+            <h4 class="text-sm font-bold text-gray-700 dark:text-gray-300">No active live auctions right now</h4>
+            <p class="text-xs text-gray-400 mt-1 max-w-sm mx-auto">Have an item like a laptop, cycle, or calculator? Put it up for bidding!</p>
+            <button onclick="document.getElementById('create-modal').classList.remove('hidden')" class="inline-block mt-4 px-4 py-2 bg-blue-600 text-white text-xs font-bold rounded-xl shadow">
+              Start an Auction
+            </button>
+          </div>
+        `
+        return
+      }
       grid.innerHTML = activeAuctions.map(auc => {
         const remaining = Math.max(0, auc.endTime - Date.now())
         const isEnded = remaining <= 0

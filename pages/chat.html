@@ -105,16 +105,24 @@
 
       if (!prod) {
         prod = {
-          title: 'Engineering Mathematics (Advanced Edition)',
-          price: 380,
-          photos: ['https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=600']
+          title: 'Campus Listing',
+          price: 0,
+          photos: ['https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=600&auto=format&fit=crop']
         }
       }
 
-      document.getElementById('chat-product-img').src = prod.photos?.[0] || 'https://via.placeholder.com/50'
+      document.getElementById('chat-product-img').src = prod.photos?.[0] || 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=600&auto=format&fit=crop'
       document.getElementById('chat-product-title').textContent = prod.title
-      document.getElementById('chat-product-price').textContent = `₹${prod.price}`
-      document.getElementById('chat-party-name').textContent = 'Campus Seller'
+      document.getElementById('chat-product-price').textContent = prod.price ? `₹${prod.price}` : ''
+
+      try {
+        if (sellerId && sellerId !== 'seller_demo') {
+          const { data: sProf } = await supabase.from('profiles').select('name, full_name').eq('id', sellerId).single()
+          if (sProf) {
+            document.getElementById('chat-party-name').textContent = sProf.full_name || sProf.name || 'Campus Seller'
+          }
+        }
+      } catch (e) {}
 
       // Check existing messages
       try {
@@ -125,10 +133,7 @@
       } catch (e) {}
 
       if (localMessages.length === 0) {
-        localMessages = [
-          { content: 'Hi! I am interested in this item. Is it still available?', sender_id: currentUser.id, created_at: new Date(Date.now() - 120000).toISOString() },
-          { content: 'Hello! Yes, it is in excellent condition. We can meet at the Campus Main Gate or Library.', sender_id: 'seller_demo', created_at: new Date(Date.now() - 60000).toISOString() }
-        ]
+        localMessages = []
       }
 
       renderMessages()

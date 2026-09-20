@@ -18,99 +18,7 @@ let currentSearch = ''
 let userLocation = null
 let wishlistIds = []
 
-// Fallback sample products for instant zero-error preview if database is fresh
-const SAMPLE_PRODUCTS = [
-  {
-    id: 'sample-1',
-    title: 'Engineering Mathematics (Advanced Edition) - Erwin Kreyszig',
-    description: 'Crisp condition semester textbook with solved problems and formula cheatsheet.',
-    price: 380,
-    category: 'Books & Notes',
-    condition: 'Like new',
-    photos: ['https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=600&auto=format&fit=crop'],
-    marketplace_mode: 'college',
-    pickup_location: 'Central Library',
-    meeting_point: 'Central Library',
-    created_at: new Date().toISOString(),
-    status: 'available',
-    profiles: { name: 'Karthik S', rating: 4.9, is_verified: true }
-  },
-  {
-    id: 'sample-2',
-    title: 'Hercules Roadeo Hardliner Geared Cycle (21 Speed)',
-    description: 'Smooth riding hostel commute cycle. Dual disc brakes, new tires, free combo lock.',
-    price: 3400,
-    category: 'Cycles & Vehicles',
-    condition: 'Used',
-    photos: ['https://images.unsplash.com/photo-1485965120184-e220f721d03e?w=600&auto=format&fit=crop'],
-    marketplace_mode: 'both',
-    pickup_location: 'Hostel Block 3',
-    meeting_point: 'Main Gate',
-    created_at: new Date(Date.now() - 3600000).toISOString(),
-    status: 'available',
-    profiles: { name: 'Priya R', rating: 5.0, is_verified: true }
-  },
-  {
-    id: 'sample-3',
-    title: 'Casio fx-991EX Classwiz Scientific Calculator',
-    description: 'Essential for engineering exams. Matrix, calculus, quadratic solvers included.',
-    price: 650,
-    category: 'Lab & Study Equipment',
-    condition: 'Like new',
-    photos: ['https://images.unsplash.com/photo-1587145820266-a5951ee6f620?w=600&auto=format&fit=crop'],
-    marketplace_mode: 'college',
-    pickup_location: 'ECE Department',
-    meeting_point: 'Department Office',
-    created_at: new Date(Date.now() - 7200000).toISOString(),
-    status: 'available',
-    profiles: { name: 'Rahul V', rating: 4.8, is_verified: true }
-  },
-  {
-    id: 'sample-4',
-    title: 'Wooden Study Table with Drawer & Ergonomic Chair',
-    description: 'Sturdy teak-finish study desk suitable for hostel room or PG flat.',
-    price: 1800,
-    category: 'Hostel & Room Essentials',
-    condition: 'Used',
-    photos: ['https://images.unsplash.com/photo-1518455027359-f3f8164ba6bd?w=600&auto=format&fit=crop'],
-    marketplace_mode: 'community',
-    pickup_location: 'North Campus Gate',
-    meeting_point: 'Canteen',
-    created_at: new Date(Date.now() - 14400000).toISOString(),
-    status: 'available',
-    profiles: { name: 'Vimal K', rating: 4.7, is_verified: false }
-  },
-  {
-    id: 'sample-5',
-    title: 'Arduino Uno R3 Starter Kit with 30+ Sensors',
-    description: 'Complete IoT & robotics kit for mini project. Includes breadboard, jumper wires, ultrasonic.',
-    price: 850,
-    category: 'Electronics & Laptops',
-    condition: 'New',
-    photos: ['https://images.unsplash.com/photo-1553406830-ef2513450d76?w=600&auto=format&fit=crop'],
-    marketplace_mode: 'college',
-    pickup_location: 'Robotics Lab',
-    meeting_point: 'Main Gate',
-    created_at: new Date(Date.now() - 28800000).toISOString(),
-    status: 'available',
-    profiles: { name: 'Sneha M', rating: 5.0, is_verified: true }
-  },
-  {
-    id: 'sample-6',
-    title: 'Campus Electric Kettle 1.5L Stainless Steel',
-    description: 'Auto-shutoff, fast boiling for late night study sessions, tea, noodles.',
-    price: 400,
-    category: 'Hostel & Room Essentials',
-    condition: 'Like new',
-    photos: ['https://images.unsplash.com/photo-1574269909862-7e1d70bb8078?w=600&auto=format&fit=crop'],
-    marketplace_mode: 'both',
-    pickup_location: 'Ladies Hostel Gate',
-    meeting_point: 'Canteen',
-    created_at: new Date(Date.now() - 43200000).toISOString(),
-    status: 'available',
-    profiles: { name: 'Ananya D', rating: 4.9, is_verified: true }
-  }
-]
+// Real products loaded dynamically from Supabase database or local offline cache
 
 // 1. Create Product Card HTML
 export function createProductCard(product, wishlistIds = []) {
@@ -242,10 +150,11 @@ export async function loadProducts() {
       .select('*, profiles(name, rating, is_verified, phone)')
       .in('status', ['available', 'active'])
       .order('created_at', { ascending: false })
-      .limit(30)
+      .limit(50)
 
     if (activeMode === 'college') {
-      query = query.in('marketplace_mode', ['college', 'both'])
+      // Include college mode items, dual-mode items, or items where mode is not yet set
+      query = query.or('marketplace_mode.in.(college,both),marketplace_mode.is.null')
     } else {
       query = query.in('marketplace_mode', ['community', 'both'])
     }
@@ -269,26 +178,48 @@ export async function loadProducts() {
       fetchedProducts = data
     }
   } catch (err) {
-    console.warn('Supabase query fallback to samples:', err)
+    console.warn('Database query note:', err)
   }
 
-  // Combine with sample data if database is fresh or empty
-  if (fetchedProducts.length === 0) {
-    fetchedProducts = SAMPLE_PRODUCTS.filter(p => {
-      if (activeMode === 'college' && p.marketplace_mode === 'community') return false
-      if (activeMode === 'community' && p.marketplace_mode === 'college') return false
-      if (currentCategory !== 'All' && p.category !== currentCategory) return false
-      if (currentSearch && !p.title.toLowerCase().includes(currentSearch.toLowerCase())) return false
-      return true
+  // Merge any local listings (e.g. freshly posted items or offline storage)
+  try {
+    const localItems = JSON.parse(localStorage.getItem('ccm_fallback_products') || '[]')
+    localItems.forEach(localProd => {
+      if (!fetchedProducts.some(p => p.id === localProd.id)) {
+        if (activeMode === 'college' && localProd.marketplace_mode === 'community') return
+        if (activeMode === 'community' && localProd.marketplace_mode === 'college') return
+        if (currentCategory && currentCategory !== 'All' && localProd.category !== currentCategory) return
+        if (currentSearch && !localProd.title?.toLowerCase().includes(currentSearch.toLowerCase())) return
+        fetchedProducts.unshift(localProd)
+      }
     })
-  }
+  } catch (e) {}
 
+  // Clean empty state when no products exist in this mode/filter
   if (fetchedProducts.length === 0) {
+    const isRoot = window.location.pathname === '/' || window.location.pathname.endsWith('index.html') || !window.location.pathname.includes('/pages/')
+    const addPath = isRoot ? 'pages/add-product.html' : 'add-product.html'
     productFeed.innerHTML = `
-      <div class="col-span-full text-center py-16">
-        <span class="text-4xl">📦</span>
-        <p class="text-gray-500 dark:text-gray-400 font-medium mt-2">No items found in ${activeMode === 'college' ? 'College' : 'Community'} mode.</p>
-        <p class="text-xs text-gray-400 mt-1">Try resetting filters or post the first item!</p>
+      <div class="col-span-full text-center py-16 px-4 bg-white dark:bg-gray-800 rounded-2xl border border-dashed border-gray-200 dark:border-gray-700">
+        <span class="text-5xl block mb-3">🛍️</span>
+        <h3 class="text-base font-bold text-gray-800 dark:text-gray-200">
+          No items found in ${activeMode === 'college' ? 'College' : 'Community'} Marketplace
+        </h3>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 max-w-sm mx-auto">
+          ${currentSearch || (currentCategory && currentCategory !== 'All') 
+            ? 'No items matched your current search or category filter. Try clearing filters.' 
+            : 'Be the first student or community member to list an item for sale, exchange or rent!'}
+        </p>
+        <div class="flex justify-center gap-3 mt-5">
+          <a href="${addPath}" class="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-md transition">
+            <span>➕</span> Post Listing
+          </a>
+          ${(currentSearch || (currentCategory && currentCategory !== 'All')) ? `
+            <button onclick="window.location.reload()" class="px-4 py-2.5 bg-gray-100 dark:bg-gray-700 text-xs font-bold rounded-xl text-gray-700 dark:text-gray-300">
+              Clear Filters
+            </button>
+          ` : ''}
+        </div>
       </div>
     `
     return
@@ -302,14 +233,17 @@ export async function loadProducts() {
 
 // 3. Add to cart window action
 window.handleAddToCart = async (productId, btn) => {
-  const allProducts = [...SAMPLE_PRODUCTS]
-  let product = allProducts.find(p => p.id === productId)
+  let product = null
+  try {
+    const { data } = await supabase.from('products').select('*').eq('id', productId).single()
+    if (data) product = data
+  } catch (e) {}
+
   if (!product) {
-    try {
-      const { data } = await supabase.from('products').select('*').eq('id', productId).single()
-      product = data
-    } catch (e) {}
+    const localItems = JSON.parse(localStorage.getItem('ccm_fallback_products') || '[]')
+    product = localItems.find(p => p.id === productId)
   }
+
   if (product) {
     await addToCart(product, 1)
     if (btn) {

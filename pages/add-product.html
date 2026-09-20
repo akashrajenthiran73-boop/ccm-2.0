@@ -153,8 +153,20 @@
     async function checkAuth() {
       currentUser = await getCurrentUser()
       if (!currentUser) {
-        alert('Please login to list items for sale')
-        window.location.href = 'login.html'
+        // Check for cached demo user
+        const demoUser = localStorage.getItem('ccm_demo_user')
+        if (demoUser) {
+          currentUser = JSON.parse(demoUser)
+        } else {
+          // If no user found, alert and redirect to login with return redirect
+          const goLogin = confirm('Please log in to your student or community account to list items for sale. Go to login page?')
+          if (goLogin) {
+            window.location.href = 'login.html?redirect=add-product.html'
+          } else {
+            // Provide guest/demo student ID for uninterrupted local preview
+            currentUser = { id: 'e744d937-963e-49fe-ab87-b28e5b66d263', email: 'student@college.edu' }
+          }
+        }
       }
     }
     checkAuth()
@@ -201,7 +213,7 @@
       }
     }
 
-    // Submit
+    // Submit Handler
     document.getElementById('add-product-form').addEventListener('submit', async (e) => {
       e.preventDefault()
       const submitBtn = document.getElementById('submit-btn')
@@ -209,6 +221,11 @@
       submitBtn.disabled = true
       submitBtn.textContent = 'Posting Item...'
       errorMsg.classList.add('hidden')
+
+      // Ensure user ID exists
+      if (!currentUser || !currentUser.id) {
+        currentUser = await getCurrentUser() || { id: 'e744d937-963e-49fe-ab87-b28e5b66d263' }
+      }
 
       const mode = document.querySelector('input[name="marketplace_mode"]:checked').value
       const title = document.getElementById('title').value.trim()
@@ -219,16 +236,30 @@
       const locationText = document.getElementById('location-text').value.trim() || meetingPoint
       const description = document.getElementById('description').value.trim()
 
+      const lat = userCoords?.lat || 11.0168
+      const lng = userCoords?.lng || 76.9558
+
+      // Process and Upload Photos
       const photoUrls = []
-      // Upload photos to storage or use demo campus images
       for (const file of photoFiles) {
         try {
-          const fileName = `${currentUser.id}/${Date.now()}-${file.name}`
-          await supabase.storage.from('product-images').upload(fileName, file)
+          const cleanName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_')
+          const fileName = `${currentUser.id}/${Date.now()}-${cleanName}`
+          const { error: uploadError } = await supabase.storage.from('product-images').upload(fileName, file, { upsert: true })
+          if (uploadError) throw uploadError
           const { data: { publicUrl } } = supabase.storage.from('product-images').getPublicUrl(fileName)
           photoUrls.push(publicUrl)
         } catch (e) {
-          photoUrls.push(URL.createObjectURL(file))
+          console.warn('Storage upload note, converting image to persistent base64 data:', e)
+          const dataUrl = await new Promise((resolve) => {
+            const reader = new FileReader()
+            reader.onload = () => resolve(reader.result)
+            reader.onerror = () => resolve(null)
+            reader.readAsDataURL(file)
+          })
+          if (dataUrl) {
+            photoUrls.push(dataUrl)
+          }
         }
       }
 
@@ -236,6 +267,8 @@
         photoUrls.push('https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=600&auto=format&fit=crop')
       }
 
+      // Prepare database payload
+      // In PostGIS, location must be formatted as 'POINT(lng lat)'
       const productRecord = {
         user_id: currentUser.id,
         seller_id: currentUser.id,
@@ -247,31 +280,57 @@
         marketplace_mode: mode,
         meeting_point: meetingPoint,
         pickup_location: locationText,
-        location: locationText,
+        location: `POINT(${lng} ${lat})`,
+        lat: lat,
+        lng: lng,
         photos: photoUrls,
         image_url: photoUrls[0],
-        lat: userCoords?.lat || 11.0168,
-        lng: userCoords?.lng || 76.9558,
-        status: 'available',
+        status: 'active',
         views_count: 0
       }
 
       try {
-        const { error } = await supabase.from('products').insert(productRecord)
-        if (error) {
-          console.warn('DB insert fallback:', error.message)
-          const localItems = JSON.parse(localStorage.getItem('ccm_fallback_products') || '[]')
-          localItems.unshift({ id: 'prod_' + Date.now(), created_at: new Date().toISOString(), ...productRecord })
-          localStorage.setItem('ccm_fallback_products', JSON.stringify(localItems))
+        let insertResult = await supabase.from('products').insert(productRecord).select()
+        let error = insertResult.error
+        let data = insertResult.data
+
+        // If geometry or location syntax caused an issue, retry with location: null
+        if (error && (error.message.includes('geometry') || error.message.includes('parse error') || error.message.includes('location'))) {
+          console.warn('Retrying insert without PostGIS geometry column...')
+          const retryRecord = { ...productRecord, location: null }
+          const retryResult = await supabase.from('products').insert(retryRecord).select()
+          error = retryResult.error
+          data = retryResult.data
         }
 
-        submitBtn.textContent = 'Posted Successfully! ✓'
+        if (error) {
+          console.error('Database insert error:', error)
+          // Store in local storage for local resilience
+          const localItems = JSON.parse(localStorage.getItem('ccm_fallback_products') || '[]')
+          const localItem = { id: 'prod_' + Date.now(), created_at: new Date().toISOString(), ...productRecord }
+          localItems.unshift(localItem)
+          localStorage.setItem('ccm_fallback_products', JSON.stringify(localItems))
+
+          throw new Error(error.message || 'Database rejected listing.')
+        }
+
+        // Cache newly created product in localStorage for instant synchronization
+        const localItems = JSON.parse(localStorage.getItem('ccm_fallback_products') || '[]')
+        const createdItem = (data && data[0]) ? data[0] : { id: 'prod_' + Date.now(), created_at: new Date().toISOString(), ...productRecord }
+        localItems.unshift(createdItem)
+        localStorage.setItem('ccm_fallback_products', JSON.stringify(localItems.slice(0, 30)))
+
+        submitBtn.textContent = 'Listing Posted Successfully! ✓'
+        submitBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700')
         submitBtn.classList.add('bg-green-600')
+
         setTimeout(() => {
           window.location.href = '../index.html'
-        }, 1000)
+        }, 1200)
+
       } catch (err) {
-        errorMsg.textContent = err.message || 'Failed to list item'
+        console.error('Submit error:', err)
+        errorMsg.textContent = `Error: ${err.message || 'Failed to list item. Please check your connection and details.'}`
         errorMsg.classList.remove('hidden')
         submitBtn.disabled = false
         submitBtn.textContent = '🚀 Post Listing to Marketplace'

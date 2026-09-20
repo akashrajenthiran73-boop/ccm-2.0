@@ -46,6 +46,16 @@
         <button type="submit" id="login-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition shadow-md">
           Sign In
         </button>
+
+        <div class="relative flex py-1 items-center">
+          <div class="flex-grow border-t border-gray-200 dark:border-gray-700"></div>
+          <span class="flex-shrink mx-3 text-[11px] text-gray-400">or test quickly</span>
+          <div class="flex-grow border-t border-gray-200 dark:border-gray-700"></div>
+        </div>
+
+        <button type="button" id="demo-student-btn" class="w-full bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 hover:bg-blue-100 font-bold py-2.5 rounded-xl transition text-xs flex items-center justify-center gap-2">
+          <span>🎓</span> One-Click Demo Login (Student)
+        </button>
       </form>
 
       <div class="mt-6 text-center text-xs text-gray-500 dark:text-gray-400 border-t border-gray-100 dark:border-gray-700 pt-4">
@@ -97,6 +107,18 @@
         loginBtn.disabled = false
         loginBtn.textContent = 'Sign In'
       }
+    })
+
+    document.getElementById('demo-student-btn')?.addEventListener('click', () => {
+      const demoUser = {
+        id: 'e744d937-963e-49fe-ab87-b28e5b66d263',
+        email: 'akash.student@college.edu',
+        user_metadata: { full_name: 'Akash Student', role: 'student' }
+      }
+      localStorage.setItem('ccm_demo_user', JSON.stringify(demoUser))
+      const urlParams = new URLSearchParams(window.location.search)
+      const redirect = urlParams.get('redirect') || '../index.html'
+      window.location.href = redirect
     })
   </script>
 </body>

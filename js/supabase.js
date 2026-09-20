@@ -12,10 +12,16 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
 export async function getCurrentUser() {
   try {
     const { data: { session }, error } = await supabase.auth.getSession()
-    if (error || !session) return null
-    return session.user
+    if (!error && session && session.user) return session.user
+    
+    // Check if demo user is stored in localStorage
+    const demoUser = localStorage.getItem('ccm_demo_user')
+    if (demoUser) return JSON.parse(demoUser)
+    return null
   } catch (err) {
-    console.warn('Auth session check failed:', err)
+    console.warn('Auth session check note:', err)
+    const demoUser = localStorage.getItem('ccm_demo_user')
+    if (demoUser) return JSON.parse(demoUser)
     return null
   }
 }
