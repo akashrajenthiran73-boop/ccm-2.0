@@ -173,11 +173,12 @@ export async function loadProducts() {
       // Include college mode items, dual-mode items, or items where mode is not yet set
       query = query.or('marketplace_mode.in.(college,both),marketplace_mode.is.null')
     } else {
-      query = query.in('marketplace_mode', ['community', 'both'])
+      query = query.or('marketplace_mode.in.(community,both),marketplace_mode.is.null')
     }
 
     if (currentCategory && currentCategory !== 'All') {
-      query = query.eq('category', currentCategory)
+      const primaryCat = currentCategory.split(' ')[0]
+      query = query.ilike('category', `%${primaryCat}%`)
     }
 
     if (currentSearch) {
@@ -203,9 +204,14 @@ export async function loadProducts() {
     const localItems = JSON.parse(localStorage.getItem('ccm_fallback_products') || '[]')
     localItems.forEach(localProd => {
       if (!fetchedProducts.some(p => p.id === localProd.id)) {
-        if (activeMode === 'college' && localProd.marketplace_mode === 'community') return
-        if (activeMode === 'community' && localProd.marketplace_mode === 'college') return
-        if (currentCategory && currentCategory !== 'All' && localProd.category !== currentCategory) return
+        const pMode = localProd.marketplace_mode || 'both'
+        if (activeMode === 'college' && pMode === 'community') return
+        if (activeMode === 'community' && pMode === 'college') return
+        if (currentCategory && currentCategory !== 'All') {
+          const primaryCat = currentCategory.split(' ')[0].toLowerCase()
+          const itemCat = (localProd.category || '').toLowerCase()
+          if (!itemCat.includes(primaryCat) && !itemCat.includes(currentCategory.toLowerCase())) return
+        }
         if (currentSearch && !localProd.title?.toLowerCase().includes(currentSearch.toLowerCase())) return
         fetchedProducts.unshift(localProd)
       }

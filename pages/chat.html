@@ -98,14 +98,92 @@
         return
       }
 
-      // Check self-chat immediately if sellerId given
-      if (sellerId && sellerId === currentUser.id) {
-        alert('⚠️ You cannot chat with yourself on your own product listing.')
-        window.location.href = productId ? `product.html?id=${productId}` : 'chats.html'
-        return
+      // 1. If convId is provided, load the conversation first
+      let currentConv = null
+      if (convId) {
+        try {
+          const { data } = await supabase.from('conversations').select('*, products(*)').eq('id', convId).single()
+          if (data) currentConv = data
+        } catch (e) {}
+
+        if (!currentConv) {
+          const localConvs = JSON.parse(localStorage.getItem('ccm_fallback_conversations') || '[]')
+          currentConv = localConvs.find(c => c.id === convId)
+        }
       }
 
-      // 1. Load Product Info
+      // 2. If convId not in URL, try resolving existing conversation
+      if (!currentConv && productId && sellerId) {
+        // Self-chat check ONLY when starting a brand new conversation
+        if (currentUser.id === sellerId) {
+          alert('⚠️ You cannot start a chat with yourself on your own product listing.')
+          window.location.href = `product.html?id=${productId}`
+          return
+        }
+
+        try {
+          const { data } = await supabase
+            .from('conversations')
+            .select('*, products(*)')
+            .eq('product_id', productId)
+            .eq('buyer_id', currentUser.id)
+            .eq('seller_id', sellerId)
+            .maybeSingle()
+          if (data) {
+            currentConv = data
+            convId = data.id
+            window.history.replaceState({}, '', `chat.html?product=${productId}&seller=${sellerId}&conv=${convId}`)
+          }
+        } catch (e) {}
+
+        if (!currentConv) {
+          const fallbackConvs = JSON.parse(localStorage.getItem('ccm_fallback_conversations') || '[]')
+          const matched = fallbackConvs.find(c => c.product_id === productId && c.buyer_id === currentUser.id && c.seller_id === sellerId)
+          if (matched) {
+            currentConv = matched
+            convId = matched.id
+            window.history.replaceState({}, '', `chat.html?product=${productId}&seller=${sellerId}&conv=${convId}`)
+          }
+        }
+      }
+
+      // 3. Handle active conversation participants & roles
+      if (currentConv) {
+        productId = currentConv.product_id || productId
+        sellerId = currentConv.seller_id || sellerId
+
+        const isBuyer = currentUser.id === currentConv.buyer_id
+        const isSeller = currentUser.id === currentConv.seller_id
+
+        if (currentConv.buyer_id === currentConv.seller_id) {
+          alert('⚠️ Invalid self-chat conversation.')
+          window.location.href = 'chats.html'
+          return
+        }
+
+        if (!isBuyer && !isSeller) {
+          alert('⚠️ You are not a participant in this conversation.')
+          window.location.href = 'chats.html'
+          return
+        }
+
+        // Show the other party's name & role
+        const otherPartyName = isSeller ? (currentConv.buyer_name || 'Buyer') : (currentConv.seller_name || 'Seller')
+        const otherRole = isSeller ? 'Buyer' : 'Seller'
+        document.getElementById('chat-party-name').textContent = `${otherPartyName} (${otherRole})`
+      } else {
+        // Starting fresh without convId: show seller name
+        if (sellerId && sellerId !== currentUser.id) {
+          try {
+            const { data: sProf } = await supabase.from('profiles').select('name, full_name').eq('id', sellerId).single()
+            if (sProf) {
+              document.getElementById('chat-party-name').textContent = sProf.full_name || sProf.name || 'Campus Seller'
+            }
+          } catch (e) {}
+        }
+      }
+
+      // 4. Load Product Info
       if (productId) {
         try {
           const { data } = await supabase.from('products').select('*, profiles(name, full_name, is_verified)').eq('id', productId).single()
@@ -119,60 +197,15 @@
       }
 
       if (currentProduct) {
-        if (!sellerId) sellerId = currentProduct.user_id || currentProduct.seller_id
-        // Verify self-chat against product owner
-        if (currentUser && (currentProduct.user_id === currentUser.id || currentProduct.seller_id === currentUser.id)) {
-          alert('⚠️ You cannot chat on your own product listing.')
-          window.location.href = `product.html?id=${currentProduct.id}`
-          return
-        }
-
         const photo = currentProduct.photos?.[0] || currentProduct.image_url || 'https://via.placeholder.com/60'
         document.getElementById('chat-product-img').src = photo
         document.getElementById('chat-product-title').textContent = currentProduct.title
         document.getElementById('chat-product-price').textContent = currentProduct.price ? `₹${currentProduct.price}` : ''
       }
 
-      // 2. Load Seller Name
-      try {
-        if (sellerId && sellerId !== 'seller_demo') {
-          const { data: sProf } = await supabase.from('profiles').select('name, full_name').eq('id', sellerId).single()
-          if (sProf) {
-            document.getElementById('chat-party-name').textContent = sProf.full_name || sProf.name || 'Campus Member'
-          }
-        }
-      } catch (e) {}
-
-      // 3. Resolve existing conversation if convId not in URL
-      if (!convId && productId && sellerId) {
-        try {
-          const { data: existing } = await supabase
-            .from('conversations')
-            .select('id')
-            .eq('product_id', productId)
-            .eq('buyer_id', currentUser.id)
-            .eq('seller_id', sellerId)
-            .maybeSingle()
-          if (existing?.id) {
-            convId = existing.id
-            window.history.replaceState({}, '', `chat.html?product=${productId}&seller=${sellerId}&conv=${convId}`)
-          }
-        } catch (e) {}
-
-        if (!convId) {
-          const fallbackConvs = JSON.parse(localStorage.getItem('ccm_fallback_conversations') || '[]')
-          const matched = fallbackConvs.find(c => c.product_id === productId && c.buyer_id === currentUser.id && c.seller_id === sellerId)
-          if (matched) {
-            convId = matched.id
-            window.history.replaceState({}, '', `chat.html?product=${productId}&seller=${sellerId}&conv=${convId}`)
-          }
-        }
-      }
-
-      // 4. Load Messages
+      // 5. Load Messages & start live polling
       await loadMessages()
 
-      // 5. Start lightweight polling for live messages
       if (pollInterval) clearInterval(pollInterval)
       pollInterval = setInterval(loadMessages, 3000)
     }

@@ -152,8 +152,9 @@
       // Filter by active marketplace mode
       const mode = getMarketplaceMode()
       nearbyProducts = items.filter(item => {
-        if (mode === 'college' && item.marketplace_mode === 'community') return false
-        if (mode === 'community' && item.marketplace_mode === 'college') return false
+        const pMode = item.marketplace_mode || 'both'
+        if (mode === 'college' && pMode === 'community') return false
+        if (mode === 'community' && pMode === 'college') return false
         return true
       })
 

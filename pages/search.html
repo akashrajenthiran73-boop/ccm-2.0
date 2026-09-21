@@ -69,7 +69,7 @@
           <label class="block text-xs font-bold mb-1">Condition</label>
           <div class="space-y-1.5 text-xs text-gray-700 dark:text-gray-300">
             <label class="flex items-center gap-2">
-              <input type="checkbox" value="New" class="cond-check"> New
+              <input type="checkbox" value="New" class="cond-check" checked> New
             </label>
             <label class="flex items-center gap-2">
               <input type="checkbox" value="Like new" class="cond-check" checked> Like new
@@ -161,10 +161,15 @@
         let query = supabase.from('products').select('*, profiles(name, rating, is_verified, phone)').in('status', ['available', 'active'])
         if (mode === 'college') {
           query = query.or('marketplace_mode.in.(college,both),marketplace_mode.is.null')
-        } else {
-          query = query.in('marketplace_mode', ['community', 'both'])
+        } else if (mode === 'community') {
+          query = query.or('marketplace_mode.in.(community,both),marketplace_mode.is.null')
         }
-        if (category !== 'All') query = query.eq('category', category)
+        // When mode === 'all', do not constrain by marketplace_mode
+
+        if (category && category !== 'All') {
+          const primaryCat = category.split(' ')[0]
+          query = query.ilike('category', `%${primaryCat}%`)
+        }
         if (keyword) query = query.ilike('title', `%${keyword}%`)
         if (minPrice > 0) query = query.gte('price', minPrice)
         if (maxPrice < 999999) query = query.lte('price', maxPrice)
@@ -185,9 +190,16 @@
 
       // Filter locally
       let filtered = items.filter(item => {
-        if (mode === 'college' && item.marketplace_mode === 'community') return false
-        if (mode === 'community' && item.marketplace_mode === 'college') return false
-        if (category !== 'All' && item.category !== category) return false
+        const itemMode = item.marketplace_mode || 'both'
+        if (mode === 'college' && itemMode === 'community') return false
+        if (mode === 'community' && itemMode === 'college') return false
+
+        if (category && category !== 'All') {
+          const primaryCat = category.split(' ')[0].toLowerCase()
+          const itemCat = (item.category || '').toLowerCase()
+          if (!itemCat.includes(primaryCat) && !itemCat.includes(category.toLowerCase())) return false
+        }
+
         if (keyword && !item.title.toLowerCase().includes(keyword) && !(item.description || '').toLowerCase().includes(keyword)) return false
         if (item.price < minPrice || item.price > maxPrice) return false
         if (checkedConds.length > 0 && item.condition && !checkedConds.includes(item.condition)) return false
