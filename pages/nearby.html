@@ -69,8 +69,10 @@
   <script type="module" src="../js/mode.js"></script>
   <script type="module" src="../js/navbar.js"></script>
   <script type="module">
-    import { supabase } from '../js/supabase.js'
+    import { supabase, getCurrentUser } from '../js/supabase.js'
     import { createProductCard } from '../js/main.js'
+
+    let currentUser = null
 
     // Campus base coordinates (Coimbatore Campus)
     const CAMPUS_COORDS = [11.0270, 77.0275]
@@ -198,7 +200,7 @@
       })
     }
 
-    function renderNearbyFeed() {
+    async function renderNearbyFeed() {
       const grid = document.getElementById('nearby-products-grid')
       const countEl = document.getElementById('nearby-count')
 
@@ -232,8 +234,10 @@
       filtered.sort((a, b) => a.distanceKm - b.distanceKm)
       countEl.textContent = `${filtered.length} items found nearby`
 
+      if (!currentUser) currentUser = await getCurrentUser()
+
       grid.innerHTML = filtered.map(item => {
-        const card = createProductCard(item, [])
+        const card = createProductCard(item, [], currentUser)
         return card.replace(
           '<!-- AI Badges -->',
           `<div class="inline-flex items-center gap-1 px-2 py-0.5 mb-1 text-[10px] font-bold rounded bg-emerald-50 dark:bg-emerald-950 text-emerald-600 border border-emerald-200">📍 ${item.distanceKm.toFixed(1)} km away</div>`

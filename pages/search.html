@@ -127,11 +127,12 @@
   <script type="module" src="../js/mode.js"></script>
   <script type="module" src="../js/navbar.js"></script>
   <script type="module">
-    import { supabase } from '../js/supabase.js'
+    import { supabase, getCurrentUser } from '../js/supabase.js'
     import { createProductCard } from '../js/main.js'
 
     const resultsGrid = document.getElementById('search-results-grid')
     const resultCount = document.getElementById('result-count')
+    let currentUser = null
 
     // Parse initial URL search term
     const urlParams = new URLSearchParams(window.location.search)
@@ -143,6 +144,7 @@
     }
 
     async function executeSearch() {
+      if (!currentUser) currentUser = await getCurrentUser()
       resultsGrid.innerHTML = '<div class="col-span-full text-center py-16 text-gray-400 animate-pulse text-xs">Searching campus marketplace...</div>'
 
       const keyword = document.getElementById('filter-keyword').value.trim().toLowerCase()
@@ -209,7 +211,7 @@
           </div>
         `
       } else {
-        resultsGrid.innerHTML = filtered.map(p => createProductCard(p, [])).join('')
+        resultsGrid.innerHTML = filtered.map(p => createProductCard(p, [], currentUser)).join('')
       }
     }
 

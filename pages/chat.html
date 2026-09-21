@@ -74,11 +74,11 @@
   <script type="module" src="../js/mode.js"></script>
   <script type="module" src="../js/navbar.js"></script>
   <script type="module">
-    import { supabase, getCurrentUser } from '../js/supabase.js'
+    import { supabase, getCurrentUser, safeDbInsert } from '../js/supabase.js'
 
     const urlParams = new URLSearchParams(window.location.search)
-    const productId = urlParams.get('product') || 'sample-1'
-    const sellerId = urlParams.get('seller') || 'seller_demo'
+    let productId = urlParams.get('product')
+    let sellerId = urlParams.get('seller')
     let convId = urlParams.get('conv')
 
     const msgsContainer = document.getElementById('messages-container')
@@ -86,7 +86,9 @@
     const messageInput = document.getElementById('message-input')
 
     let currentUser = null
+    let currentProduct = null
     let localMessages = []
+    let pollInterval = null
 
     async function initChat() {
       currentUser = await getCurrentUser()
@@ -96,50 +98,176 @@
         return
       }
 
-      // Load Product Info
-      let prod = null
-      try {
-        const { data } = await supabase.from('products').select('*').eq('id', productId).single()
-        if (data) prod = data
-      } catch (e) {}
+      // Check self-chat immediately if sellerId given
+      if (sellerId && sellerId === currentUser.id) {
+        alert('⚠️ You cannot chat with yourself on your own product listing.')
+        window.location.href = productId ? `product.html?id=${productId}` : 'chats.html'
+        return
+      }
 
-      if (!prod) {
-        prod = {
-          title: 'Campus Listing',
-          price: 0,
-          photos: ['https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=600&auto=format&fit=crop']
+      // 1. Load Product Info
+      if (productId) {
+        try {
+          const { data } = await supabase.from('products').select('*, profiles(name, full_name, is_verified)').eq('id', productId).single()
+          if (data) currentProduct = data
+        } catch (e) {}
+
+        if (!currentProduct) {
+          const local = JSON.parse(localStorage.getItem('ccm_fallback_products') || '[]')
+          currentProduct = local.find(p => p.id === productId)
         }
       }
 
-      document.getElementById('chat-product-img').src = prod.photos?.[0] || 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=600&auto=format&fit=crop'
-      document.getElementById('chat-product-title').textContent = prod.title
-      document.getElementById('chat-product-price').textContent = prod.price ? `₹${prod.price}` : ''
+      if (currentProduct) {
+        if (!sellerId) sellerId = currentProduct.user_id || currentProduct.seller_id
+        // Verify self-chat against product owner
+        if (currentUser && (currentProduct.user_id === currentUser.id || currentProduct.seller_id === currentUser.id)) {
+          alert('⚠️ You cannot chat on your own product listing.')
+          window.location.href = `product.html?id=${currentProduct.id}`
+          return
+        }
 
+        const photo = currentProduct.photos?.[0] || currentProduct.image_url || 'https://via.placeholder.com/60'
+        document.getElementById('chat-product-img').src = photo
+        document.getElementById('chat-product-title').textContent = currentProduct.title
+        document.getElementById('chat-product-price').textContent = currentProduct.price ? `₹${currentProduct.price}` : ''
+      }
+
+      // 2. Load Seller Name
       try {
         if (sellerId && sellerId !== 'seller_demo') {
           const { data: sProf } = await supabase.from('profiles').select('name, full_name').eq('id', sellerId).single()
           if (sProf) {
-            document.getElementById('chat-party-name').textContent = sProf.full_name || sProf.name || 'Campus Seller'
+            document.getElementById('chat-party-name').textContent = sProf.full_name || sProf.name || 'Campus Member'
           }
         }
       } catch (e) {}
 
-      // Check existing messages
+      // 3. Resolve existing conversation if convId not in URL
+      if (!convId && productId && sellerId) {
+        try {
+          const { data: existing } = await supabase
+            .from('conversations')
+            .select('id')
+            .eq('product_id', productId)
+            .eq('buyer_id', currentUser.id)
+            .eq('seller_id', sellerId)
+            .maybeSingle()
+          if (existing?.id) {
+            convId = existing.id
+            window.history.replaceState({}, '', `chat.html?product=${productId}&seller=${sellerId}&conv=${convId}`)
+          }
+        } catch (e) {}
+
+        if (!convId) {
+          const fallbackConvs = JSON.parse(localStorage.getItem('ccm_fallback_conversations') || '[]')
+          const matched = fallbackConvs.find(c => c.product_id === productId && c.buyer_id === currentUser.id && c.seller_id === sellerId)
+          if (matched) {
+            convId = matched.id
+            window.history.replaceState({}, '', `chat.html?product=${productId}&seller=${sellerId}&conv=${convId}`)
+          }
+        }
+      }
+
+      // 4. Load Messages
+      await loadMessages()
+
+      // 5. Start lightweight polling for live messages
+      if (pollInterval) clearInterval(pollInterval)
+      pollInterval = setInterval(loadMessages, 3000)
+    }
+
+    async function ensureConversation() {
+      if (convId) return convId
+
+      const convRecord = {
+        product_id: productId || null,
+        buyer_id: currentUser.id,
+        seller_id: sellerId || null,
+        buyer_name: currentUser.name || currentUser.full_name || 'Buyer',
+        seller_name: document.getElementById('chat-party-name').textContent || 'Seller'
+      }
+
       try {
-        if (convId) {
-          const { data } = await supabase.from('messages').select('*').eq('conversation_id', convId).order('created_at', { ascending: true })
-          if (data && data.length > 0) localMessages = data
+        const { data, error } = await supabase.from('conversations').insert(convRecord).select().single()
+        if (!error && data) {
+          convId = data.id
         }
       } catch (e) {}
 
-      if (localMessages.length === 0) {
-        localMessages = []
+      if (!convId) {
+        const newId = (typeof crypto !== 'undefined' && crypto.randomUUID) 
+          ? crypto.randomUUID() 
+          : 'conv_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6)
+        convId = newId
+
+        const list = JSON.parse(localStorage.getItem('ccm_fallback_conversations') || '[]')
+        list.unshift({
+          id: convId,
+          created_at: new Date().toISOString(),
+          ...convRecord,
+          products: currentProduct
+        })
+        localStorage.setItem('ccm_fallback_conversations', JSON.stringify(list))
       }
 
-      renderMessages()
+      window.history.replaceState({}, '', `chat.html?product=${productId || ''}&seller=${sellerId || ''}&conv=${convId}`)
+      return convId
+    }
+
+    async function loadMessages() {
+      if (!convId) {
+        if (localMessages.length === 0) {
+          msgsContainer.innerHTML = `
+            <div class="text-center py-12 px-4 space-y-2">
+              <span class="text-4xl block">💬</span>
+              <p class="font-bold text-xs text-gray-700 dark:text-gray-300">Start conversation with seller</p>
+              <p class="text-[11px] text-gray-400 max-w-xs mx-auto">Ask about the item, verify its condition, or suggest a campus meeting point.</p>
+            </div>
+          `
+        }
+        return
+      }
+
+      let dbMessages = []
+      try {
+        const { data, error } = await supabase
+          .from('messages')
+          .select('*')
+          .eq('conversation_id', convId)
+          .order('created_at', { ascending: true })
+
+        if (!error && data) dbMessages = data
+      } catch (e) {}
+
+      const localKey = `ccm_fallback_messages_${convId}`
+      const localStash = JSON.parse(localStorage.getItem(localKey) || '[]')
+
+      // Merge avoiding duplicates by id or content+created_at
+      const map = new Map()
+      dbMessages.forEach(m => map.set(m.id || `${m.content}_${m.created_at}`, m))
+      localStash.forEach(m => map.set(m.id || `${m.content}_${m.created_at}`, m))
+
+      const merged = Array.from(map.values()).sort((a, b) => new Date(a.created_at || 0) - new Date(b.created_at || 0))
+
+      if (merged.length !== localMessages.length || JSON.stringify(merged) !== JSON.stringify(localMessages)) {
+        localMessages = merged
+        renderMessages()
+      }
     }
 
     function renderMessages() {
+      if (localMessages.length === 0) {
+        msgsContainer.innerHTML = `
+          <div class="text-center py-12 px-4 space-y-2">
+            <span class="text-4xl block">💬</span>
+            <p class="font-bold text-xs text-gray-700 dark:text-gray-300">No messages yet</p>
+            <p class="text-[11px] text-gray-400 max-w-xs mx-auto">Send a message below to start chatting with the seller!</p>
+          </div>
+        `
+        return
+      }
+
       msgsContainer.innerHTML = localMessages.map(m => {
         const isMe = m.sender_id === currentUser.id
         return `
@@ -165,25 +293,46 @@
       const text = messageInput.value.trim()
       if (!text) return
 
+      await ensureConversation()
+
       const newMsg = {
-        content: text,
+        conversation_id: convId,
         sender_id: currentUser.id,
+        content: text,
+        is_read: false,
         created_at: new Date().toISOString()
       }
+
+      // Immediately show in UI
       localMessages.push(newMsg)
       messageInput.value = ''
       renderMessages()
 
+      // Save to local fallback
+      const localKey = `ccm_fallback_messages_${convId}`
+      const localStash = JSON.parse(localStorage.getItem(localKey) || '[]')
+      localStash.push(newMsg)
+      localStorage.setItem(localKey, JSON.stringify(localStash))
+
+      // Update conversation in fallback list
+      const convList = JSON.parse(localStorage.getItem('ccm_fallback_conversations') || '[]')
+      const cIdx = convList.findIndex(c => c.id === convId)
+      if (cIdx >= 0) {
+        convList[cIdx].messages = localStash
+        localStorage.setItem('ccm_fallback_conversations', JSON.stringify(convList))
+      }
+
       // Try save to Supabase
       try {
-        if (convId) {
-          await supabase.from('messages').insert({
-            conversation_id: convId,
-            sender_id: currentUser.id,
-            content: text
-          })
-        }
-      } catch (e) {}
+        await supabase.from('messages').insert({
+          conversation_id: convId,
+          sender_id: currentUser.id,
+          content: text,
+          is_read: false
+        })
+      } catch (err) {
+        console.warn('Supabase message insert fallback engaged:', err)
+      }
     }
 
     // Offer Handlers
@@ -193,15 +342,45 @@
     document.getElementById('cancel-chat-offer').onclick = () => {
       document.getElementById('chat-offer-modal').classList.add('hidden')
     }
-    document.getElementById('send-chat-offer').onclick = () => {
+    document.getElementById('send-chat-offer').onclick = async () => {
       const val = document.getElementById('offer-modal-val').value
       if (val) {
-        localMessages.push({
-          content: `🤝 Proposed a counter-offer: ₹${val}`,
+        await ensureConversation()
+        const offerText = `🤝 Proposed a counter-offer: ₹${val}`
+        const offerMsg = {
+          conversation_id: convId,
           sender_id: currentUser.id,
+          content: offerText,
+          is_read: false,
           created_at: new Date().toISOString()
-        })
+        }
+        localMessages.push(offerMsg)
         renderMessages()
+
+        const localKey = `ccm_fallback_messages_${convId}`
+        const localStash = JSON.parse(localStorage.getItem(localKey) || '[]')
+        localStash.push(offerMsg)
+        localStorage.setItem(localKey, JSON.stringify(localStash))
+
+        try {
+          await supabase.from('messages').insert({
+            conversation_id: convId,
+            sender_id: currentUser.id,
+            content: offerText
+          })
+          if (productId && sellerId) {
+            await supabase.from('offers').insert({
+              product_id: productId,
+              conversation_id: convId,
+              buyer_id: currentUser.id,
+              seller_id: sellerId,
+              original_price: currentProduct?.price || 0,
+              offer_price: parseFloat(val),
+              status: 'pending'
+            })
+          }
+        } catch (e) {}
+
         document.getElementById('chat-offer-modal').classList.add('hidden')
       }
     }

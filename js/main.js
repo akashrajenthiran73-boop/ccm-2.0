@@ -17,13 +17,17 @@ let currentCategory = 'All'
 let currentSearch = ''
 let userLocation = null
 let wishlistIds = []
+let cachedUser = null
 
 // Real products loaded dynamically from Supabase database or local offline cache
 
 // 1. Create Product Card HTML
-export function createProductCard(product, wishlistIds = []) {
+export function createProductCard(product, wishlistIds = [], currentUser = null) {
   const isRoot = window.location.pathname === '/' || window.location.pathname.endsWith('index.html') || !window.location.pathname.includes('/pages/')
   const pagesPath = isRoot ? 'pages/' : ''
+
+  const userToCheck = currentUser || cachedUser
+  const isOwner = Boolean(userToCheck && (userToCheck.id === product.user_id || userToCheck.id === product.seller_id))
 
   const firstPhoto = product.photos?.[0] || product.image_url || 'https://via.placeholder.com/400x260?text=No+Image'
   const timeAgo = new Date(product.created_at).toLocaleDateString('en-IN')
@@ -107,16 +111,28 @@ export function createProductCard(product, wishlistIds = []) {
         </div>
 
         <!-- Action Buttons Grid -->
-        <div class="grid grid-cols-2 gap-2 mt-4 pt-2">
-          <button onclick="handleAddToCart('${product.id}', this)"
-                  class="w-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-100 text-xs font-bold py-2 rounded-lg transition flex items-center justify-center gap-1">
-            <span>🛒</span> Cart
-          </button>
-          <a href="${pagesPath}product.html?id=${product.id}"
-             class="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-2 rounded-lg transition text-center shadow-sm flex items-center justify-center">
-            View / Buy
-          </a>
-        </div>
+        ${isOwner ? `
+          <div class="grid grid-cols-2 gap-2 mt-4 pt-2">
+            <span class="w-full bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 text-xs font-bold py-2 rounded-lg text-center flex items-center justify-center gap-1 border border-amber-200 dark:border-amber-800">
+              👑 Your Item
+            </span>
+            <a href="${pagesPath}product.html?id=${product.id}"
+               class="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-2 rounded-lg transition text-center shadow-sm flex items-center justify-center">
+              Manage
+            </a>
+          </div>
+        ` : `
+          <div class="grid grid-cols-2 gap-2 mt-4 pt-2">
+            <button onclick="handleAddToCart('${product.id}', this)"
+                    class="w-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-100 text-xs font-bold py-2 rounded-lg transition flex items-center justify-center gap-1">
+              <span>🛒</span> Cart
+            </button>
+            <a href="${pagesPath}product.html?id=${product.id}"
+               class="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-2 rounded-lg transition text-center shadow-sm flex items-center justify-center">
+              View / Buy
+            </a>
+          </div>
+        `}
 
       </div>
     </div>
@@ -130,6 +146,7 @@ export async function loadProducts() {
   productFeed.innerHTML = '<div class="col-span-full text-center text-gray-400 py-12 animate-pulse text-sm">Loading campus listings...</div>'
 
   const user = await getCurrentUser()
+  cachedUser = user
   if (user) {
     try {
       const { data: wishlists } = await supabase
@@ -228,11 +245,14 @@ export async function loadProducts() {
   // AI Recommendation ranking
   const ranked = rankRecommendations(fetchedProducts)
 
-  productFeed.innerHTML = ranked.map(p => createProductCard(p, wishlistIds)).join('')
+  productFeed.innerHTML = ranked.map(p => createProductCard(p, wishlistIds, cachedUser)).join('')
 }
 
 // 3. Add to cart window action
 window.handleAddToCart = async (productId, btn) => {
+  const user = await getCurrentUser()
+  cachedUser = user
+
   let product = null
   try {
     const { data } = await supabase.from('products').select('*').eq('id', productId).single()
@@ -245,8 +265,13 @@ window.handleAddToCart = async (productId, btn) => {
   }
 
   if (product) {
-    await addToCart(product, 1)
-    if (btn) {
+    if (user && (user.id === product.user_id || user.id === product.seller_id)) {
+      alert('⚠️ You cannot add your own product listing to your cart.')
+      return
+    }
+
+    const added = await addToCart(product, 1)
+    if (added && btn) {
       const orig = btn.innerHTML
       btn.innerHTML = '<span>✓</span> Added'
       btn.classList.add('text-green-600', 'font-bold')

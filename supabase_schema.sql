@@ -252,6 +252,22 @@ CREATE TABLE IF NOT EXISTS public.messages (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='conversations' AND column_name='updated_at') THEN
+    ALTER TABLE public.conversations ADD COLUMN updated_at TIMESTAMPTZ DEFAULT NOW();
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='conversations' AND column_name='buyer_name') THEN
+    ALTER TABLE public.conversations ADD COLUMN buyer_name TEXT;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='conversations' AND column_name='seller_name') THEN
+    ALTER TABLE public.conversations ADD COLUMN seller_name TEXT;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='messages' AND column_name='receiver_id') THEN
+    ALTER TABLE public.messages ADD COLUMN receiver_id UUID;
+  END IF;
+END $$;
+
 -- 9. OFFERS (Price Negotiation in Chat)
 CREATE TABLE IF NOT EXISTS public.offers (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),

@@ -50,16 +50,22 @@
           .from('conversations')
           .select('*, products(id, title, price, photos), messages(content, created_at, sender_id, is_read)')
           .or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`)
-          .order('updated_at', { ascending: false })
+          .order('created_at', { ascending: false })
 
         if (!error && data) convos = data
       } catch (e) {}
 
-      // Fallback
-      if (convos.length === 0) {
-        const local = JSON.parse(localStorage.getItem('ccm_fallback_conversations') || '[]')
-        convos = local.filter(c => c.buyer_id === user.id || c.seller_id === user.id)
-      }
+      // Fallback merge
+      const local = JSON.parse(localStorage.getItem('ccm_fallback_conversations') || '[]')
+      const userLocal = local.filter(c => c.buyer_id === user.id || c.seller_id === user.id)
+
+      const map = new Map()
+      convos.forEach(c => map.set(c.id, c))
+      userLocal.forEach(c => {
+        if (!map.has(c.id)) map.set(c.id, c)
+      })
+
+      convos = Array.from(map.values()).sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0))
 
       if (convos.length === 0) {
         chatList.innerHTML = `

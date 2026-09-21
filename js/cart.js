@@ -33,6 +33,10 @@ export async function getCart() {
  */
 export async function addToCart(product, quantity = 1) {
   const user = await getCurrentUser()
+  if (user && (user.id === product.user_id || user.id === product.seller_id)) {
+    alert('⚠️ You cannot add your own product listing to your cart.')
+    return false
+  }
   if (user) {
     try {
       const { data: existing } = await supabase

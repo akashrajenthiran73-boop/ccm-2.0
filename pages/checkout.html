@@ -149,15 +149,47 @@
       const directItem = urlParams.get('item')
       const directPrice = parseFloat(urlParams.get('price'))
 
-      if (directItem && directPrice) {
-        orderItems = [{
-          product_id: directItem,
-          quantity: 1,
-          product: { title: 'Direct Order Item', price: directPrice }
-        }]
-        orderAmount = directPrice
+      if (directItem) {
+        let prod = null
+        try {
+          const { data } = await supabase.from('products').select('*').eq('id', directItem).single()
+          if (data) prod = data
+        } catch (e) {}
+
+        if (!prod) {
+          const local = JSON.parse(localStorage.getItem('ccm_fallback_products') || '[]')
+          prod = local.find(p => p.id === directItem)
+        }
+
+        if (prod) {
+          // Self-Purchase Check
+          if (currentUser && (prod.user_id === currentUser.id || prod.seller_id === currentUser.id)) {
+            alert('⚠️ You cannot purchase your own product listing.')
+            window.location.href = `product.html?id=${prod.id}`
+            return
+          }
+
+          orderItems = [{
+            product_id: prod.id,
+            quantity: 1,
+            product: prod
+          }]
+          orderAmount = prod.price || directPrice || 0
+        } else {
+          orderItems = [{
+            product_id: directItem,
+            quantity: 1,
+            product: { title: 'Campus Item', price: directPrice || 0 }
+          }]
+          orderAmount = directPrice || 0
+        }
       } else {
-        orderItems = await getCart()
+        const rawCart = await getCart()
+        // Filter out any accidentally added self-owned items
+        orderItems = rawCart.filter(item => {
+          const isOwn = currentUser && (item.product?.user_id === currentUser.id || item.product?.seller_id === currentUser.id)
+          return !isOwn
+        })
         orderAmount = orderItems.reduce((sum, i) => sum + ((i.product?.price || 0) * (i.quantity || 1)), 0)
       }
 
@@ -181,9 +213,12 @@
       // Render Order Items
       const listEl = document.getElementById('checkout-items-list')
       listEl.innerHTML = orderItems.map(i => `
-        <div class="flex justify-between items-center py-1">
-          <span class="truncate max-w-[150px] font-medium">${i.product?.title || 'Item'} (x${i.quantity || 1})</span>
-          <span class="font-bold">₹${(i.product?.price || 0) * (i.quantity || 1)}</span>
+        <div class="flex justify-between items-center py-1.5 border-b border-gray-100 dark:border-gray-700/50 last:border-0">
+          <div class="truncate max-w-[170px]">
+            <span class="font-bold text-gray-800 dark:text-gray-200">${i.product?.title || 'Item'}</span>
+            <span class="text-gray-400 text-[11px] block">Qty: ${i.quantity || 1}</span>
+          </div>
+          <span class="font-black text-blue-600 dark:text-blue-400">₹${(i.product?.price || 0) * (i.quantity || 1)}</span>
         </div>
       `).join('')
 
@@ -236,40 +271,87 @@
       const meetingSpot = document.getElementById('meeting-spot').value
       const notes = document.getElementById('custom-pickup-notes').value
 
+      const firstItem = orderItems[0]
+      if (!firstItem) {
+        alert('No items to purchase')
+        btn.disabled = false
+        btn.textContent = 'Confirm Order & Pay ✓'
+        return
+      }
+
+      // Final sanity check against self-purchase
+      if (currentUser && (firstItem.product?.user_id === currentUser.id || firstItem.product?.seller_id === currentUser.id)) {
+        alert('⚠️ You cannot purchase your own product listing.')
+        btn.disabled = false
+        btn.textContent = 'Confirm Order & Pay ✓'
+        return
+      }
+
       try {
-        const orderId = 'ord_' + Date.now()
-        
+        const orderUuid = (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : null
+        const sellerId = firstItem.product?.seller_id || firstItem.product?.user_id || null
+
         // 1. Process payment simulation
         const paymentResult = await processSimulatedPayment({
-          orderId,
+          orderId: orderUuid || ('sim_' + Date.now()),
           amount: orderAmount,
           method
         })
 
-        // 2. Save order to Supabase
+        // 2. Build Supabase-compliant order record (matches UUID columns)
         const orderRecord = {
-          id: orderId,
           buyer_id: currentUser.id,
-          seller_id: orderItems[0]?.product?.user_id || orderItems[0]?.product?.seller_id || currentUser.id,
-          product_id: orderItems[0]?.product_id || null,
+          seller_id: sellerId,
+          product_id: firstItem.product_id || null,
           quantity: orderItems.reduce((s, i) => s + (i.quantity || 1), 0),
           total_price: orderAmount,
           status: 'confirmed',
           payment_method: method,
           payment_status: 'paid',
           pickup_location: meetingSpot,
-          notes: notes
+          notes: notes || 'Campus meeting handover'
         }
 
-        await safeDbInsert('orders', orderRecord, () => supabase.from('orders').insert(orderRecord))
+        if (orderUuid) {
+          orderRecord.id = orderUuid
+        }
 
-        // 3. Clear cart & redirect
+        // Full record with nested product info for local fallback and immediate tracking UI
+        const orderWithProducts = {
+          ...orderRecord,
+          id: orderUuid || ('ord_' + Date.now()),
+          created_at: new Date().toISOString(),
+          products: firstItem.product || {
+            id: firstItem.product_id,
+            title: firstItem.product?.title || 'Campus Item',
+            price: orderAmount,
+            photos: firstItem.product?.photos || []
+          }
+        }
+
+        await safeDbInsert('orders', orderWithProducts, () => supabase.from('orders').insert(orderRecord).select().single())
+
+        // 3. Mark product as sold in Supabase & fallback
+        if (firstItem.product_id) {
+          try {
+            await supabase.from('products').update({ status: 'sold' }).eq('id', firstItem.product_id)
+          } catch (e) {}
+
+          const localProds = JSON.parse(localStorage.getItem('ccm_fallback_products') || '[]')
+          const pIdx = localProds.findIndex(p => p.id === firstItem.product_id)
+          if (pIdx >= 0) {
+            localProds[pIdx].status = 'sold'
+            localStorage.setItem('ccm_fallback_products', JSON.stringify(localProds))
+          }
+        }
+
+        // 4. Clear cart & redirect
         await clearCart()
 
         btn.textContent = 'Order Confirmed! ✓'
         btn.classList.add('bg-green-600')
 
-        alert(`✅ Order Placed Successfully!\nTransaction ID: ${paymentResult.transactionId}\nMeeting Spot: ${meetingSpot}`)
+        alert(`✅ Order Placed Successfully!\n\nMeeting Spot: ${meetingSpot}\nPayment Method: ${method.toUpperCase()}\n\nYou can track the handover in My Orders.`)
         window.location.href = 'orders.html'
 
       } catch (err) {
