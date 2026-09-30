@@ -80,6 +80,16 @@
           </div>
         </div>
 
+        <!-- Availability Filter -->
+        <div>
+          <label class="block text-xs font-bold mb-1">Availability</label>
+          <select id="filter-availability" class="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-xs">
+            <option value="in_stock" selected>🟢 In Stock Only</option>
+            <option value="all">✨ All (In Stock & Sold)</option>
+            <option value="sold">🚫 Sold Items Only</option>
+          </select>
+        </div>
+
         <!-- Distance Filter -->
         <div>
           <label class="block text-xs font-bold mb-1">Distance Filter</label>
@@ -152,13 +162,23 @@
       const category = document.getElementById('filter-category').value
       const minPrice = parseFloat(document.getElementById('filter-min-price').value) || 0
       const maxPrice = parseFloat(document.getElementById('filter-max-price').value) || 999999
+      const availability = document.getElementById('filter-availability')?.value || 'in_stock'
       const sortBy = document.getElementById('filter-sort').value
 
       const checkedConds = Array.from(document.querySelectorAll('.cond-check:checked')).map(c => c.value)
 
       let items = []
       try {
-        let query = supabase.from('products').select('*, profiles(name, rating, is_verified, phone)').in('status', ['available', 'active'])
+        let query = supabase.from('products').select('*, profiles(name, rating, is_verified, phone)')
+        
+        if (availability === 'in_stock') {
+          query = query.in('status', ['available', 'active'])
+        } else if (availability === 'sold') {
+          query = query.eq('status', 'sold')
+        } else {
+          query = query.in('status', ['available', 'active', 'sold'])
+        }
+
         if (mode === 'college') {
           query = query.or('marketplace_mode.in.(college,both),marketplace_mode.is.null')
         } else if (mode === 'community') {
@@ -190,6 +210,10 @@
 
       // Filter locally
       let filtered = items.filter(item => {
+        // Availability check
+        if (availability === 'in_stock' && item.status === 'sold') return false
+        if (availability === 'sold' && item.status !== 'sold') return false
+
         const itemMode = item.marketplace_mode || 'both'
         if (mode === 'college' && itemMode === 'community') return false
         if (mode === 'community' && itemMode === 'college') return false

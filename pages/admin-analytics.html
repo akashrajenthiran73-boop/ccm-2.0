@@ -30,23 +30,23 @@
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
       <div class="bg-white dark:bg-gray-800 p-5 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm">
         <div class="text-xs font-bold text-gray-400">College Verified Users</div>
-        <div class="text-3xl font-black text-blue-600 mt-1">214</div>
-        <div class="text-[11px] text-green-500 font-bold mt-1">↑ 18% this month</div>
+        <div id="stat-college-users" class="text-3xl font-black text-blue-600 mt-1">0</div>
+        <div class="text-[11px] text-green-500 font-bold mt-1">Live Students & Staff</div>
       </div>
       <div class="bg-white dark:bg-gray-800 p-5 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm">
         <div class="text-xs font-bold text-gray-400">Community Users</div>
-        <div class="text-3xl font-black text-emerald-600 mt-1">86</div>
-        <div class="text-[11px] text-green-500 font-bold mt-1">↑ 24% this month</div>
+        <div id="stat-community-users" class="text-3xl font-black text-emerald-600 mt-1">0</div>
+        <div class="text-[11px] text-green-500 font-bold mt-1">Nearby Members</div>
       </div>
       <div class="bg-white dark:bg-gray-800 p-5 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm">
         <div class="text-xs font-bold text-gray-400">Gross Marketplace Value</div>
-        <div class="text-3xl font-black text-purple-600 mt-1">₹68,450</div>
+        <div id="stat-gmv" class="text-3xl font-black text-purple-600 mt-1">₹0</div>
         <div class="text-[11px] text-gray-400 mt-1">100% simulated safe</div>
       </div>
       <div class="bg-white dark:bg-gray-800 p-5 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm">
-        <div class="text-xs font-bold text-gray-400">Resolution Rate</div>
-        <div class="text-3xl font-black text-amber-500 mt-1">99.2%</div>
-        <div class="text-[11px] text-gray-400 mt-1">Zero scam breaches</div>
+        <div class="text-xs font-bold text-gray-400">Fulfillment Rate</div>
+        <div id="stat-resolution" class="text-3xl font-black text-amber-500 mt-1">100%</div>
+        <div class="text-[11px] text-gray-400 mt-1">Completed vs Placed</div>
       </div>
     </div>
 
@@ -76,8 +76,8 @@
         <div class="h-56 flex items-center justify-center">
           <canvas id="modeDoughnutChart"></canvas>
         </div>
-        <div class="text-center text-xs text-gray-500 pt-2 border-t border-gray-100 dark:border-gray-700">
-          71% College Students/Staff • 29% Local Community
+        <div id="stat-ratio-text" class="text-center text-xs text-gray-500 pt-2 border-t border-gray-100 dark:border-gray-700">
+          Syncing users ratio...
         </div>
       </div>
 
@@ -100,19 +100,19 @@
         <div class="space-y-3 text-xs">
           <div class="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700/40 rounded-xl">
             <span class="font-bold flex items-center gap-2"><span>🛍️</span> Regular Buy / Sell Listings</span>
-            <span class="font-black text-blue-600">84% of activity</span>
+            <span id="stat-listings" class="font-black text-blue-600">0 listings</span>
           </div>
           <div class="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700/40 rounded-xl">
             <span class="font-bold flex items-center gap-2"><span>🔄</span> Barter Exchanges Requested</span>
-            <span class="font-black text-emerald-600">32 requests</span>
+            <span id="stat-exchanges" class="font-black text-emerald-600">0 requests</span>
           </div>
           <div class="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700/40 rounded-xl">
             <span class="font-bold flex items-center gap-2"><span>📚</span> Rent & Borrow Transactions</span>
-            <span class="font-black text-purple-600">19 active rentals</span>
+            <span id="stat-rentals" class="font-black text-purple-600">0 rentals</span>
           </div>
           <div class="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700/40 rounded-xl">
-            <span class="font-bold flex items-center gap-2"><span>🔨</span> Live Auction Bids Placed</span>
-            <span class="font-black text-amber-500">45 bids this week</span>
+            <span class="font-bold flex items-center gap-2"><span>🏷️</span> Price Negotiations & Offers</span>
+            <span id="stat-offers" class="font-black text-amber-500">0 offers</span>
           </div>
         </div>
       </div>
@@ -122,64 +122,174 @@
   </div>
 
   <script type="module">
-    // 1. Sales Line Chart
-    new Chart(document.getElementById('salesLineChart'), {
-      type: 'line',
-      data: {
-        labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-        datasets: [{
-          label: 'Simulated Sales (₹)',
-          data: [4200, 6800, 5100, 9400, 11200, 15400, 16350],
-          borderColor: '#3B82F6',
-          backgroundColor: 'rgba(59, 130, 246, 0.1)',
-          fill: true,
-          tension: 0.35,
-          borderWidth: 3
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { display: false } }
-      }
-    })
+    import { supabase } from '../js/supabase.js'
 
-    // 2. Mode Doughnut Chart
-    new Chart(document.getElementById('modeDoughnutChart'), {
-      type: 'doughnut',
-      data: {
-        labels: ['🎓 College Users', '🌐 Community Users'],
-        datasets: [{
-          data: [214, 86],
-          backgroundColor: ['#3B82F6', '#10B981'],
-          borderWidth: 0
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { position: 'bottom' } }
-      }
-    })
+    async function initAnalytics() {
+      // 1. Fetch Users
+      let collegeUsers = 0
+      let communityUsers = 0
+      try {
+        const { data: profiles } = await supabase.from('profiles').select('id, role, user_type')
+        if (profiles) {
+          profiles.forEach(p => {
+            const role = (p.role || p.user_type || '').toLowerCase()
+            if (role === 'community') communityUsers++
+            else collegeUsers++
+          })
+        }
+      } catch (e) {}
 
-    // 3. Category Bar Chart
-    new Chart(document.getElementById('categoriesBarChart'), {
-      type: 'bar',
-      data: {
-        labels: ['Books', 'Cycles', 'Electronics', 'Hostel', 'Lab Gear'],
-        datasets: [{
-          label: 'Listings',
-          data: [54, 28, 38, 22, 19],
-          backgroundColor: ['#3B82F6', '#10B981', '#8B5CF6', '#F59E0B', '#EC4899'],
-          borderRadius: 8
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { display: false } }
+      document.getElementById('stat-college-users').textContent = collegeUsers
+      document.getElementById('stat-community-users').textContent = communityUsers
+      const totalUsers = collegeUsers + communityUsers
+      if (totalUsers > 0) {
+        const collegePct = Math.round((collegeUsers / totalUsers) * 100)
+        const commPct = 100 - collegePct
+        document.getElementById('stat-ratio-text').textContent = `${collegePct}% College Students/Staff • ${commPct}% Local Community`
+      } else {
+        document.getElementById('stat-ratio-text').textContent = 'No registered users yet'
       }
-    })
+
+      // 2. Fetch Orders & GMV
+      let gmv = 0
+      let completedOrders = 0
+      let totalOrders = 0
+      const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+      const last7DaysMap = {}
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date()
+        d.setDate(d.getDate() - i)
+        const label = days[d.getDay()]
+        last7DaysMap[label] = 0
+      }
+
+      try {
+        const { data: orders } = await supabase.from('orders').select('*')
+        if (orders) {
+          totalOrders = orders.length
+          orders.forEach(o => {
+            const price = parseFloat(o.total_price || o.price || 0)
+            if (o.status !== 'cancelled') gmv += price
+            if (o.status === 'completed') completedOrders++
+
+            if (o.created_at) {
+              const dayName = days[new Date(o.created_at).getDay()]
+              if (last7DaysMap[dayName] !== undefined) {
+                last7DaysMap[dayName] += price
+              }
+            }
+          })
+        }
+      } catch (e) {}
+
+      document.getElementById('stat-gmv').textContent = '₹' + gmv.toLocaleString('en-IN')
+      const fulfillmentRate = totalOrders > 0 ? Math.round((completedOrders / totalOrders) * 100) : 100
+      document.getElementById('stat-resolution').textContent = fulfillmentRate + '%'
+
+      // 3. Fetch Products & Categories
+      const catCountMap = {}
+      let totalProducts = 0
+      try {
+        const { data: products } = await supabase.from('products').select('category, status')
+        if (products) {
+          totalProducts = products.length
+          products.forEach(p => {
+            const cat = p.category || 'General'
+            catCountMap[cat] = (catCountMap[cat] || 0) + 1
+          })
+        }
+      } catch (e) {}
+
+      document.getElementById('stat-listings').textContent = totalProducts + ' listings'
+
+      // 4. Exchanges count
+      let exchangesCount = 0
+      try {
+        const { data: ex } = await supabase.from('exchanges').select('id')
+        if (ex) exchangesCount = ex.length
+      } catch (e) {}
+      document.getElementById('stat-exchanges').textContent = exchangesCount + ' requests'
+
+      // 5. Rentals count
+      let rentalsCount = 0
+      try {
+        const { data: r } = await supabase.from('rentals').select('id')
+        if (r) rentalsCount = r.length
+      } catch (e) {}
+      document.getElementById('stat-rentals').textContent = rentalsCount + ' active rentals'
+
+      // 6. Offers count
+      let offersCount = 0
+      try {
+        const { data: off } = await supabase.from('offers').select('id')
+        if (off) offersCount = off.length
+      } catch (e) {}
+      document.getElementById('stat-offers').textContent = offersCount + ' offers'
+
+      // Initialize Charts
+      // 1. Sales Line Chart
+      new Chart(document.getElementById('salesLineChart'), {
+        type: 'line',
+        data: {
+          labels: Object.keys(last7DaysMap),
+          datasets: [{
+            label: 'Sales (₹)',
+            data: Object.values(last7DaysMap),
+            borderColor: '#3B82F6',
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            fill: true,
+            tension: 0.35,
+            borderWidth: 3
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } }
+        }
+      })
+
+      // 2. Mode Doughnut Chart
+      new Chart(document.getElementById('modeDoughnutChart'), {
+        type: 'doughnut',
+        data: {
+          labels: ['🎓 College Users', '🌐 Community Users'],
+          datasets: [{
+            data: totalUsers > 0 ? [collegeUsers, communityUsers] : [1, 0],
+            backgroundColor: ['#3B82F6', '#10B981'],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: 'bottom' } }
+        }
+      })
+
+      // 3. Category Bar Chart
+      const topCats = Object.keys(catCountMap).slice(0, 5)
+      const topVals = topCats.map(c => catCountMap[c])
+      new Chart(document.getElementById('categoriesBarChart'), {
+        type: 'bar',
+        data: {
+          labels: topCats.length > 0 ? topCats : ['No listings yet'],
+          datasets: [{
+            label: 'Listings',
+            data: topVals.length > 0 ? topVals : [0],
+            backgroundColor: ['#3B82F6', '#10B981', '#8B5CF6', '#F59E0B', '#EC4899'],
+            borderRadius: 8
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } }
+        }
+      })
+    }
+
+    initAnalytics()
   </script>
 </body>
 </html>

@@ -185,10 +185,12 @@
                   ${p.marketplace_mode === 'college' ? '🎓 College Marketplace' : '🌐 Community Marketplace'}
                 </span>
                 <span class="text-xs font-bold px-2.5 py-1 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
-                  ${p.condition}
+                  ${p.condition || 'Used'}
                 </span>
-                <span class="text-xs font-bold px-2.5 py-1 rounded-full ${p.status === 'available' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">
-                  ${p.status === 'available' ? 'In Stock' : 'Sold Out'}
+                <span class="text-xs font-bold px-2.5 py-1 rounded-full ${
+                  p.status === 'sold' ? 'bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-300' : 'bg-green-100 text-green-700 dark:bg-green-950/50 dark:text-green-300'
+                }">
+                  ${p.status === 'sold' ? '🚫 Sold Out' : '🟢 In Stock'}
                 </span>
               </div>
 
@@ -202,7 +204,7 @@
               </div>
 
               <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-300 leading-relaxed mb-6">
-                ${p.description}
+                ${p.description || 'Verified campus marketplace listing.'}
               </p>
 
               <!-- Campus Pickup Spot Badge -->
@@ -219,11 +221,11 @@
                 <div class="text-[10px] uppercase font-bold text-gray-400 tracking-wider mb-2">Seller Details</div>
                 <div class="flex items-center gap-3">
                   <div class="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-sm">
-                    ${(p.profiles?.name || 'S')[0]}
+                    ${(p.profiles?.name || p.profiles?.full_name || 'S')[0]}
                   </div>
                   <div class="flex-1">
                     <div class="font-bold text-sm flex items-center gap-1.5">
-                      ${p.profiles?.name || 'Student Seller'}
+                      ${p.profiles?.full_name || p.profiles?.name || 'Student Seller'}
                       ${p.profiles?.is_verified ? '<span class="text-emerald-500 font-bold text-xs" title="Verified User">✓ Verified</span>' : ''}
                     </div>
                     <div class="text-xs text-gray-500">
@@ -235,16 +237,26 @@
 
             </div>
 
-            <!-- Action Buttons Row (Self-Purchase & Self-Chat Prevention) -->
+            <!-- Action Buttons Row (Owner Controls vs Buyer Actions vs Sold State) -->
             ${isOwner ? `
               <div class="p-5 bg-amber-50 dark:bg-amber-950/40 border-2 border-dashed border-amber-300 dark:border-amber-700 rounded-2xl text-center space-y-3">
                 <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-900/60 text-amber-800 dark:text-amber-200 text-xs font-bold">
                   <span>👑</span> You are the seller of this listing
                 </div>
                 <p class="text-xs text-amber-700 dark:text-amber-300 max-w-sm mx-auto leading-relaxed">
-                  This item was listed from your account. Self-purchasing and self-chatting are disabled. Other students and campus members can purchase and message you.
+                  Status: <b class="uppercase">${p.status || 'active'}</b>. You can update details, relist, or toggle sold status below.
                 </p>
                 <div class="flex flex-wrap gap-2 justify-center pt-1">
+                  <!-- Quick Toggle Sold / Relist -->
+                  ${p.status === 'sold' ? `
+                    <button onclick="toggleProductSold('${p.id}', 'active')" class="py-2.5 px-5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs transition inline-flex items-center gap-1.5 shadow">
+                      <span>🔄</span> Relist as Available
+                    </button>
+                  ` : `
+                    <button onclick="toggleProductSold('${p.id}', 'sold')" class="py-2.5 px-5 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl text-xs transition inline-flex items-center gap-1.5 shadow">
+                      <span>🏷️</span> Mark as Sold
+                    </button>
+                  `}
                   <a href="edit-product.html?id=${p.id}" class="py-2.5 px-5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs transition inline-flex items-center gap-1.5 shadow">
                     <span>✏️</span> Edit Listing
                   </a>
@@ -252,6 +264,17 @@
                     <span>📦</span> My Listings
                   </a>
                 </div>
+              </div>
+            ` : p.status === 'sold' ? `
+              <div class="p-6 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 rounded-2xl text-center space-y-2">
+                <span class="text-3xl block">🚫</span>
+                <h4 class="font-black text-sm text-red-700 dark:text-red-300">This Item Has Been Sold Out</h4>
+                <p class="text-xs text-red-600 dark:text-red-400 max-w-sm mx-auto">
+                  The seller has marked this listing as sold or the handover order was completed.
+                </p>
+                <a href="../index.html" class="inline-block mt-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow transition">
+                  Browse Other Items
+                </a>
               </div>
             ` : `
               <div class="space-y-2.5 pt-4 border-t border-gray-100 dark:border-gray-700">
@@ -381,6 +404,26 @@
       } catch (e) {}
 
       simDiv.innerHTML = '<div class="col-span-full text-center py-4 text-xs text-gray-400">Discover more listings on the Search page!</div>'
+    }
+
+    window.toggleProductSold = async (id, newStatus) => {
+      try {
+        await supabase.from('products').update({ status: newStatus }).eq('id', id)
+      } catch (e) {}
+
+      // Update local fallback
+      const local = JSON.parse(localStorage.getItem('ccm_fallback_products') || '[]')
+      const idx = local.findIndex(p => p.id === id)
+      if (idx >= 0) {
+        local[idx].status = newStatus
+        localStorage.setItem('ccm_fallback_products', JSON.stringify(local))
+      }
+
+      if (currentProduct) {
+        currentProduct.status = newStatus
+        renderProductDetails(currentProduct)
+      }
+      alert(newStatus === 'sold' ? 'Item marked as SOLD.' : 'Item relisted as AVAILABLE.')
     }
 
     initProductPage()

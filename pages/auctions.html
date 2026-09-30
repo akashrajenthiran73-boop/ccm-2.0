@@ -123,33 +123,39 @@
         return
       }
       grid.innerHTML = activeAuctions.map(auc => {
-        const remaining = Math.max(0, auc.endTime - Date.now())
+        const endTime = auc.endTime || (auc.end_time ? new Date(auc.end_time).getTime() : (Date.now() + 86400000))
+        const remaining = Math.max(0, endTime - Date.now())
         const isEnded = remaining <= 0
+        const photo = (auc.photos && auc.photos.length > 0) ? auc.photos[0] : 'https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=400'
+        const currentHigh = auc.current_highest_bid || auc.current_bid || auc.starting_bid || 0
+        const minBid = auc.min_bid || 50
+        const highestBidder = auc.highest_bidder || 'No bids yet'
+        const bidsCount = auc.bids_count || 0
 
         return `
           <div class="bg-white dark:bg-gray-800 rounded-3xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden flex flex-col justify-between hover-lift">
             <div>
               <div class="relative">
-                <img src="${auc.photos[0]}" class="w-full h-48 object-cover">
+                <img src="${photo}" class="w-full h-48 object-cover">
                 <!-- Countdown Timer Pill -->
-                <div class="absolute top-2 right-2 px-3 py-1 bg-black/75 backdrop-blur text-amber-400 font-mono text-xs font-black rounded-full shadow countdown-box" data-end="${auc.endTime}">
+                <div class="absolute top-2 right-2 px-3 py-1 bg-black/75 backdrop-blur text-amber-400 font-mono text-xs font-black rounded-full shadow countdown-box" data-end="${endTime}">
                   ⏱️ ${formatTimeRemaining(remaining)}
                 </div>
               </div>
 
               <div class="p-5">
-                <h3 class="font-bold text-base text-gray-900 dark:text-white truncate">${auc.title}</h3>
-                <p class="text-xs text-gray-400 mt-1 line-clamp-2">${auc.description}</p>
+                <h3 class="font-bold text-base text-gray-900 dark:text-white truncate">${auc.title || 'Auction Item'}</h3>
+                <p class="text-xs text-gray-400 mt-1 line-clamp-2">${auc.description || 'Rare campus auction listing'}</p>
 
                 <!-- Current Highest Bid Strip -->
                 <div class="mt-4 p-3.5 bg-blue-50/70 dark:bg-blue-950/40 rounded-2xl border border-blue-100 dark:border-blue-900">
                   <div class="flex justify-between items-baseline">
                     <span class="text-xs text-gray-500">Current Highest Bid:</span>
-                    <span class="text-2xl font-black text-blue-600 dark:text-blue-400">₹${auc.current_highest_bid}</span>
+                    <span class="text-2xl font-black text-blue-600 dark:text-blue-400">₹${currentHigh}</span>
                   </div>
                   <div class="flex justify-between text-[11px] text-gray-400 mt-1">
-                    <span>Highest Bidder: <b class="text-gray-700 dark:text-gray-300">${auc.highest_bidder}</b></span>
-                    <span>${auc.bids_count} bids placed</span>
+                    <span>Highest Bidder: <b class="text-gray-700 dark:text-gray-300">${highestBidder}</b></span>
+                    <span>${bidsCount} bids placed</span>
                   </div>
                 </div>
               </div>

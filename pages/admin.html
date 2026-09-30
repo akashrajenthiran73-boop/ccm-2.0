@@ -151,32 +151,37 @@
         const { count: oCount } = await supabase.from('orders').select('*', { count: 'exact', head: true })
         const { count: rCount } = await supabase.from('reports').select('*', { count: 'exact', head: true })
 
-        document.getElementById('stat-total-users').textContent = uCount || 28
-        document.getElementById('stat-total-prods').textContent = pCount || 19
-        document.getElementById('stat-total-orders').textContent = oCount || 14
-        document.getElementById('stat-total-reports').textContent = rCount || 2
-        document.getElementById('stat-total-rev').textContent = '₹42,800'
-      } catch (e) {}
+        document.getElementById('stat-total-users').textContent = uCount || 0
+        document.getElementById('stat-total-prods').textContent = pCount || 0
+        document.getElementById('stat-total-orders').textContent = oCount || 0
+        document.getElementById('stat-total-reports').textContent = rCount || 0
+
+        // Calculate GMV
+        const { data: orders } = await supabase.from('orders').select('total_price')
+        const totalRev = orders ? orders.reduce((sum, o) => sum + (Number(o.total_price) || 0), 0) : 0
+        document.getElementById('stat-total-rev').textContent = `₹${totalRev.toLocaleString('en-IN')}`
+      } catch (e) {
+        console.warn('Overview stats error:', e)
+      }
     }
 
     // Load Users
     async function loadUsers() {
       const container = document.getElementById('users-table-container')
+      container.innerHTML = '<div class="text-center py-8 text-xs text-gray-400 animate-pulse">Loading user records...</div>'
+
       let profiles = []
       try {
         const { data } = await supabase.from('profiles').select('*').order('created_at', { ascending: false })
         if (data && data.length > 0) profiles = data
       } catch (e) {}
 
-      if (profiles.length === 0) {
-        profiles = [
-          { id: 'u1', name: 'Akash Rajenthiran', email: 'akash@cit.edu.in', user_type: 'student', college_name: 'CIT', is_verified: true, is_blocked: false, role: 'admin' },
-          { id: 'u2', name: 'Karthik Subramanian', email: 'karthik@cit.edu.in', user_type: 'student', college_name: 'CIT', is_verified: true, is_blocked: false, role: 'user' },
-          { id: 'u3', name: 'Dr. S. Sundaram', email: 'sundaram@cit.edu.in', user_type: 'staff', college_name: 'CIT', is_verified: true, is_blocked: false, role: 'user' },
-          { id: 'u4', name: 'Vimal Kumar', email: 'vimal.nearby@gmail.com', user_type: 'community_user', college_name: 'Nearby Public', is_verified: false, is_blocked: false, role: 'user' }
-        ]
-      }
       allUsers = profiles
+
+      if (profiles.length === 0) {
+        container.innerHTML = '<div class="text-center py-12 text-xs text-gray-400">No user accounts registered yet.</div>'
+        return
+      }
 
       renderUsersTable(profiles)
     }
@@ -262,6 +267,8 @@
     // Load Products Tab
     async function loadAdminProducts() {
       const container = document.getElementById('products-table-container')
+      container.innerHTML = '<div class="text-center py-8 text-xs text-gray-400 animate-pulse">Loading products...</div>'
+
       let prods = []
       try {
         const { data } = await supabase.from('products').select('*').order('created_at', { ascending: false })
@@ -269,11 +276,8 @@
       } catch (e) {}
 
       if (prods.length === 0) {
-        prods = [
-          { id: 'p1', title: 'Engineering Mathematics Kreyszig', price: 380, category: 'Books & Notes', marketplace_mode: 'college', status: 'available' },
-          { id: 'p2', title: 'Hercules Roadeo Geared Cycle', price: 3400, category: 'Cycles & Vehicles', marketplace_mode: 'both', status: 'available' },
-          { id: 'p3', title: 'Study Desk & Chair', price: 1800, category: 'Hostel Essentials', marketplace_mode: 'community', status: 'sold' }
-        ]
+        container.innerHTML = '<div class="text-center py-12 text-xs text-gray-400">No marketplace listings found.</div>'
+        return
       }
 
       container.innerHTML = `
@@ -294,8 +298,14 @@
                 <td class="p-3 font-bold text-gray-900 dark:text-white">${p.title}</td>
                 <td class="p-3 font-black text-blue-600">₹${p.price}</td>
                 <td class="p-3 text-gray-500">${p.category}</td>
-                <td class="p-3 uppercase text-[10px] font-bold">${p.marketplace_mode}</td>
-                <td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-green-100 text-green-700">${p.status}</span></td>
+                <td class="p-3 uppercase text-[10px] font-bold">${p.marketplace_mode || 'both'}</td>
+                <td class="p-3">
+                  <span class="px-2 py-0.5 rounded text-[10px] font-bold ${
+                    p.status === 'sold' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
+                  }">
+                    ${(p.status || 'available').toUpperCase()}
+                  </span>
+                </td>
                 <td class="p-3 text-right">
                   <button onclick="adminDeleteProduct('${p.id}')" class="text-red-500 hover:underline font-bold text-[11px]">Remove</button>
                 </td>
@@ -314,9 +324,62 @@
       loadAdminProducts()
     }
 
-    // Load Reports
+    // Load Orders Tab
+    async function loadAdminOrders() {
+      const container = document.getElementById('orders-table-container')
+      container.innerHTML = '<div class="text-center py-8 text-xs text-gray-400 animate-pulse">Loading orders...</div>'
+
+      let orders = []
+      try {
+        const { data } = await supabase.from('orders').select('*, products(title)').order('created_at', { ascending: false })
+        if (data && data.length > 0) orders = data
+      } catch (e) {}
+
+      if (orders.length === 0) {
+        container.innerHTML = '<div class="text-center py-12 text-xs text-gray-400">No orders placed yet.</div>'
+        return
+      }
+
+      container.innerHTML = `
+        <table class="w-full text-xs text-left">
+          <thead class="bg-gray-50 dark:bg-gray-700/50 text-gray-500 uppercase">
+            <tr>
+              <th class="p-3">Order ID</th>
+              <th class="p-3">Item</th>
+              <th class="p-3">Total</th>
+              <th class="p-3">Payment</th>
+              <th class="p-3">Status</th>
+              <th class="p-3">Date</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+            ${orders.map(o => `
+              <tr>
+                <td class="p-3 font-mono text-gray-400">#${o.id.slice(0, 8)}</td>
+                <td class="p-3 font-bold text-gray-900 dark:text-white">${o.products?.title || 'Campus Item'}</td>
+                <td class="p-3 font-black text-blue-600">₹${o.total_price}</td>
+                <td class="p-3 uppercase text-[10px] font-bold text-gray-500">${o.payment_method || 'Wallet'}</td>
+                <td class="p-3">
+                  <span class="px-2 py-0.5 rounded text-[10px] font-bold ${
+                    o.status === 'completed' ? 'bg-green-100 text-green-700' :
+                    o.status === 'cancelled' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'
+                  }">
+                    ${(o.status || 'placed').toUpperCase()}
+                  </span>
+                </td>
+                <td class="p-3 text-gray-400 text-[10px]">${new Date(o.created_at).toLocaleDateString('en-IN')}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `
+    }
+
+    // Load Reports Tab
     async function loadAdminReports() {
       const container = document.getElementById('reports-table-container')
+      container.innerHTML = '<div class="text-center py-8 text-xs text-gray-400 animate-pulse">Loading complaints...</div>'
+
       let reports = []
       try {
         const { data } = await supabase.from('reports').select('*').order('created_at', { ascending: false })
@@ -324,10 +387,8 @@
       } catch (e) {}
 
       if (reports.length === 0) {
-        reports = [
-          { id: 'rep1', reason: 'scam: Off-platform wire transfer request', type: 'scam', description: 'Seller asked to transfer advance deposit on Telegram before meeting.', status: 'pending', created_at: new Date().toISOString() },
-          { id: 'rep2', reason: 'fake_listing: Unrealistically cheap laptop', type: 'fake_listing', description: 'Listed M2 MacBook for ₹500.', status: 'resolved', created_at: new Date(Date.now() - 86400000).toISOString() }
-        ]
+        container.innerHTML = '<div class="text-center py-12 text-xs text-gray-400">No safety complaints or reports recorded. Platform is clean!</div>'
+        return
       }
 
       container.innerHTML = `
@@ -346,7 +407,7 @@
               <tr>
                 <td class="p-3 font-bold text-gray-900 dark:text-white">${r.reason}</td>
                 <td class="p-3 text-red-500 font-bold uppercase text-[10px]">${r.type}</td>
-                <td class="p-3 text-gray-500">${r.description}</td>
+                <td class="p-3 text-gray-500">${r.description || 'No additional details provided.'}</td>
                 <td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${r.status === 'resolved' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-800'}">${r.status}</span></td>
                 <td class="p-3 text-right">
                   <button onclick="resolveReport('${r.id}')" class="px-2 py-1 bg-green-600 text-white font-bold rounded text-[10px]">Resolve</button>
@@ -382,6 +443,7 @@
 
         if (tab === 'users') loadUsers()
         if (tab === 'products') loadAdminProducts()
+        if (tab === 'orders') loadAdminOrders()
         if (tab === 'reports') loadAdminReports()
       }
     })

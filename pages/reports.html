@@ -93,13 +93,7 @@
         <div class="bg-white dark:bg-gray-800 p-5 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm">
           <h4 class="font-bold text-xs mb-3 text-gray-700 dark:text-gray-300">My Investigation Status</h4>
           <div id="my-reports-list" class="space-y-2 text-xs">
-            <div class="p-3 bg-gray-50 dark:bg-gray-750 rounded-xl border">
-              <div class="flex justify-between font-bold">
-                <span>Suspicious Wire Transfer Request</span>
-                <span class="text-amber-600">Investigating</span>
-              </div>
-              <p class="text-[10px] text-gray-400 mt-1">Status: Assigned to campus admin for verification.</p>
-            </div>
+            <div class="text-center py-4 text-gray-400 text-xs">Loading reports...</div>
           </div>
         </div>
 
@@ -116,10 +110,66 @@
   <script type="module">
     import { supabase, getCurrentUser, safeDbInsert } from '../js/supabase.js'
 
+    let currentUser = null
+
+    async function loadMyReports() {
+      const container = document.getElementById('my-reports-list')
+      currentUser = await getCurrentUser()
+      if (!currentUser) {
+        container.innerHTML = '<div class="text-center py-4 text-gray-400 text-xs">Sign in to view your filed reports</div>'
+        return
+      }
+
+      let reports = []
+      try {
+        const { data, error } = await supabase
+          .from('reports')
+          .select('*')
+          .eq('reporter_id', currentUser.id)
+          .order('created_at', { ascending: false })
+
+        if (!error && data) reports = data
+      } catch (e) {}
+
+      // Fallback
+      if (reports.length === 0) {
+        const local = JSON.parse(localStorage.getItem('ccm_fallback_reports') || '[]')
+        reports = local.filter(r => r.reporter_id === currentUser.id)
+      }
+
+      if (reports.length === 0) {
+        container.innerHTML = `
+          <div class="p-4 text-center text-gray-400 text-xs">
+            <span class="text-2xl block mb-1">🛡️</span>
+            No complaints or reports filed by you.
+          </div>
+        `
+        return
+      }
+
+      container.innerHTML = reports.map(r => `
+        <div class="p-3 bg-gray-50 dark:bg-gray-700/40 rounded-xl border border-gray-100 dark:border-gray-700 space-y-1">
+          <div class="flex justify-between items-center font-bold">
+            <span class="truncate">${r.reason || 'Safety Report'}</span>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${
+              r.status === 'resolved' ? 'bg-green-100 text-green-700' :
+              r.status === 'dismissed' ? 'bg-gray-100 text-gray-600' :
+              'bg-amber-100 text-amber-700'
+            }">
+              ${(r.status || 'pending').toUpperCase()}
+            </span>
+          </div>
+          <p class="text-[11px] text-gray-500 dark:text-gray-400 line-clamp-2">${r.description || ''}</p>
+          <div class="text-[10px] text-gray-400 pt-1">
+            Filed: ${r.created_at ? new Date(r.created_at).toLocaleDateString('en-IN') : 'Recently'}
+          </div>
+        </div>
+      `).join('')
+    }
+
     document.getElementById('report-form').onsubmit = async (e) => {
       e.preventDefault()
-      const user = await getCurrentUser()
-      if (!user) {
+      if (!currentUser) {
         alert('Please login to file a report')
         window.location.href = 'login.html'
         return
@@ -128,11 +178,10 @@
       const reason = document.getElementById('report-reason').value
       const entity = document.getElementById('report-entity').value.trim()
       const details = document.getElementById('report-details').value.trim()
-      const type = document.querySelector('input[name="report-target"]:checked').value
 
       const reportRecord = {
-        reporter_id: user.id,
-        reason: `${reason}: ${entity}`,
+        reporter_id: currentUser.id,
+        reason: entity ? `${reason} - ${entity}` : reason,
         type: reason === 'scam' ? 'scam' : 'other',
         description: details,
         status: 'pending'
@@ -142,7 +191,10 @@
 
       alert('🛡️ Report lodged successfully. Admin investigation initiated.')
       document.getElementById('report-form').reset()
+      loadMyReports()
     }
+
+    loadMyReports()
   </script>
 </body>
 </html>

@@ -130,5 +130,131 @@ ALTER TABLE public.offers ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Users access offers" ON public.offers;
 CREATE POLICY "Users access offers" ON public.offers FOR ALL USING (true) WITH CHECK (true);
 
--- 6. RELOAD POSTGREST SCHEMA CACHE
+-- 6. REVIEWS FOREIGN KEY FIX
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.table_constraints 
+    WHERE constraint_name = 'reviews_buyer_id_fkey' AND table_name = 'reviews'
+  ) THEN
+    ALTER TABLE public.reviews
+    ADD CONSTRAINT reviews_buyer_id_fkey FOREIGN KEY (buyer_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
+  END IF;
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.table_constraints 
+    WHERE constraint_name = 'reviews_seller_id_fkey' AND table_name = 'reviews'
+  ) THEN
+    ALTER TABLE public.reviews
+    ADD CONSTRAINT reviews_seller_id_fkey FOREIGN KEY (seller_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
+  END IF;
+EXCEPTION
+  WHEN OTHERS THEN
+    RAISE NOTICE 'Constraint already exists or column type mismatch: %', SQLERRM;
+END $$;
+
+-- 7. CATEGORIES TABLE
+CREATE TABLE IF NOT EXISTS public.categories (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  name TEXT NOT NULL UNIQUE,
+  slug TEXT,
+  icon TEXT,
+  description TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE public.categories ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Public read categories" ON public.categories;
+CREATE POLICY "Public read categories" ON public.categories FOR ALL USING (true) WITH CHECK (true);
+
+-- Seed Categories if empty
+INSERT INTO public.categories (name, slug, icon, description)
+VALUES 
+  ('Books & Notes', 'books', '📚', 'Textbooks, semester notes, lab manuals'),
+  ('Electronics & Gadgets', 'electronics', '💻', 'Laptops, calculators, microcontrollers'),
+  ('Hostel & Room Essentials', 'hostel', '🛏️', 'Mattresses, kettles, buckets, lamps'),
+  ('Cycles & Mobility', 'cycles', '🚲', 'Campus bicycles, skateboards'),
+  ('Lab & Workshop Equipment', 'lab', '🔬', 'Lab coats, drafters, breadboards, toolkits'),
+  ('Clothing & Fashion', 'clothing', '👕', 'Formal wear, winter jackets, casuals')
+ON CONFLICT (name) DO NOTHING;
+
+-- 8. ADMIN ACTIVITY TABLE
+CREATE TABLE IF NOT EXISTS public.admin_activity (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  action TEXT NOT NULL,
+  admin_id UUID,
+  details JSONB,
+  ip_address TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE public.admin_activity ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Admin access activity" ON public.admin_activity;
+CREATE POLICY "Admin access activity" ON public.admin_activity FOR ALL USING (true) WITH CHECK (true);
+
+-- 9. RENTALS TABLE
+CREATE TABLE IF NOT EXISTS public.rentals (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  product_id UUID REFERENCES public.products(id) ON DELETE CASCADE,
+  owner_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
+  renter_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
+  start_date DATE NOT NULL,
+  end_date DATE NOT NULL,
+  daily_rate NUMERIC(10,2) NOT NULL DEFAULT 0,
+  total_rent NUMERIC(10,2) NOT NULL DEFAULT 0,
+  deposit NUMERIC(10,2) NOT NULL DEFAULT 0,
+  status TEXT DEFAULT 'active' CHECK (status IN ('requested', 'active', 'returned', 'cancelled')),
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE public.rentals ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users access rentals" ON public.rentals;
+CREATE POLICY "Users access rentals" ON public.rentals FOR ALL USING (true) WITH CHECK (true);
+
+-- 10. EXCHANGES (BARTER) TABLE
+CREATE TABLE IF NOT EXISTS public.exchanges (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  requester_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
+  owner_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
+  product_offered TEXT NOT NULL,
+  product_wanted TEXT NOT NULL,
+  note TEXT,
+  status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'rejected', 'completed')),
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE public.exchanges ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users access exchanges" ON public.exchanges;
+CREATE POLICY "Users access exchanges" ON public.exchanges FOR ALL USING (true) WITH CHECK (true);
+
+-- 11. GROUP BUYS TABLE
+CREATE TABLE IF NOT EXISTS public.group_buys (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  title TEXT NOT NULL,
+  product_id UUID REFERENCES public.products(id) ON DELETE SET NULL,
+  organizer_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
+  target_qty INT NOT NULL DEFAULT 5,
+  current_qty INT NOT NULL DEFAULT 1,
+  discounted_price NUMERIC(10,2) NOT NULL DEFAULT 0,
+  original_price NUMERIC(10,2) NOT NULL DEFAULT 0,
+  status TEXT DEFAULT 'open' CHECK (status IN ('open', 'completed', 'expired')),
+  expires_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE public.group_buys ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users access group buys" ON public.group_buys;
+CREATE POLICY "Users access group buys" ON public.group_buys FOR ALL USING (true) WITH CHECK (true);
+
+CREATE TABLE IF NOT EXISTS public.group_buy_members (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  group_buy_id UUID REFERENCES public.group_buys(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
+  joined_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE public.group_buy_members ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users access group buy members" ON public.group_buy_members;
+CREATE POLICY "Users access group buy members" ON public.group_buy_members FOR ALL USING (true) WITH CHECK (true);
+
+-- 12. RELOAD POSTGREST SCHEMA CACHE
 NOTIFY pgrst, 'reload schema';

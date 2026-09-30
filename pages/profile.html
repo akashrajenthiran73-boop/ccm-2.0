@@ -78,23 +78,23 @@
         <dl class="space-y-3 text-xs">
           <div class="flex justify-between">
             <dt class="text-gray-500 dark:text-gray-400">College Name:</dt>
-            <dd class="font-bold text-right" id="info-college-name">Campus College</dd>
+            <dd class="font-bold text-right" id="info-college-name">-</dd>
           </div>
           <div class="flex justify-between">
             <dt class="text-gray-500 dark:text-gray-400">College Roll / ID:</dt>
-            <dd class="font-bold text-right font-mono" id="info-college-id">21IT001</dd>
+            <dd class="font-bold text-right font-mono" id="info-college-id">-</dd>
           </div>
           <div class="flex justify-between">
             <dt class="text-gray-500 dark:text-gray-400">Department:</dt>
-            <dd class="font-bold text-right" id="info-department">Information Technology</dd>
+            <dd class="font-bold text-right" id="info-department">-</dd>
           </div>
           <div class="flex justify-between">
             <dt class="text-gray-500 dark:text-gray-400">Course:</dt>
-            <dd class="font-bold text-right" id="info-course">B.Tech IT</dd>
+            <dd class="font-bold text-right" id="info-course">-</dd>
           </div>
           <div class="flex justify-between">
             <dt class="text-gray-500 dark:text-gray-400">Year & Semester:</dt>
-            <dd class="font-bold text-right" id="info-year-sem">3rd Year • Sem 6</dd>
+            <dd class="font-bold text-right" id="info-year-sem">-</dd>
           </div>
         </dl>
       </div>
@@ -108,34 +108,45 @@
         <dl class="space-y-3 text-xs">
           <div class="flex justify-between">
             <dt class="text-gray-500 dark:text-gray-400">User Type:</dt>
-            <dd class="font-bold capitalize text-right" id="info-user-type">Student</dd>
+            <dd class="font-bold capitalize text-right" id="info-user-type">-</dd>
           </div>
           <div class="flex justify-between">
             <dt class="text-gray-500 dark:text-gray-400">Email Address:</dt>
-            <dd class="font-bold text-right font-mono" id="info-email">user@college.edu</dd>
+            <dd class="font-bold text-right font-mono" id="info-email">-</dd>
           </div>
           <div class="flex justify-between">
             <dt class="text-gray-500 dark:text-gray-400">Mobile Number:</dt>
-            <dd class="font-bold text-right font-mono" id="info-mobile">+91 98765 43210</dd>
+            <dd class="font-bold text-right font-mono" id="info-mobile">-</dd>
           </div>
           <div class="flex justify-between">
             <dt class="text-gray-500 dark:text-gray-400">Location:</dt>
-            <dd class="font-bold text-right" id="info-location">Coimbatore, Tamil Nadu</dd>
+            <dd class="font-bold text-right" id="info-location">-</dd>
           </div>
           <div class="flex justify-between">
             <dt class="text-gray-500 dark:text-gray-400">Campus Address:</dt>
-            <dd class="font-bold text-right" id="info-address">Hostel Block 3, Room 204</dd>
+            <dd class="font-bold text-right" id="info-address">-</dd>
           </div>
         </dl>
       </div>
 
     </div>
 
-    <!-- My Listings Management -->
-    <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
-      <div class="flex items-center justify-between mb-4">
-        <h3 class="font-bold text-base text-gray-900 dark:text-white">My Active Listings</h3>
-        <a href="add-product.html" class="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline">+ Post New Item</a>
+    <!-- My Listings Management with Active / Sold Tabs -->
+    <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700" id="listings">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+        <div>
+          <h3 class="font-bold text-base text-gray-900 dark:text-white">My Listings Management</h3>
+          <p class="text-xs text-gray-400">Manage listing availability, edit details, or toggle sold status</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <!-- Active vs Sold Filter -->
+          <div class="flex items-center bg-gray-100 dark:bg-gray-750 p-1 rounded-xl text-xs font-bold">
+            <button id="filter-all-listings" class="px-3 py-1.5 rounded-lg bg-blue-600 text-white shadow-sm">All</button>
+            <button id="filter-active-listings" class="px-3 py-1.5 rounded-lg text-gray-600 dark:text-gray-300 hover:text-blue-600">Active</button>
+            <button id="filter-sold-listings" class="px-3 py-1.5 rounded-lg text-gray-600 dark:text-gray-300 hover:text-blue-600">Sold</button>
+          </div>
+          <a href="add-product.html" class="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-sm transition">+ Post Item</a>
+        </div>
       </div>
       <div id="profile-listings" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
         <div class="col-span-full text-center py-8 text-xs text-gray-400">Loading your items...</div>
@@ -151,6 +162,9 @@
   <script type="module">
     import { supabase, getCurrentUser, getUserProfile } from '../js/supabase.js'
 
+    let userListings = []
+    let activeFilter = 'all'
+
     async function loadProfilePage() {
       const user = await getCurrentUser()
       if (!user) {
@@ -163,71 +177,189 @@
       
       document.getElementById('profile-name').textContent = name
       document.getElementById('profile-username').textContent = p?.username ? `@${p.username}` : `@user_${user.id.slice(0, 5)}`
-      document.getElementById('profile-bio').textContent = p?.bio || 'Campus community buyer and seller.'
+      document.getElementById('profile-bio').textContent = p?.bio || 'Campus community member.'
       document.getElementById('profile-rating').textContent = p?.rating || '5.0'
       if (p?.avatar_url) document.getElementById('profile-avatar').src = p.avatar_url
 
-      // College Info
-      document.getElementById('info-college-name').textContent = p?.college_name || 'Campus College'
-      document.getElementById('info-college-id').textContent = p?.college_id_number || '21IT001'
-      document.getElementById('info-department').textContent = p?.department || 'Information Technology'
-      document.getElementById('info-course').textContent = p?.course || 'Undergraduate'
-      document.getElementById('info-year-sem').textContent = `${p?.year || '3rd Year'} • ${p?.semester || 'Sem 6'}`
+      // College Info (with zero fake mock strings)
+      document.getElementById('info-college-name').textContent = p?.college_name || 'Not Provided'
+      document.getElementById('info-college-id').textContent = p?.college_id_number || 'Not Set'
+      document.getElementById('info-department').textContent = p?.department || 'Not Set'
+      document.getElementById('info-course').textContent = p?.course || 'Not Set'
+      document.getElementById('info-year-sem').textContent = (p?.year || p?.semester) ? `${p?.year || ''} ${p?.semester ? '• ' + p.semester : ''}`.trim() : 'Not Set'
 
       // Account Info
       document.getElementById('info-user-type').textContent = (p?.user_type || 'student').replace('_', ' ')
       document.getElementById('info-email').textContent = user.email || p?.email || 'N/A'
-      document.getElementById('info-mobile').textContent = p?.mobile_number || p?.phone || '+91 98765 43210'
-      document.getElementById('info-location').textContent = p?.location || 'Coimbatore'
-      document.getElementById('info-address').textContent = p?.address || 'Campus Hostel / Flat'
+      document.getElementById('info-mobile').textContent = p?.mobile_number || p?.phone || 'Not Set'
+      document.getElementById('info-location').textContent = p?.location || 'Campus / Local'
+      document.getElementById('info-address').textContent = p?.address || 'Not Set'
 
-      // Listings
+      // Load Listings
+      await fetchUserListings(user.id)
+    }
+
+    async function fetchUserListings(userId) {
+      let listings = []
       try {
-        const { data: listings } = await supabase
+        const { data, error } = await supabase
           .from('products')
           .select('*')
-          .eq('user_id', user.id)
+          .or(`user_id.eq.${userId},seller_id.eq.${userId}`)
           .order('created_at', { ascending: false })
 
-        document.getElementById('profile-listings-count').textContent = listings?.length || 0
-        const listDiv = document.getElementById('profile-listings')
+        if (!error && data) listings = data
+      } catch (e) {}
 
-        if (!listings || listings.length === 0) {
-          listDiv.innerHTML = '<div class="col-span-full text-center py-6 text-xs text-gray-400">You have no active listings. Click "+ Post New Item" to sell!</div>'
-        } else {
-          listDiv.innerHTML = listings.map(item => `
-            <div class="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden p-3 bg-gray-50 dark:bg-gray-750 text-xs">
-              <img src="${item.photos?.[0] || 'https://via.placeholder.com/200'}" class="w-full h-28 object-cover rounded-lg mb-2">
-              <div class="font-bold truncate text-gray-900 dark:text-white">${item.title}</div>
-              <div class="text-blue-600 font-bold mt-1">₹${item.price}</div>
-              <div class="flex gap-2 mt-3">
-                <a href="edit-product.html?id=${item.id}" class="flex-1 text-center py-1 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 rounded font-semibold">Edit</a>
-                <a href="product.html?id=${item.id}" class="flex-1 text-center py-1 bg-blue-600 hover:bg-blue-700 text-white rounded font-semibold">View</a>
-              </div>
-            </div>
-          `).join('')
-        }
-      } catch (e) {
-        document.getElementById('profile-listings').innerHTML = '<div class="col-span-full text-center py-6 text-xs text-gray-400">Listings loaded</div>'
+      // Check local fallback
+      try {
+        const local = JSON.parse(localStorage.getItem('ccm_fallback_products') || '[]')
+        local.forEach(l => {
+          if ((l.user_id === userId || l.seller_id === userId) && !listings.some(it => it.id === l.id)) {
+            listings.push(l)
+          }
+        })
+      } catch (e) {}
+
+      userListings = listings
+      const activeCount = userListings.filter(i => ['available', 'active'].includes(i.status)).length
+      document.getElementById('profile-listings-count').textContent = activeCount
+      renderUserListings()
+    }
+
+    function renderUserListings() {
+      const listDiv = document.getElementById('profile-listings')
+      let filtered = userListings
+      if (activeFilter === 'active') {
+        filtered = userListings.filter(i => ['available', 'active'].includes(i.status))
+      } else if (activeFilter === 'sold') {
+        filtered = userListings.filter(i => i.status === 'sold')
       }
 
-      // Avatar upload simulation
-      const avatarInput = document.getElementById('avatar-file')
-      avatarInput?.addEventListener('change', async () => {
-        if (avatarInput.files && avatarInput.files[0]) {
-          const file = avatarInput.files[0]
-          const tempUrl = URL.createObjectURL(file)
-          document.getElementById('profile-avatar').src = tempUrl
-          // Try upload to avatars bucket or local save
-          try {
+      if (filtered.length === 0) {
+        listDiv.innerHTML = `<div class="col-span-full text-center py-8 text-xs text-gray-400">No ${activeFilter === 'all' ? '' : activeFilter} listings found. Click "+ Post Item" to add!</div>`
+        return
+      }
+
+      listDiv.innerHTML = filtered.map(item => {
+        const isSold = item.status === 'sold'
+        const photo = item.photos?.[0] || item.image_url || 'https://via.placeholder.com/200'
+
+        return `
+          <div class="border border-gray-200 dark:border-gray-700 rounded-2xl overflow-hidden p-3.5 bg-gray-50 dark:bg-gray-750 text-xs flex flex-col justify-between hover-lift transition">
+            <div>
+              <div class="relative mb-2">
+                <img src="${photo}" class="w-full h-32 object-cover rounded-xl" onerror="this.src='https://via.placeholder.com/200'">
+                <span class="absolute top-2 left-2 px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                  isSold ? 'bg-red-600 text-white shadow' : 'bg-emerald-600 text-white shadow'
+                }">
+                  ${isSold ? '🚫 SOLD' : '🟢 ACTIVE'}
+                </span>
+              </div>
+              <div class="font-bold truncate text-gray-900 dark:text-white">${item.title}</div>
+              <div class="text-blue-600 font-black text-sm mt-0.5">₹${item.price}</div>
+              <div class="text-[10px] text-gray-400 mt-1">Mode: <b class="uppercase">${item.marketplace_mode || 'both'}</b></div>
+            </div>
+
+            <div class="mt-3 pt-2.5 border-t border-gray-200 dark:border-gray-700 space-y-2">
+              <div class="flex gap-2">
+                <a href="edit-product.html?id=${item.id}" class="flex-1 text-center py-1.5 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-lg font-bold text-gray-700 dark:text-gray-200">
+                  Edit
+                </a>
+                <a href="product.html?id=${item.id}" class="flex-1 text-center py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold">
+                  View
+                </a>
+              </div>
+              
+              <!-- Quick Sold / Relist Toggle Button -->
+              ${isSold ? `
+                <button onclick="toggleProductSold('${item.id}', 'active')" class="w-full py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 rounded-lg font-bold text-[11px] border border-emerald-200 dark:border-emerald-800 transition">
+                  🔄 Relist as Available
+                </button>
+              ` : `
+                <button onclick="toggleProductSold('${item.id}', 'sold')" class="w-full py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300 rounded-lg font-bold text-[11px] border border-amber-200 dark:border-amber-800 transition">
+                  🏷️ Mark as Sold
+                </button>
+              `}
+            </div>
+          </div>
+        `
+      }).join('')
+    }
+
+    // Toggle Sold status action
+    window.toggleProductSold = async (productId, newStatus) => {
+      try {
+        await supabase.from('products').update({ status: newStatus }).eq('id', productId)
+      } catch (e) {}
+
+      // Update local storage
+      const local = JSON.parse(localStorage.getItem('ccm_fallback_products') || '[]')
+      const pIdx = local.findIndex(p => p.id === productId)
+      if (pIdx >= 0) {
+        local[pIdx].status = newStatus
+        localStorage.setItem('ccm_fallback_products', JSON.stringify(local))
+      }
+
+      // Update state
+      const target = userListings.find(i => i.id === productId)
+      if (target) target.status = newStatus
+
+      const activeCount = userListings.filter(i => ['available', 'active'].includes(i.status)).length
+      document.getElementById('profile-listings-count').textContent = activeCount
+
+      renderUserListings()
+      alert(newStatus === 'sold' ? 'Listing marked as SOLD.' : 'Listing relisted as ACTIVE.')
+    }
+
+    // Listing Filter Buttons
+    document.getElementById('filter-all-listings').onclick = () => {
+      activeFilter = 'all'
+      updateFilterButtons()
+      renderUserListings()
+    }
+    document.getElementById('filter-active-listings').onclick = () => {
+      activeFilter = 'active'
+      updateFilterButtons()
+      renderUserListings()
+    }
+    document.getElementById('filter-sold-listings').onclick = () => {
+      activeFilter = 'sold'
+      updateFilterButtons()
+      renderUserListings()
+    }
+
+    function updateFilterButtons() {
+      const allBtn = document.getElementById('filter-all-listings')
+      const actBtn = document.getElementById('filter-active-listings')
+      const sldBtn = document.getElementById('filter-sold-listings')
+      
+      const activeCls = 'px-3 py-1.5 rounded-lg bg-blue-600 text-white shadow-sm'
+      const inactiveCls = 'px-3 py-1.5 rounded-lg text-gray-600 dark:text-gray-300 hover:text-blue-600'
+      
+      allBtn.className = activeFilter === 'all' ? activeCls : inactiveCls
+      actBtn.className = activeFilter === 'active' ? activeCls : inactiveCls
+      sldBtn.className = activeFilter === 'sold' ? activeCls : inactiveCls
+    }
+
+    // Avatar upload
+    const avatarInput = document.getElementById('avatar-file')
+    avatarInput?.addEventListener('change', async () => {
+      if (avatarInput.files && avatarInput.files[0]) {
+        const file = avatarInput.files[0]
+        const tempUrl = URL.createObjectURL(file)
+        document.getElementById('profile-avatar').src = tempUrl
+        try {
+          const user = await getCurrentUser()
+          if (user) {
             const fileName = `${user.id}-${Date.now()}`
             await supabase.storage.from('avatars').upload(fileName, file)
             const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(fileName)
             await supabase.from('profiles').update({ avatar_url: publicUrl }).eq('id', user.id)
-          } catch (e) {}
-        }
-      })
-    }
+          }
+        } catch (e) {}
+      }
+    })
 
     loadProfilePage()
   </script>

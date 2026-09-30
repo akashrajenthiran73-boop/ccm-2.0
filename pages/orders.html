@@ -122,6 +122,61 @@
         orders = local.filter(o => activeTab === 'bought' ? o.buyer_id === currentUser.id : o.seller_id === currentUser.id)
       }
 
+      // If activeTab is 'sold', also include products marked as 'sold' by the seller
+      if (activeTab === 'sold') {
+        try {
+          const { data: soldProducts } = await supabase
+            .from('products')
+            .select('*')
+            .eq('seller_id', currentUser.id)
+            .eq('status', 'sold')
+
+          if (soldProducts && soldProducts.length > 0) {
+            soldProducts.forEach(sp => {
+              const existingOrder = orders.find(o => o.product_id === sp.id || o.products?.id === sp.id)
+              if (!existingOrder) {
+                orders.push({
+                  id: 'sale-' + (sp.id ? sp.id.slice(0, 8) : 'item'),
+                  created_at: sp.updated_at || sp.created_at || new Date().toISOString(),
+                  status: 'completed',
+                  payment_method: 'Direct / Marked Sold',
+                  total_price: sp.price,
+                  quantity: 1,
+                  pickup_location: sp.pickup_location || 'Campus Handover',
+                  is_direct_sold: true,
+                  product_id: sp.id,
+                  products: sp
+                })
+              }
+            })
+          }
+        } catch (e) {
+          console.warn('Sold products fetch note:', e)
+        }
+
+        // Also check local fallback products marked as sold
+        try {
+          const localProds = JSON.parse(localStorage.getItem('ccm_fallback_products') || '[]')
+          localProds.filter(p => p.seller_id === currentUser.id && p.status === 'sold').forEach(sp => {
+            const existingOrder = orders.find(o => o.product_id === sp.id || o.products?.id === sp.id)
+            if (!existingOrder) {
+              orders.push({
+                id: 'sale-' + (sp.id ? sp.id.slice(0, 8) : 'item'),
+                created_at: sp.created_at || new Date().toISOString(),
+                status: 'completed',
+                payment_method: 'Direct / Marked Sold',
+                total_price: sp.price,
+                quantity: 1,
+                pickup_location: sp.pickup_location || 'Campus Handover',
+                is_direct_sold: true,
+                product_id: sp.id,
+                products: sp
+              })
+            }
+          })
+        } catch (e) {}
+      }
+
       if (orders.length === 0) {
         container.innerHTML = `
           <div class="bg-white dark:bg-gray-800 rounded-2xl p-12 text-center border border-gray-200 dark:border-gray-700">
@@ -227,6 +282,15 @@
                   <span>⭐</span> Rate & Review
                 </button>
               ` : ''}
+
+              ${order.is_direct_sold ? `
+                <a href="product.html?id=${order.product_id}" class="px-3 py-1.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-200">
+                  View Product
+                </a>
+                <button onclick="relistSoldItem('${order.product_id}')" class="px-3 py-1.5 bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800 rounded-lg hover:bg-blue-100">
+                  🔄 Relist as Available
+                </button>
+              ` : ''}
             </div>
 
           </div>
@@ -253,6 +317,27 @@
       try {
         await supabase.from('orders').update({ status: newStatus }).eq('id', orderId)
       } catch (e) {}
+      loadOrders()
+    }
+
+    // Relist direct sold item
+    window.relistSoldItem = async (productId) => {
+      if (!confirm('Relist this product as active & available in the marketplace?')) return
+      try {
+        await supabase.from('products').update({ status: 'available' }).eq('id', productId)
+      } catch (e) {}
+
+      // Also update local fallback
+      try {
+        const local = JSON.parse(localStorage.getItem('ccm_fallback_products') || '[]')
+        const item = local.find(i => i.id === productId)
+        if (item) {
+          item.status = 'available'
+          localStorage.setItem('ccm_fallback_products', JSON.stringify(local))
+        }
+      } catch (e) {}
+
+      alert('Item relisted as available!')
       loadOrders()
     }
 

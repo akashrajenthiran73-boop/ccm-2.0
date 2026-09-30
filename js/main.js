@@ -42,14 +42,17 @@ export function createProductCard(product, wishlistIds = [], currentUser = null)
     ? '<span class="text-[10px] bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 font-bold px-2 py-0.5 rounded-full">🎓 College</span>'
     : '<span class="text-[10px] bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 font-bold px-2 py-0.5 rounded-full">🌐 Community</span>'
 
+  // Sold status check
+  const isSold = product.status === 'sold'
+
   return `
-    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden hover-lift flex flex-col transition duration-200">
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden hover-lift flex flex-col transition duration-200 ${isSold ? 'opacity-90' : ''}">
       
       <!-- Top Image & Quick Badges -->
       <div class="relative overflow-hidden group">
         <a href="${pagesPath}product.html?id=${product.id}">
           <img src="${firstPhoto}" alt="${product.title}" 
-               class="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+               class="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300 ${isSold ? 'grayscale-[25%]' : ''}"
                onerror="this.src='https://via.placeholder.com/400x260?text=Campus+Marketplace'">
         </a>
         
@@ -65,6 +68,10 @@ export function createProductCard(product, wishlistIds = [], currentUser = null)
 
         <!-- Condition & Mode Pill -->
         <div class="absolute bottom-2 left-2 flex gap-1 flex-wrap">
+          ${isSold 
+            ? '<span class="text-[10px] bg-red-600 text-white px-2 py-0.5 rounded-full font-bold shadow">🚫 SOLD OUT</span>'
+            : '<span class="text-[10px] bg-emerald-600 text-white px-2 py-0.5 rounded-full font-bold shadow">🟢 IN STOCK</span>'
+          }
           <span class="text-[10px] bg-black/60 backdrop-blur text-white px-2 py-0.5 rounded-full font-medium">
             ${product.condition || 'Used'}
           </span>
@@ -119,6 +126,16 @@ export function createProductCard(product, wishlistIds = [], currentUser = null)
             <a href="${pagesPath}product.html?id=${product.id}"
                class="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-2 rounded-lg transition text-center shadow-sm flex items-center justify-center">
               Manage
+            </a>
+          </div>
+        ` : isSold ? `
+          <div class="grid grid-cols-2 gap-2 mt-4 pt-2">
+            <span class="w-full bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 text-xs font-bold py-2 rounded-lg text-center border border-red-200 dark:border-red-900 flex items-center justify-center">
+              Sold Out
+            </span>
+            <a href="${pagesPath}product.html?id=${product.id}"
+               class="w-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 text-xs font-bold py-2 rounded-lg transition text-center flex items-center justify-center">
+              Details
             </a>
           </div>
         ` : `

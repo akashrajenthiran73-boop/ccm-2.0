@@ -49,3 +49,12 @@ export function getModeInfo() {
     }
   }
 }
+
+if (typeof window !== 'undefined') {
+  window.getMarketplaceMode = getMarketplaceMode
+  window.setMarketplaceMode = setMarketplaceMode
+  window.isCollegeMode = isCollegeMode
+  window.isCommunityMode = isCommunityMode
+  window.getModeInfo = getModeInfo
+}
+

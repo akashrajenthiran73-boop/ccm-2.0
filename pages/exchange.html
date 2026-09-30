@@ -102,54 +102,105 @@
   <script type="module" src="../js/mode.js"></script>
   <script type="module" src="../js/navbar.js"></script>
   <script type="module">
-    import { supabase, getCurrentUser, safeDbInsert } from '../js/supabase.js'
+    import { supabase, getCurrentUser } from '../js/supabase.js'
 
     let currentUser = null
     let selectedBarterItem = null
-
-    const BARTER_ITEMS = [
-      { id: 'b1', title: 'Python Crash Course (3rd Edition)', value: 450, looking_for: 'Scientific Calculator / Discrete Maths', photos: ['https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=600'], owner_name: 'Dharani R', college: 'CIT' },
-      { id: 'b2', title: 'Casio fx-991MS Scientific Calculator', value: 500, looking_for: 'Data Structures or OS Book', photos: ['https://images.unsplash.com/photo-1587145820266-a5951ee6f620?w=600'], owner_name: 'Kavin M', college: 'PSG Tech' },
-      { id: 'b3', title: 'Arduino Uno with Sensor Starter Kit', value: 800, looking_for: 'Hostel Cycle or Study Table', photos: ['https://images.unsplash.com/photo-1553406830-ef2513450d76?w=600'], owner_name: 'Rohit S', college: 'GCT' }
-    ]
+    let barterProducts = []
 
     async function initExchangePage() {
       currentUser = await getCurrentUser()
-      renderBarterGrid()
+      await loadBarterProducts()
     }
 
-    function renderBarterGrid() {
+    async function loadBarterProducts() {
       const grid = document.getElementById('barter-grid')
-      grid.innerHTML = BARTER_ITEMS.map(item => `
-        <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 shadow-sm hover-lift flex flex-col justify-between">
-          <div>
-            <img src="${item.photos[0]}" class="w-full h-40 object-cover rounded-xl mb-3">
-            <h4 class="font-bold text-sm text-gray-900 dark:text-white truncate">${item.title}</h4>
-            <div class="text-[11px] text-gray-400 mt-0.5">Approx Value: ₹${item.value}</div>
-            
-            <div class="mt-3 p-2.5 bg-emerald-50 dark:bg-emerald-950/40 rounded-xl border border-emerald-200 dark:border-emerald-800 text-[11px]">
-              <span class="font-bold text-emerald-800 dark:text-emerald-300">🔄 Looking to trade for:</span>
-              <p class="text-emerald-700 dark:text-emerald-200 mt-0.5 font-medium">${item.looking_for}</p>
+      grid.innerHTML = '<div class="col-span-full text-center py-12 text-xs text-gray-400 animate-pulse">Loading barter catalog...</div>'
+
+      let items = []
+      try {
+        const { data, error } = await supabase
+          .from('products')
+          .select('*, profiles(name, full_name, college_name)')
+          .in('status', ['available', 'active'])
+          .order('created_at', { ascending: false })
+
+        if (!error && data) items = data
+      } catch (e) {
+        console.warn('Barter items fetch note:', e)
+      }
+
+      // Merge local listings
+      try {
+        const local = JSON.parse(localStorage.getItem('ccm_fallback_products') || '[]')
+        local.forEach(l => {
+          if (['available', 'active'].includes(l.status) && !items.some(it => it.id === l.id)) {
+            items.push(l)
+          }
+        })
+      } catch (e) {}
+
+      barterProducts = items
+
+      if (barterProducts.length === 0) {
+        grid.innerHTML = `
+          <div class="col-span-full text-center py-16 px-4 bg-white dark:bg-gray-800 rounded-2xl border border-dashed border-gray-200 dark:border-gray-700">
+            <span class="text-4xl block mb-2">🔄</span>
+            <h4 class="text-sm font-bold text-gray-700 dark:text-gray-300">No Barter Items Listed Yet</h4>
+            <p class="text-xs text-gray-400 mt-1 max-w-sm mx-auto">
+              Be the first student to post an item for trade! Exchange notes, books, drawing tools or electronics.
+            </p>
+            <a href="add-product.html" class="inline-block mt-4 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow transition">
+              + Post Item for Barter
+            </a>
+          </div>
+        `
+        return
+      }
+
+      grid.innerHTML = barterProducts.map(item => {
+        const photo = item.photos?.[0] || item.image_url || 'https://via.placeholder.com/400x260?text=Barter+Item'
+        const sellerName = item.profiles?.full_name || item.profiles?.name || 'Student Member'
+        const college = item.profiles?.college_name || 'Campus College'
+        const isOwner = currentUser && (currentUser.id === item.user_id || currentUser.id === item.seller_id)
+
+        return `
+          <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 shadow-sm hover-lift flex flex-col justify-between">
+            <div>
+              <img src="${photo}" class="w-full h-40 object-cover rounded-xl mb-3" onerror="this.src='https://via.placeholder.com/400x260?text=Campus+Item'">
+              <h4 class="font-bold text-sm text-gray-900 dark:text-white truncate">${item.title}</h4>
+              <div class="text-[11px] text-gray-400 mt-0.5">Approx Value: ₹${item.price}</div>
+              
+              <div class="mt-3 p-2.5 bg-emerald-50 dark:bg-emerald-950/40 rounded-xl border border-emerald-200 dark:border-emerald-800 text-[11px]">
+                <span class="font-bold text-emerald-800 dark:text-emerald-300">🔄 Barter Category:</span>
+                <p class="text-emerald-700 dark:text-emerald-200 mt-0.5 font-medium">${item.category || 'Books / Supplies'}</p>
+              </div>
+            </div>
+
+            <div class="mt-4 pt-3 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between">
+              <span class="text-[10px] text-gray-400 truncate max-w-[140px]">👤 ${sellerName}</span>
+              ${isOwner ? `
+                <span class="px-3 py-1.5 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs font-bold rounded-xl">
+                  Your Item
+                </span>
+              ` : `
+                <button onclick="openBarterModal('${item.id}', '${item.title.replace(/'/g, "\\'")}', '${item.seller_id || item.user_id || ''}')" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow transition">
+                  Trade My Item ↔
+                </button>
+              `}
             </div>
           </div>
-
-          <div class="mt-4 pt-3 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between">
-            <span class="text-[10px] text-gray-400">👤 ${item.owner_name} (${item.college})</span>
-            <button onclick="openBarterModal('${item.id}', '${item.title.replace(/'/g, "\\'")}')" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow">
-              Trade My Item ↔
-            </button>
-          </div>
-        </div>
-      `).join('')
+        `
+      }).join('')
     }
 
-    window.openBarterModal = (id, title) => {
+    window.openBarterModal = (id, title, ownerId) => {
       if (!currentUser) {
         alert('Please login to propose an exchange')
         window.location.href = 'login.html'
         return
       }
-      selectedBarterItem = { id, title }
+      selectedBarterItem = { id, title, ownerId }
       document.getElementById('target-barter-title').textContent = title
       document.getElementById('barter-modal').classList.remove('hidden')
     }
@@ -168,15 +219,29 @@
 
       const req = {
         requester_id: currentUser.id,
+        owner_id: selectedBarterItem.ownerId || null,
+        notes: `Offered: ${offeredText} | Note: ${note || 'Direct exchange proposal'}`,
+        status: 'pending'
+      }
+
+      // Try Supabase insert
+      try {
+        await supabase.from('exchanges').insert(req)
+      } catch (e) {
+        console.warn('Exchanges table insert note:', e)
+      }
+
+      // Local fallback for offline/instant UI
+      const localReq = {
+        id: 'exch_' + Date.now(),
         target_title: selectedBarterItem.title,
         offered_item: offeredText,
         notes: note,
         status: 'pending',
         created_at: new Date().toISOString()
       }
-
       const stored = JSON.parse(localStorage.getItem('ccm_barter_requests') || '[]')
-      stored.unshift(req)
+      stored.unshift(localReq)
       localStorage.setItem('ccm_barter_requests', JSON.stringify(stored))
 
       alert(`✅ Exchange Request Sent!\nOffered: ${offeredText} ↔ Target: ${selectedBarterItem.title}`)
@@ -185,26 +250,48 @@
       document.getElementById('tab-requests').click()
     }
 
-    function loadRequests() {
+    async function loadRequests() {
       const list = document.getElementById('requests-list')
+      list.innerHTML = '<div class="text-center py-12 text-xs text-gray-400 animate-pulse">Loading exchange offers...</div>'
+
+      let requests = []
+      if (currentUser) {
+        try {
+          const { data } = await supabase
+            .from('exchanges')
+            .select('*')
+            .or(`requester_id.eq.${currentUser.id},owner_id.eq.${currentUser.id}`)
+            .order('created_at', { ascending: false })
+          if (data && data.length > 0) requests = data
+        } catch (e) {}
+      }
+
       const stored = JSON.parse(localStorage.getItem('ccm_barter_requests') || '[]')
-      if (stored.length === 0) {
+      stored.forEach(s => {
+        if (!requests.some(r => r.id === s.id)) requests.push(s)
+      })
+
+      if (requests.length === 0) {
         list.innerHTML = '<div class="text-center py-12 text-xs text-gray-400">No active barter requests. Propose a trade from the Browse tab!</div>'
         return
       }
 
-      list.innerHTML = stored.map(r => `
+      list.innerHTML = requests.map(r => `
         <div class="bg-white dark:bg-gray-800 p-4 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm flex items-center justify-between">
           <div class="space-y-1">
             <div class="flex items-center gap-2">
-              <span class="font-bold text-xs">${r.offered_item}</span>
+              <span class="font-bold text-xs">${r.offered_item || 'Offered Item'}</span>
               <span class="text-gray-400">↔</span>
-              <span class="font-bold text-xs text-blue-600">${r.target_title}</span>
+              <span class="font-bold text-xs text-emerald-600">${r.target_title || 'Campus Item'}</span>
             </div>
             <p class="text-[11px] text-gray-400">${r.notes || 'No extra notes provided.'}</p>
           </div>
-          <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">
-            PENDING RESPONSE
+          <span class="px-2.5 py-1 rounded-full text-[10px] font-bold ${
+            r.status === 'accepted' ? 'bg-green-100 text-green-800' :
+            r.status === 'rejected' ? 'bg-red-100 text-red-800' :
+            'bg-amber-100 text-amber-800'
+          }">
+            ${(r.status || 'PENDING').toUpperCase()}
           </span>
         </div>
       `).join('')

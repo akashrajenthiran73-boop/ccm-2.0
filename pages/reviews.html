@@ -20,73 +20,33 @@
     </div>
 
     <!-- Reputation Score Card -->
-    <div class="bg-white dark:bg-gray-800 rounded-3xl p-6 sm:p-8 border border-gray-200 dark:border-gray-700 shadow-sm mb-8">
+    <div class="bg-white dark:bg-gray-800 rounded-3xl p-6 sm:p-8 border border-gray-200 dark:border-gray-700 shadow-sm mb-8" id="reputation-card">
       <div class="grid sm:grid-cols-3 gap-6 text-center divide-y sm:divide-y-0 sm:divide-x divide-gray-100 dark:divide-gray-700">
         <div>
-          <div class="text-4xl font-black text-amber-500">4.9 / 5.0</div>
+          <div class="text-4xl font-black text-amber-500" id="stat-avg-rating">--</div>
           <div class="text-xs font-bold text-gray-500 mt-1">Overall Campus Rating</div>
-          <div class="text-[10px] text-gray-400">Based on 124 verified reviews</div>
+          <div class="text-[10px] text-gray-400" id="stat-rating-subtitle">Calculating...</div>
         </div>
         <div class="pt-4 sm:pt-0">
-          <div class="text-4xl font-black text-emerald-500">98%</div>
-          <div class="text-xs font-bold text-gray-500 mt-1">On-Time Handover Rate</div>
-          <div class="text-[10px] text-gray-400">Meeting points punctual index</div>
+          <div class="text-4xl font-black text-emerald-500" id="stat-verified-count">0</div>
+          <div class="text-xs font-bold text-gray-500 mt-1">Verified Reviews</div>
+          <div class="text-[10px] text-gray-400">Honest feedback recorded</div>
         </div>
         <div class="pt-4 sm:pt-0">
-          <div class="text-4xl font-black text-blue-600 dark:text-blue-400">180+</div>
-          <div class="text-xs font-bold text-gray-500 mt-1">Successful Transits</div>
-          <div class="text-[10px] text-gray-400">Zero disputes recorded</div>
+          <div class="text-4xl font-black text-blue-600 dark:text-blue-400" id="stat-five-star-ratio">100%</div>
+          <div class="text-xs font-bold text-gray-500 mt-1">Positive Satisfaction</div>
+          <div class="text-[10px] text-gray-400">Campus handover rate</div>
         </div>
       </div>
     </div>
 
     <!-- Recent Reviews Feed -->
-    <h3 class="font-black text-base mb-4">Recent Verified Feedback</h3>
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="font-black text-base">Recent Verified Feedback</h3>
+      <span class="text-xs text-gray-400" id="reviews-count-badge">Loading...</span>
+    </div>
     <div class="space-y-3" id="reviews-feed">
-      <!-- Review 1 -->
-      <div class="bg-white dark:bg-gray-800 p-4 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm">
-        <div class="flex items-center justify-between mb-2">
-          <div class="flex items-center gap-2">
-            <span class="font-bold text-xs text-gray-900 dark:text-white">Dinesh Kumar (CIT EEE)</span>
-            <span class="text-emerald-500 text-xs">✓ Verified Buyer</span>
-          </div>
-          <span class="text-amber-500 font-bold text-xs">⭐⭐⭐⭐⭐ 5.0</span>
-        </div>
-        <p class="text-xs text-gray-600 dark:text-gray-300">
-          "Bought the Casio Classwiz calculator. Punctual meeting at Canteen, item condition was just like brand new with fresh battery. Highly recommend!"
-        </p>
-        <span class="text-[10px] text-gray-400 mt-2 block">Item: Casio fx-991EX • Yesterday</span>
-      </div>
-
-      <!-- Review 2 -->
-      <div class="bg-white dark:bg-gray-800 p-4 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm">
-        <div class="flex items-center justify-between mb-2">
-          <div class="flex items-center gap-2">
-            <span class="font-bold text-xs text-gray-900 dark:text-white">Aravind S (PSG Tech Mech)</span>
-            <span class="text-emerald-500 text-xs">✓ Verified Buyer</span>
-          </div>
-          <span class="text-amber-500 font-bold text-xs">⭐⭐⭐⭐⭐ 5.0</span>
-        </div>
-        <p class="text-xs text-gray-600 dark:text-gray-300">
-          "Smooth barter transaction! Traded my Engineering Physics textbook for a drawing board and drafter. Transparent and very polite seller."
-        </p>
-        <span class="text-[10px] text-gray-400 mt-2 block">Item: Mini Drafter Set • 3 days ago</span>
-      </div>
-
-      <!-- Review 3 -->
-      <div class="bg-white dark:bg-gray-800 p-4 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm">
-        <div class="flex items-center justify-between mb-2">
-          <div class="flex items-center gap-2">
-            <span class="font-bold text-xs text-gray-900 dark:text-white">Meenakshi V (GCT CSE)</span>
-            <span class="text-emerald-500 text-xs">✓ Verified Buyer</span>
-          </div>
-          <span class="text-amber-500 font-bold text-xs">⭐⭐⭐⭐ 4.0</span>
-        </div>
-        <p class="text-xs text-gray-600 dark:text-gray-300">
-          "Rented the commuter cycle for a week. Riding was comfortable, gears shifted cleanly. Returned safely at Main Gate."
-        </p>
-        <span class="text-[10px] text-gray-400 mt-2 block">Item: Geared Bicycle • 5 days ago</span>
-      </div>
+      <div class="text-center py-16 text-xs text-gray-400 animate-pulse">Loading reviews...</div>
     </div>
 
   </div>
@@ -95,5 +55,120 @@
   <script type="module" src="../js/i18n.js"></script>
   <script type="module" src="../js/mode.js"></script>
   <script type="module" src="../js/navbar.js"></script>
+  <script type="module">
+    import { supabase } from '../js/supabase.js'
+
+    async function loadReviewsFeed() {
+      const feed = document.getElementById('reviews-feed')
+      let reviews = []
+
+      try {
+        // Query reviews directly with related product info
+        const { data, error } = await supabase
+          .from('reviews')
+          .select('*, products(id, title)')
+          .order('created_at', { ascending: false })
+
+        if (!error && data) {
+          reviews = data
+        }
+      } catch (e) {
+        console.warn('Reviews fetch error:', e)
+      }
+
+      // Check fallback reviews
+      if (reviews.length === 0) {
+        try {
+          const local = JSON.parse(localStorage.getItem('ccm_fallback_reviews') || '[]')
+          if (local.length > 0) reviews = local
+        } catch (e) {}
+      }
+
+      const countBadge = document.getElementById('reviews-count-badge')
+
+      if (reviews.length === 0) {
+        document.getElementById('stat-avg-rating').textContent = '5.0'
+        document.getElementById('stat-rating-subtitle').textContent = 'Based on 0 verified reviews'
+        document.getElementById('stat-verified-count').textContent = '0'
+        document.getElementById('stat-five-star-ratio').textContent = '100%'
+        countBadge.textContent = '0 reviews'
+
+        feed.innerHTML = `
+          <div class="bg-white dark:bg-gray-800 rounded-3xl p-12 text-center border border-dashed border-gray-200 dark:border-gray-700">
+            <span class="text-4xl block mb-2">⭐</span>
+            <h4 class="font-bold text-sm text-gray-800 dark:text-gray-200">No Reviews Submitted Yet</h4>
+            <p class="text-xs text-gray-400 mt-1 max-w-sm mx-auto">
+              Buyer feedback and seller ratings will appear here as campus handovers and orders are completed.
+            </p>
+            <a href="../index.html" class="inline-block mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow transition">
+              Explore Marketplace
+            </a>
+          </div>
+        `
+        return
+      }
+
+      // Calculate stats
+      const totalReviews = reviews.length
+      const sumRatings = reviews.reduce((acc, r) => acc + (Number(r.rating) || 5), 0)
+      const avgRating = (sumRatings / totalReviews).toFixed(1)
+      const positiveCount = reviews.filter(r => (Number(r.rating) || 5) >= 4).length
+      const satisfaction = Math.round((positiveCount / totalReviews) * 100)
+
+      document.getElementById('stat-avg-rating').textContent = `${avgRating} / 5.0`
+      document.getElementById('stat-rating-subtitle').textContent = `Based on ${totalReviews} verified review${totalReviews > 1 ? 's' : ''}`
+      document.getElementById('stat-verified-count').textContent = totalReviews
+      document.getElementById('stat-five-star-ratio').textContent = `${satisfaction}%`
+      countBadge.textContent = `${totalReviews} review${totalReviews > 1 ? 's' : ''}`
+
+      // Fetch reviewer profile names safely
+      const buyerIds = [...new Set(reviews.map(r => r.buyer_id).filter(Boolean))]
+      const profileMap = {}
+      if (buyerIds.length > 0) {
+        try {
+          const { data: profiles } = await supabase
+            .from('profiles')
+            .select('id, name, full_name, college_name, department')
+            .in('id', buyerIds)
+          if (profiles) {
+            profiles.forEach(p => {
+              profileMap[p.id] = p.full_name || p.name || 'Student Buyer'
+            })
+          }
+        } catch (e) {}
+      }
+
+      feed.innerHTML = reviews.map(r => {
+        const rating = Number(r.rating) || 5
+        const stars = '⭐'.repeat(Math.min(5, Math.max(1, rating)))
+        const reviewerName = profileMap[r.buyer_id] || 'Verified Campus Buyer'
+        const dateStr = r.created_at ? new Date(r.created_at).toLocaleDateString('en-IN') : 'Recently'
+        const productTitle = r.products?.title || 'Campus Marketplace Item'
+
+        return `
+          <div class="bg-white dark:bg-gray-800 p-5 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm space-y-2 hover-lift transition">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="font-bold text-xs text-gray-900 dark:text-white">${reviewerName}</span>
+                <span class="text-emerald-500 text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800">
+                  ✓ Verified Handover
+                </span>
+              </div>
+              <span class="text-amber-500 font-bold text-xs">${stars} ${rating}.0</span>
+            </div>
+            <p class="text-xs text-gray-600 dark:text-gray-300 leading-relaxed">
+              "${r.review_text || 'Item handover completed smoothly at the campus meeting spot.'}"
+            </p>
+            <div class="flex items-center justify-between text-[10px] text-gray-400 pt-1 border-t border-gray-100 dark:border-gray-700">
+              <span>Item: <b>${productTitle}</b></span>
+              <span>${dateStr}</span>
+            </div>
+          </div>
+        `
+      }).join('')
+    }
+
+    loadReviewsFeed()
+  </script>
 </body>
 </html>
