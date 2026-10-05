@@ -3,6 +3,16 @@ import { supabase, getCurrentUser } from './supabase.js'
 import { getMarketplaceMode, isCollegeMode } from './mode.js'
 import { analyzePrice, detectScamRisk, rankRecommendations, trackUserActivity } from './ai-smart.js'
 import { addToCart } from './cart.js'
+import { translateDOM } from './i18n.js'
+
+// One-time clean slate purge of old mock/test listings so user starts fresh
+const CLEAN_SLATE_KEY = 'ccm_marketplace_fresh_start_v3'
+if (typeof localStorage !== 'undefined' && !localStorage.getItem(CLEAN_SLATE_KEY)) {
+  localStorage.removeItem('ccm_fallback_products')
+  localStorage.removeItem('ccm_active_rentals')
+  localStorage.removeItem('ccm_barter_requests')
+  localStorage.setItem(CLEAN_SLATE_KEY, 'true')
+}
 
 const productFeed = document.getElementById('product-feed')
 const trendingFeed = document.getElementById('trending-feed')
@@ -19,7 +29,7 @@ let userLocation = null
 let wishlistIds = []
 let cachedUser = null
 
-// Real products loaded dynamically from Supabase database or local offline cache
+// Real products loaded dynamically from Supabase database or local storage
 
 // 1. Create Product Card HTML
 export function createProductCard(product, wishlistIds = [], currentUser = null) {
@@ -109,8 +119,8 @@ export function createProductCard(product, wishlistIds = [], currentUser = null)
 
           <!-- Seller info & Meeting Spot -->
           <div class="flex items-center justify-between text-[11px] text-gray-500 dark:text-gray-400 mt-3 pt-2.5 border-t border-gray-100 dark:border-gray-700">
-            <span class="truncate max-w-[130px]" title="${product.profiles?.full_name || product.profiles?.name || 'Verified Member'}">
-              👤 ${product.profiles?.full_name || product.profiles?.name || product.profiles?.username || 'Verified Member'} 
+            <span class="truncate max-w-[130px]" title="${product.profiles?.full_name || product.profiles?.name || 'Campus Seller'}">
+              👤 ${product.profiles?.full_name || product.profiles?.name || product.profiles?.username || 'Campus Seller'} 
               ${product.profiles?.is_verified ? '<span class="text-green-500" title="Verified ID">✓</span>' : ''}
             </span>
             <span class="text-gray-400 truncate">📍 ${product.meeting_point || product.pickup_location || 'Main Gate'}</span>
@@ -218,7 +228,12 @@ export async function loadProducts() {
 
   // Merge any local listings (e.g. freshly posted items or offline storage)
   try {
-    const localItems = JSON.parse(localStorage.getItem('ccm_fallback_products') || '[]')
+    const rawLocal = JSON.parse(localStorage.getItem('ccm_fallback_products') || '[]')
+    const localItems = rawLocal.filter(p => {
+      const sName = p.profiles?.full_name || p.profiles?.name || p.profiles?.username || ''
+      return sName !== 'Verified Member'
+    })
+
     localItems.forEach(localProd => {
       if (!fetchedProducts.some(p => p.id === localProd.id)) {
         const pMode = localProd.marketplace_mode || 'both'
@@ -262,6 +277,7 @@ export async function loadProducts() {
         </div>
       </div>
     `
+    translateDOM()
     return
   }
 
@@ -269,6 +285,7 @@ export async function loadProducts() {
   const ranked = rankRecommendations(fetchedProducts)
 
   productFeed.innerHTML = ranked.map(p => createProductCard(p, wishlistIds, cachedUser)).join('')
+  translateDOM()
 }
 
 // 3. Add to cart window action
@@ -367,6 +384,11 @@ nearMeBtn?.addEventListener('click', () => {
 
 // Listen to marketplace mode change
 window.addEventListener('marketplaceModeChanged', () => {
+  loadProducts()
+})
+
+// Listen to language change
+window.addEventListener('languageChanged', () => {
   loadProducts()
 })
 

@@ -12,11 +12,14 @@ let selectedLocation = null
 let photoFiles = []
 
 // 1. Check login 
-const { data: { user } } = await supabase.auth.getUser()
-if (!user) {
-  alert('Login panni thaan item post panna mudiyum da')
-  window.location.href = 'login.html'
+async function checkUserAuth() {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    alert('Login panni thaan item post panna mudiyum da')
+    window.location.href = 'login.html'
+  }
 }
+checkUserAuth()
 
 // 2. Photo Preview 
 photoInput.addEventListener('change', () => {

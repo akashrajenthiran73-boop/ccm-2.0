@@ -220,7 +220,9 @@
       const req = {
         requester_id: currentUser.id,
         owner_id: selectedBarterItem.ownerId || null,
-        notes: `Offered: ${offeredText} | Note: ${note || 'Direct exchange proposal'}`,
+        offered_item: offeredText,
+        target_title: selectedBarterItem.title,
+        notes: note || 'Direct exchange proposal',
         status: 'pending'
       }
 
@@ -250,6 +252,31 @@
       document.getElementById('tab-requests').click()
     }
 
+    window.updateExchangeStatus = async (exchangeId, newStatus) => {
+      // Supabase update
+      try {
+        await supabase
+          .from('exchanges')
+          .update({ status: newStatus })
+          .eq('id', exchangeId)
+      } catch (e) {
+        console.warn('Exchanges update note:', e)
+      }
+
+      // Local storage update
+      const stored = JSON.parse(localStorage.getItem('ccm_barter_requests') || '[]')
+      const updated = stored.map(s => {
+        if (s.id === exchangeId) {
+          return { ...s, status: newStatus }
+        }
+        return s
+      })
+      localStorage.setItem('ccm_barter_requests', JSON.stringify(updated))
+
+      alert(`✅ Exchange proposal updated: ${newStatus.toUpperCase()}`)
+      loadRequests()
+    }
+
     async function loadRequests() {
       const list = document.getElementById('requests-list')
       list.innerHTML = '<div class="text-center py-12 text-xs text-gray-400 animate-pulse">Loading exchange offers...</div>'
@@ -276,25 +303,60 @@
         return
       }
 
-      list.innerHTML = requests.map(r => `
-        <div class="bg-white dark:bg-gray-800 p-4 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm flex items-center justify-between">
-          <div class="space-y-1">
-            <div class="flex items-center gap-2">
-              <span class="font-bold text-xs">${r.offered_item || 'Offered Item'}</span>
-              <span class="text-gray-400">↔</span>
-              <span class="font-bold text-xs text-emerald-600">${r.target_title || 'Campus Item'}</span>
+      list.innerHTML = requests.map(r => {
+        const status = (r.status || 'pending').toLowerCase()
+
+        let badgeClass = 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300'
+        let badgeText = '⏳ PENDING'
+
+        if (status === 'accepted') {
+          badgeClass = 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
+          badgeText = '🤝 ACCEPTED'
+        } else if (status === 'completed') {
+          badgeClass = 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
+          badgeText = '✅ COMPLETED'
+        } else if (status === 'rejected' || status === 'declined') {
+          badgeClass = 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
+          badgeText = '❌ DECLINED'
+        } else if (status === 'cancelled') {
+          badgeClass = 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+          badgeText = '🚫 CANCELLED'
+        }
+
+        return `
+          <div class="bg-white dark:bg-gray-800 p-4 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div class="space-y-1">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="font-bold text-xs text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 px-2 py-0.5 rounded">📦 Offered: ${r.offered_item || 'Offered Item'}</span>
+                <span class="text-gray-400 font-bold">↔</span>
+                <span class="font-bold text-xs text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded">🎯 For: ${r.target_title || 'Campus Item'}</span>
+              </div>
+              <p class="text-[11px] text-gray-400 mt-1">${r.notes || 'Direct campus barter proposal.'}</p>
             </div>
-            <p class="text-[11px] text-gray-400">${r.notes || 'No extra notes provided.'}</p>
+
+            <div class="flex items-center gap-2 self-end sm:self-center">
+              <span class="px-2.5 py-1 rounded-full text-[10px] font-bold ${badgeClass}">
+                ${badgeText}
+              </span>
+
+              ${status === 'pending' ? `
+                <div class="flex items-center gap-1.5">
+                  <button onclick="updateExchangeStatus('${r.id}', 'accepted')" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow transition flex items-center gap-1" title="Accept Trade">
+                    ✅ Accept
+                  </button>
+                  <button onclick="updateExchangeStatus('${r.id}', 'rejected')" class="px-2.5 py-1 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-bold shadow transition flex items-center gap-1" title="Decline Trade">
+                    ❌ Decline
+                  </button>
+                </div>
+              ` : status === 'accepted' ? `
+                <button onclick="updateExchangeStatus('${r.id}', 'completed')" class="px-3 py-1 bg-green-600 hover:bg-green-700 text-white rounded-lg text-xs font-bold shadow transition flex items-center gap-1" title="Complete Barter Handover">
+                  🤝 Mark Completed
+                </button>
+              ` : ''}
+            </div>
           </div>
-          <span class="px-2.5 py-1 rounded-full text-[10px] font-bold ${
-            r.status === 'accepted' ? 'bg-green-100 text-green-800' :
-            r.status === 'rejected' ? 'bg-red-100 text-red-800' :
-            'bg-amber-100 text-amber-800'
-          }">
-            ${(r.status || 'PENDING').toUpperCase()}
-          </span>
-        </div>
-      `).join('')
+        `
+      }).join('')
     }
 
     // Tabs toggle

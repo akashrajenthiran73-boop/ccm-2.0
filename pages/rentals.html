@@ -220,13 +220,11 @@
         await supabase.from('rentals').insert({
           product_id: selectedRental.id,
           renter_id: currentUser.id,
-          owner_id: selectedRental.ownerId || null,
           rental_price: total,
           duration_days: days,
           start_date: startDate,
           return_date: returnDate,
-          status: 'requested',
-          notes: `Campus borrow booking for ${days} days`
+          status: 'active'
         })
       } catch (e) {
         console.warn('Rentals table insert note:', e)
@@ -254,6 +252,32 @@
       document.getElementById('tab-my-rentals').click()
     }
 
+    window.returnRentalItem = async (rentalId) => {
+      if (!confirm('Are you sure you want to return this borrowed item to the campus owner?')) return
+
+      try {
+        await supabase
+          .from('rentals')
+          .update({ status: 'returned' })
+          .eq('id', rentalId)
+      } catch (e) {
+        console.warn('Supabase rental return update note:', e)
+      }
+
+      // Update in localStorage
+      const localList = JSON.parse(localStorage.getItem('ccm_active_rentals') || '[]')
+      const updated = localList.map(item => {
+        if (item.id === rentalId) {
+          return { ...item, status: 'RETURNED' }
+        }
+        return item
+      })
+      localStorage.setItem('ccm_active_rentals', JSON.stringify(updated))
+
+      alert('✅ Item marked as Returned successfully! Thank you for using Campus Rentals.')
+      loadMyRentals()
+    }
+
     async function loadMyRentals() {
       const container = document.getElementById('my-rentals-list')
       container.innerHTML = '<div class="text-center py-12 text-xs text-gray-400 animate-pulse">Loading your rentals...</div>'
@@ -264,7 +288,7 @@
           const { data } = await supabase
             .from('rentals')
             .select('*, products(title)')
-            .or(`renter_id.eq.${currentUser.id},owner_id.eq.${currentUser.id}`)
+            .eq('renter_id', currentUser.id)
             .order('created_at', { ascending: false })
           if (data && data.length > 0) {
             rentals = data.map(r => ({
@@ -290,17 +314,26 @@
         return
       }
 
-      container.innerHTML = rentals.map(r => `
-        <div class="bg-white dark:bg-gray-800 p-4 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm flex items-center justify-between">
+      container.innerHTML = rentals.map(r => {
+        const isReturned = (r.status || '').toLowerCase() === 'returned'
+        return `
+        <div class="bg-white dark:bg-gray-800 p-4 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div>
-            <h4 class="font-bold text-xs text-gray-900 dark:text-white">${r.title}</h4>
-            <p class="text-[11px] text-gray-400">Duration: ${r.start} to ${r.end} (${r.days || 1} days) • Amount: ₹${r.total}</p>
+            <h4 class="font-bold text-sm text-gray-900 dark:text-white">${r.title}</h4>
+            <p class="text-[11px] text-gray-400 mt-1">Duration: ${r.start} to ${r.end} (${r.days || 1} days) • Fee: ₹${r.total}</p>
           </div>
-          <span class="px-3 py-1 bg-green-100 text-green-700 font-bold text-[10px] rounded-full">
-            ${r.status}
-          </span>
+          <div class="flex items-center gap-2">
+            <span class="px-3 py-1 font-bold text-[10px] rounded-full ${isReturned ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'}">
+              ${isReturned ? '✅ RETURNED' : '⏳ ' + r.status}
+            </span>
+            ${!isReturned ? `
+              <button onclick="returnRentalItem('${r.id}')" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow transition flex items-center gap-1">
+                🔄 Return Item
+              </button>
+            ` : ''}
+          </div>
         </div>
-      `).join('')
+      `}).join('')
     }
 
     document.getElementById('tab-rent-browse').onclick = () => {
