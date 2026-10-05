@@ -5,13 +5,20 @@ import { analyzePrice, detectScamRisk, rankRecommendations, trackUserActivity } 
 import { addToCart } from './cart.js'
 import { translateDOM } from './i18n.js'
 
-// One-time clean slate purge of old mock/test listings so user starts fresh
-const CLEAN_SLATE_KEY = 'ccm_marketplace_fresh_start_v3'
-if (typeof localStorage !== 'undefined' && !localStorage.getItem(CLEAN_SLATE_KEY)) {
-  localStorage.removeItem('ccm_fallback_products')
-  localStorage.removeItem('ccm_active_rentals')
-  localStorage.removeItem('ccm_barter_requests')
-  localStorage.setItem(CLEAN_SLATE_KEY, 'true')
+// Safely filter out only obsolete mock items without deleting real user listings
+if (typeof localStorage !== 'undefined') {
+  try {
+    const raw = JSON.parse(localStorage.getItem('ccm_fallback_products') || '[]')
+    const cleaned = raw.filter(p => {
+      const title = (p.title || '').toLowerCase()
+      const isLegacyDummy = title.includes('kreyszig') || title.includes('fx-991ex') || p.id === '1' || p.id === '2'
+      const hasVerifiedMember = (p.profiles?.full_name || p.profiles?.name) === 'Verified Member'
+      return !isLegacyDummy && !hasVerifiedMember
+    })
+    if (cleaned.length !== raw.length) {
+      localStorage.setItem('ccm_fallback_products', JSON.stringify(cleaned))
+    }
+  } catch (e) {}
 }
 
 const productFeed = document.getElementById('product-feed')
