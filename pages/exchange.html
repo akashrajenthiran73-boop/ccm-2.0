@@ -160,14 +160,14 @@
 
       grid.innerHTML = barterProducts.map(item => {
         const photo = item.photos?.[0] || item.image_url || 'https://via.placeholder.com/400x260?text=Barter+Item'
-        const sellerName = item.profiles?.full_name || item.profiles?.name || 'Student Member'
-        const college = item.profiles?.college_name || 'Campus College'
+        const sellerName = item.profiles?.full_name || item.profiles?.name || item.profiles?.username || 'Campus Member'
+        const college = item.profiles?.college_name || 'Campus Member'
         const isOwner = currentUser && (currentUser.id === item.user_id || currentUser.id === item.seller_id)
 
         return `
           <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 shadow-sm hover-lift flex flex-col justify-between">
             <div>
-              <img src="${photo}" class="w-full h-40 object-cover rounded-xl mb-3" onerror="this.src='https://via.placeholder.com/400x260?text=Campus+Item'">
+              <img src="${photo}" class="w-full h-48 sm:h-52 md:h-56 object-cover object-center rounded-xl mb-3" onerror="this.src='https://via.placeholder.com/400x300?text=Campus+Item'">
               <h4 class="font-bold text-sm text-gray-900 dark:text-white truncate">${item.title}</h4>
               <div class="text-[11px] text-gray-400 mt-0.5">Approx Value: ₹${item.price}</div>
               

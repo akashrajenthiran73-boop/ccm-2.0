@@ -145,14 +145,20 @@
           
           <!-- Left: Gallery -->
           <div class="md:col-span-6 space-y-4">
-            <div class="overflow-hidden rounded-2xl border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
-              <img id="main-product-img" src="${firstPhoto}" class="w-full h-80 sm:h-96 object-cover hover:scale-105 transition duration-300">
+            <div class="overflow-hidden rounded-3xl border border-gray-100 dark:border-gray-700 bg-gray-50/80 dark:bg-gray-800/80 flex items-center justify-center p-3 sm:p-5 w-full min-h-[300px] sm:min-h-[400px] md:min-h-[460px] lg:min-h-[500px] shadow-xs">
+              <img id="main-product-img" src="${firstPhoto}" 
+                   class="max-w-full max-h-[300px] sm:max-h-[380px] md:max-h-[440px] lg:max-h-[480px] w-auto h-auto object-contain mx-auto rounded-2xl transition duration-300 hover:scale-[1.02]"
+                   alt="${p.title}"
+                   onerror="this.src='https://via.placeholder.com/600x450?text=Campus+Marketplace'">
             </div>
             ${p.photos?.length > 1 ? `
-              <div class="flex gap-2 overflow-x-auto pb-2">
+              <div class="flex gap-2.5 overflow-x-auto pb-2 pt-1">
                 ${p.photos.map(photo => `
-                  <img src="${photo}" class="w-16 h-16 object-cover rounded-xl border border-gray-200 cursor-pointer hover:opacity-80 transition"
-                       onclick="document.getElementById('main-product-img').src='${photo}'">
+                  <button type="button" 
+                          class="flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded-2xl overflow-hidden border-2 border-gray-200 dark:border-gray-700 hover:border-blue-500 focus:border-blue-600 focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 p-1 flex items-center justify-center transition shadow-xs"
+                          onclick="document.getElementById('main-product-img').src='${photo}'">
+                    <img src="${photo}" class="max-w-full max-h-full object-contain rounded-xl">
+                  </button>
                 `).join('')}
               </div>
             ` : ''}
@@ -225,11 +231,11 @@
                   </div>
                   <div class="flex-1">
                     <div class="font-bold text-sm flex items-center gap-1.5">
-                      ${p.profiles?.full_name || p.profiles?.name || 'Student Seller'}
+                      ${p.profiles?.full_name || p.profiles?.name || p.profiles?.username || 'Verified Member'}
                       ${p.profiles?.is_verified ? '<span class="text-emerald-500 font-bold text-xs" title="Verified User">✓ Verified</span>' : ''}
                     </div>
                     <div class="text-xs text-gray-500">
-                      ${p.profiles?.college_name || 'Campus College'} • ⭐ ${p.profiles?.rating || '5.0'} Rating
+                      ${p.profiles?.college_name || 'Campus Member'} • ⭐ ${p.profiles?.rating || '5.0'} Rating
                     </div>
                   </div>
                 </div>

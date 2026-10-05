@@ -17,7 +17,7 @@
     <div class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-2xl p-6 sm:p-8 shadow-sm mb-8 flex flex-col md:flex-row items-center justify-between gap-6">
       <div>
         <div class="inline-flex items-center gap-2 px-3 py-1 bg-white/20 backdrop-blur rounded-full text-xs font-semibold mb-2">
-          <span id="user-badge-icon">🎓</span> <span id="user-role-text">Student Member</span>
+          <span id="user-badge-icon">🎓</span> <span id="user-role-text">Campus Member</span>
         </div>
         <h1 class="text-2xl sm:text-3xl font-black" id="welcome-name">Hello, Campus User!</h1>
         <p class="text-blue-100 text-xs sm:text-sm mt-1" id="college-info-text">
@@ -143,6 +143,21 @@
 
       if (profile?.college_name) {
         document.getElementById('college-info-text').textContent = `${profile.college_name} • ${profile.department || 'Campus Department'}`
+      }
+
+      const role = (profile?.role || profile?.user_type || 'student').toLowerCase()
+      if (role === 'staff' || role === 'faculty') {
+        document.getElementById('user-badge-icon').textContent = '🏛️'
+        document.getElementById('user-role-text').textContent = 'Faculty / Staff'
+      } else if (role === 'community' || role === 'community_user') {
+        document.getElementById('user-badge-icon').textContent = '🌐'
+        document.getElementById('user-role-text').textContent = 'Community Member'
+      } else if (role === 'admin') {
+        document.getElementById('user-badge-icon').textContent = '⚙️'
+        document.getElementById('user-role-text').textContent = 'Administrator'
+      } else {
+        document.getElementById('user-badge-icon').textContent = '🎓'
+        document.getElementById('user-role-text').textContent = 'College Student'
       }
 
       // Wallet Balance

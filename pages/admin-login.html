@@ -19,23 +19,46 @@
       <p class="text-xs text-gray-400 mt-1">Authorized personnel and campus moderators only</p>
     </div>
 
+    <!-- Admin Credentials Callout Card -->
+    <div class="p-3.5 bg-blue-950/60 border border-blue-800/80 rounded-2xl text-xs space-y-2 text-blue-200">
+      <div class="font-bold flex items-center justify-between text-blue-400">
+        <span class="flex items-center gap-1.5">🔑 Official Admin Credentials</span>
+        <span class="text-[10px] px-2 py-0.5 rounded-full bg-blue-900/80 text-blue-300 font-mono">Master Access</span>
+      </div>
+      <div class="grid grid-cols-2 gap-2 text-[11px] pt-1">
+        <div class="p-2 bg-gray-900/80 rounded-xl border border-gray-700">
+          <span class="text-gray-400 block text-[10px] uppercase font-bold">Admin Username</span>
+          <code class="font-bold text-white font-mono text-xs">admin</code>
+          <span class="text-gray-400 text-[10px] block">or admin@ccm.edu</span>
+        </div>
+        <div class="p-2 bg-gray-900/80 rounded-xl border border-gray-700">
+          <span class="text-gray-400 block text-[10px] uppercase font-bold">Admin Password</span>
+          <code class="font-bold text-white font-mono text-xs">admin123</code>
+          <span class="text-gray-400 text-[10px] block">or admin</span>
+        </div>
+      </div>
+    </div>
+
     <form id="admin-login-form" class="space-y-4">
       <div>
-        <label class="block text-xs font-bold text-gray-300 mb-1">Admin Email</label>
-        <input type="email" id="admin-email" required placeholder="admin@ccm.edu"
+        <label class="block text-xs font-bold text-gray-300 mb-1">Admin Username or Email *</label>
+        <input type="text" id="admin-identifier" required placeholder="admin or admin@ccm.edu" value="admin"
                class="w-full px-3 py-2.5 rounded-xl border border-gray-700 bg-gray-900 text-sm focus:ring-2 focus:ring-blue-500 text-white">
       </div>
 
       <div>
-        <label class="block text-xs font-bold text-gray-300 mb-1">Admin Password</label>
-        <input type="password" id="admin-password" required placeholder="••••••••"
+        <div class="flex items-center justify-between mb-1">
+          <label class="block text-xs font-bold text-gray-300">Admin Password *</label>
+          <span class="text-[10px] text-gray-400">Default: admin123</span>
+        </div>
+        <input type="password" id="admin-password" required placeholder="••••••••" value="admin123"
                class="w-full px-3 py-2.5 rounded-xl border border-gray-700 bg-gray-900 text-sm focus:ring-2 focus:ring-blue-500 text-white">
       </div>
 
       <div id="admin-error" class="text-xs text-red-400 font-semibold text-center hidden"></div>
 
-      <button type="submit" id="admin-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl text-xs transition shadow">
-        Authenticate as Admin
+      <button type="submit" id="admin-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl text-xs transition shadow flex items-center justify-center gap-2">
+        <span>🔐</span> Authenticate as Admin
       </button>
     </form>
 
@@ -49,7 +72,7 @@
 
     document.getElementById('admin-login-form').onsubmit = async (e) => {
       e.preventDefault()
-      const email = document.getElementById('admin-email').value.trim()
+      const identifier = document.getElementById('admin-identifier').value.trim()
       const password = document.getElementById('admin-password').value
       const btn = document.getElementById('admin-btn')
       const err = document.getElementById('admin-error')
@@ -58,29 +81,55 @@
       btn.textContent = 'Verifying credentials...'
       err.classList.add('hidden')
 
-      try {
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password })
-        if (error) throw error
+      // Check Master Admin Credentials
+      const storedAdminUser = (localStorage.getItem('ccm_admin_username') || 'admin').toLowerCase()
+      const storedAdminPass = localStorage.getItem('ccm_admin_password') || 'admin123'
+      const cleanIdent = identifier.toLowerCase()
 
-        const user = data.user
-        const adminStatus = await isAdmin(user.id)
-        
-        // Grant admin for demo purposes if email contains 'admin'
-        if (adminStatus || email.includes('admin')) {
-          localStorage.setItem(`demo_role_${user.id}`, 'admin')
-          window.location.href = 'admin.html'
-        } else {
-          err.textContent = 'Account authenticated but does not possess admin privileges.'
-          err.classList.remove('hidden')
-          btn.disabled = false
-          btn.textContent = 'Authenticate as Admin'
+      const isValidMasterUser = cleanIdent === 'admin' || cleanIdent === 'admin@ccm.edu' || cleanIdent === storedAdminUser
+      const isValidMasterPass = password === storedAdminPass || password === 'admin123' || password === 'admin'
+
+      if (isValidMasterUser && isValidMasterPass) {
+        const adminUser = {
+          id: 'admin-master-id',
+          email: identifier.includes('@') ? identifier : 'admin@ccm.edu',
+          username: 'admin',
+          full_name: 'Campus Administrator',
+          role: 'admin',
+          user_type: 'admin'
         }
-      } catch (e) {
-        err.textContent = e.message || 'Authentication failed'
-        err.classList.remove('hidden')
-        btn.disabled = false
-        btn.textContent = 'Authenticate as Admin'
+        localStorage.setItem('ccm_admin_logged_in', 'true')
+        localStorage.setItem('ccm_admin_user', JSON.stringify(adminUser))
+        localStorage.setItem('ccm_demo_user', JSON.stringify(adminUser))
+        localStorage.setItem('demo_role_admin-master-id', 'admin')
+        window.location.href = 'admin.html'
+        return
       }
+
+      // If entered as an email, attempt Supabase Auth as secondary check
+      if (identifier.includes('@')) {
+        try {
+          const { data, error } = await supabase.auth.signInWithPassword({ email: identifier, password })
+          if (!error && data?.user) {
+            const user = data.user
+            const adminStatus = await isAdmin(user.id)
+            if (adminStatus || identifier.includes('admin')) {
+              localStorage.setItem('ccm_admin_logged_in', 'true')
+              localStorage.setItem(`demo_role_${user.id}`, 'admin')
+              window.location.href = 'admin.html'
+              return
+            }
+          }
+        } catch (authErr) {
+          console.warn('Supabase auth note:', authErr)
+        }
+      }
+
+      // If neither matched
+      err.textContent = 'Invalid credentials. Use Username: admin | Password: admin123'
+      err.classList.remove('hidden')
+      btn.disabled = false
+      btn.innerHTML = '<span>🔐</span> Authenticate as Admin'
     }
   </script>
 </body>

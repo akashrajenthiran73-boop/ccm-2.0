@@ -49,11 +49,11 @@ export function createProductCard(product, wishlistIds = [], currentUser = null)
     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden hover-lift flex flex-col transition duration-200 ${isSold ? 'opacity-90' : ''}">
       
       <!-- Top Image & Quick Badges -->
-      <div class="relative overflow-hidden group">
-        <a href="${pagesPath}product.html?id=${product.id}">
+      <div class="relative overflow-hidden group bg-gray-50 dark:bg-gray-800 h-52 sm:h-56 md:h-60 lg:h-64 flex items-center justify-center">
+        <a href="${pagesPath}product.html?id=${product.id}" class="w-full h-full flex items-center justify-center">
           <img src="${firstPhoto}" alt="${product.title}" 
-               class="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300 ${isSold ? 'grayscale-[25%]' : ''}"
-               onerror="this.src='https://via.placeholder.com/400x260?text=Campus+Marketplace'">
+               class="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300 ${isSold ? 'grayscale-[25%]' : ''}"
+               onerror="this.src='https://via.placeholder.com/400x300?text=Campus+Marketplace'">
         </a>
         
         <!-- Wishlist Button -->
@@ -109,8 +109,8 @@ export function createProductCard(product, wishlistIds = [], currentUser = null)
 
           <!-- Seller info & Meeting Spot -->
           <div class="flex items-center justify-between text-[11px] text-gray-500 dark:text-gray-400 mt-3 pt-2.5 border-t border-gray-100 dark:border-gray-700">
-            <span class="truncate max-w-[120px]">
-              👤 ${product.profiles?.name || 'Student Seller'} 
+            <span class="truncate max-w-[130px]" title="${product.profiles?.full_name || product.profiles?.name || 'Verified Member'}">
+              👤 ${product.profiles?.full_name || product.profiles?.name || product.profiles?.username || 'Verified Member'} 
               ${product.profiles?.is_verified ? '<span class="text-green-500" title="Verified ID">✓</span>' : ''}
             </span>
             <span class="text-gray-400 truncate">📍 ${product.meeting_point || product.pickup_location || 'Main Gate'}</span>
