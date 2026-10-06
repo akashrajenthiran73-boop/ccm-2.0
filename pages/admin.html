@@ -520,6 +520,8 @@
     document.getElementById('admin-logout-btn').onclick = async () => {
       localStorage.removeItem('ccm_admin_logged_in')
       localStorage.removeItem('ccm_admin_user')
+      localStorage.removeItem('ccm_demo_user')
+      localStorage.removeItem('ccm_user_profile')
       if (currentUser?.id) localStorage.removeItem(`demo_role_${currentUser.id}`)
       try { await supabase.auth.signOut() } catch (e) {}
       window.location.href = 'admin-login.html'

@@ -27,6 +27,40 @@ export async function getCurrentUser() {
 }
 
 /**
+ * Completely sign out user and purge all session states
+ */
+export async function signOutUser() {
+  try {
+    await supabase.auth.signOut()
+  } catch (err) {
+    console.warn('Supabase signOut note:', err)
+  }
+  
+  if (typeof localStorage !== 'undefined') {
+    localStorage.removeItem('ccm_demo_user')
+    localStorage.removeItem('ccm_user_profile')
+    // Clear all Supabase auth storage tokens
+    const keysToRemove = []
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i)
+      if (k && (k.startsWith('sb-') || k.includes('auth-token') || k.includes('supabase.auth'))) {
+        keysToRemove.push(k)
+      }
+    }
+    keysToRemove.forEach(k => localStorage.removeItem(k))
+  }
+  
+  if (typeof sessionStorage !== 'undefined') {
+    sessionStorage.clear()
+  }
+
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('authSessionChanged', { detail: { user: null } }))
+  }
+  return true
+}
+
+/**
  * Check if a given user is an administrator
  */
 export async function isAdmin(userId) {

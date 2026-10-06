@@ -267,9 +267,21 @@
           const { error: profError } = await supabase.from('profiles').upsert(profileData)
           if (profError) {
             console.warn('Profile save note:', profError.message)
-            // Cache locally so experience is uninterrupted
-            localStorage.setItem(`ccm_profile_${userId}`, JSON.stringify(profileData))
           }
+
+          // Immediately establish authenticated session so the user is logged in
+          const authUser = {
+            id: userId,
+            email: email,
+            user_metadata: {
+              full_name: fullName,
+              username: username,
+              role: 'user',
+              user_type: userType
+            }
+          }
+          localStorage.setItem('ccm_demo_user', JSON.stringify(authUser))
+          localStorage.setItem('ccm_user_profile', JSON.stringify(profileData))
         }
 
         submitBtn.textContent = 'Account Created! Redirecting...'

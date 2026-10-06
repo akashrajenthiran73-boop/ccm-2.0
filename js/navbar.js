@@ -1,5 +1,5 @@
 // js/navbar.js - Universal Responsive Navigation & Bottom Bar
-import { supabase, getCurrentUser, isAdmin } from './supabase.js'
+import { supabase, getCurrentUser, isAdmin, signOutUser } from './supabase.js'
 import { getMarketplaceMode, setMarketplaceMode, getModeInfo } from './mode.js'
 import { getCurrentLanguage, toggleLanguage, t } from './i18n.js'
 import { toggleTheme, getThemeIcon } from './theme.js'
@@ -223,7 +223,9 @@ export async function renderUniversalNavbar() {
   const logoutBtn = document.getElementById('nav-logout-btn')
   if (logoutBtn) {
     logoutBtn.onclick = async () => {
-      await supabase.auth.signOut()
+      logoutBtn.disabled = true
+      logoutBtn.textContent = 'Logging out...'
+      await signOutUser()
       window.location.href = rootPath + 'index.html'
     }
   }

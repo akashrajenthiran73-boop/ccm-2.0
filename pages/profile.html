@@ -41,13 +41,16 @@
             </div>
 
             <!-- Action Buttons -->
-            <div class="flex items-center justify-center gap-2 mt-2 sm:mt-0">
+            <div class="flex items-center justify-center gap-2 mt-2 sm:mt-0 flex-wrap">
               <a href="edit-profile.html" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition shadow-sm">
                 ✏️ Edit Profile
               </a>
               <a href="edit-profile.html#password" class="px-3 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-xs font-bold rounded-xl transition">
                 🔑 Password
               </a>
+              <button id="profile-logout-btn" class="px-3 py-2 bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900 border border-red-200 dark:border-red-800 text-xs font-bold rounded-xl transition">
+                🚪 Logout
+              </button>
             </div>
           </div>
 
@@ -160,7 +163,7 @@
   <script type="module" src="../js/mode.js"></script>
   <script type="module" src="../js/navbar.js"></script>
   <script type="module">
-    import { supabase, getCurrentUser, getUserProfile } from '../js/supabase.js'
+    import { supabase, getCurrentUser, getUserProfile, signOutUser } from '../js/supabase.js'
 
     let userListings = []
     let activeFilter = 'all'
@@ -359,6 +362,13 @@
           }
         } catch (e) {}
       }
+    })
+
+    // Logout handler
+    document.getElementById('profile-logout-btn')?.addEventListener('click', async () => {
+      if (!confirm('Are you sure you want to sign out of your account?')) return
+      await signOutUser()
+      window.location.href = 'login.html'
     })
 
     loadProfilePage()
