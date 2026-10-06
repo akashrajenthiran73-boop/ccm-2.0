@@ -19,39 +19,16 @@
       <p class="text-xs text-gray-400 mt-1">Authorized personnel and campus moderators only</p>
     </div>
 
-    <!-- Admin Credentials Callout Card -->
-    <div class="p-3.5 bg-blue-950/60 border border-blue-800/80 rounded-2xl text-xs space-y-2 text-blue-200">
-      <div class="font-bold flex items-center justify-between text-blue-400">
-        <span class="flex items-center gap-1.5">🔑 Official Admin Credentials</span>
-        <span class="text-[10px] px-2 py-0.5 rounded-full bg-blue-900/80 text-blue-300 font-mono">Master Access</span>
-      </div>
-      <div class="grid grid-cols-2 gap-2 text-[11px] pt-1">
-        <div class="p-2 bg-gray-900/80 rounded-xl border border-gray-700">
-          <span class="text-gray-400 block text-[10px] uppercase font-bold">Admin Username</span>
-          <code class="font-bold text-white font-mono text-xs">admin</code>
-          <span class="text-gray-400 text-[10px] block">or admin@ccm.edu</span>
-        </div>
-        <div class="p-2 bg-gray-900/80 rounded-xl border border-gray-700">
-          <span class="text-gray-400 block text-[10px] uppercase font-bold">Admin Password</span>
-          <code class="font-bold text-white font-mono text-xs">admin123</code>
-          <span class="text-gray-400 text-[10px] block">or admin</span>
-        </div>
-      </div>
-    </div>
-
     <form id="admin-login-form" class="space-y-4">
       <div>
         <label class="block text-xs font-bold text-gray-300 mb-1">Admin Username or Email *</label>
-        <input type="text" id="admin-identifier" required placeholder="admin or admin@ccm.edu" value="admin"
+        <input type="text" id="admin-identifier" required placeholder="Enter admin username or email"
                class="w-full px-3 py-2.5 rounded-xl border border-gray-700 bg-gray-900 text-sm focus:ring-2 focus:ring-blue-500 text-white">
       </div>
 
       <div>
-        <div class="flex items-center justify-between mb-1">
-          <label class="block text-xs font-bold text-gray-300">Admin Password *</label>
-          <span class="text-[10px] text-gray-400">Default: admin123</span>
-        </div>
-        <input type="password" id="admin-password" required placeholder="••••••••" value="admin123"
+        <label class="block text-xs font-bold text-gray-300 mb-1">Admin Password *</label>
+        <input type="password" id="admin-password" required placeholder="Enter admin password"
                class="w-full px-3 py-2.5 rounded-xl border border-gray-700 bg-gray-900 text-sm focus:ring-2 focus:ring-blue-500 text-white">
       </div>
 
@@ -126,7 +103,7 @@
       }
 
       // If neither matched
-      err.textContent = 'Invalid credentials. Use Username: admin | Password: admin123'
+      err.textContent = 'Invalid admin credentials. Access denied.'
       err.classList.remove('hidden')
       btn.disabled = false
       btn.innerHTML = '<span>🔐</span> Authenticate as Admin'
