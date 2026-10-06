@@ -132,16 +132,20 @@
       }
 
       // 2. Resolve login identifier to email if username or phone was typed
+      const isRealEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(identifier)
       let loginEmail = identifier
-      if (!identifier.includes('@')) {
+      let resolvedProfile = null
+
+      if (!isRealEmail) {
         try {
           const { data: prof } = await supabase
             .from('profiles')
-            .select('email')
-            .or(`username.eq.${identifier},mobile_number.eq.${identifier},college_id_number.eq.${identifier}`)
+            .select('*')
+            .or(`username.eq.${identifier},mobile_number.eq.${identifier},college_id_number.eq.${identifier},phone.eq.${identifier}`)
             .maybeSingle()
-          if (prof && prof.email) {
-            loginEmail = prof.email
+          if (prof) {
+            resolvedProfile = prof
+            if (prof.email) loginEmail = prof.email
           }
         } catch (e) {}
       }
@@ -173,24 +177,27 @@
         }
 
         // 5. Resilient Profile Lookup Fallback (handles unconfirmed emails or test accounts)
-        const { data: matchedProfile } = await supabase
-          .from('profiles')
-          .select('*')
-          .or(`email.eq.${loginEmail},username.eq.${identifier},phone.eq.${identifier}`)
-          .maybeSingle()
+        if (!resolvedProfile) {
+          const { data: matched } = await supabase
+            .from('profiles')
+            .select('*')
+            .or(`email.eq.${loginEmail},username.eq.${identifier},phone.eq.${identifier}`)
+            .maybeSingle()
+          if (matched) resolvedProfile = matched
+        }
 
-        if (matchedProfile) {
+        if (resolvedProfile) {
           const profileAuthUser = {
-            id: matchedProfile.id,
-            email: matchedProfile.email,
+            id: resolvedProfile.id,
+            email: resolvedProfile.email,
             user_metadata: {
-              full_name: matchedProfile.full_name || matchedProfile.name,
-              username: matchedProfile.username,
-              role: matchedProfile.role || 'user'
+              full_name: resolvedProfile.full_name || resolvedProfile.name,
+              username: resolvedProfile.username,
+              role: resolvedProfile.role || 'user'
             }
           }
           localStorage.setItem('ccm_demo_user', JSON.stringify(profileAuthUser))
-          localStorage.setItem('ccm_user_profile', JSON.stringify(matchedProfile))
+          localStorage.setItem('ccm_user_profile', JSON.stringify(resolvedProfile))
 
           loginBtn.textContent = 'Verified! Redirecting...'
           loginBtn.classList.add('bg-green-600')

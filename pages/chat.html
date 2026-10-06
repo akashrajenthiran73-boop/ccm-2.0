@@ -113,7 +113,7 @@
       }
 
       // 2. If convId not in URL, try resolving existing conversation
-      if (!currentConv && productId && sellerId) {
+      if (!currentConv && !convId && productId && sellerId) {
         // Self-chat check ONLY when starting a brand new conversation
         if (currentUser.id === sellerId) {
           alert('⚠️ You cannot start a chat with yourself on your own product listing.')
